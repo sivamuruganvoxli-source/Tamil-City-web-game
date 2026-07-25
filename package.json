@@ -1,0 +1,16 @@
+{
+  "name": "tamil-city-web-game",
+  "version": "1.0.0",
+  "description": "Tamil City — Open World Game",
+  "type": "module",
+  "scripts": {
+    "dev": "npx serve .",
+    "preview": "npx serve ."
+  },
+  "keywords": ["game", "tamil", "city", "open-world"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@vercel/analytics": "^1.4.1"
+  }
+}
