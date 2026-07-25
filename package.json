@@ -1,0 +1,35 @@
+{
+  "name": "tamil-city-web-game",
+  "version": "1.0.0",
+  "description": "Tamil City — Open World Web Game",
+  "main": "index.html",
+  "type": "module",
+  "scripts": {
+    "build:analytics": "esbuild analytics.js --bundle --outfile=dist/analytics.bundle.js --format=iife",
+    "build": "npm run build:analytics",
+    "dev": "npm run build && npx http-server -p 8080",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sivamuruganvoxli-source/Tamil-City-web-game.git"
+  },
+  "keywords": [
+    "game",
+    "tamil",
+    "web-game",
+    "open-world"
+  ],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sivamuruganvoxli-source/Tamil-City-web-game/issues"
+  },
+  "homepage": "https://github.com/sivamuruganvoxli-source/Tamil-City-web-game#readme",
+  "dependencies": {
+    "@vercel/analytics": "^2.0.1"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.1"
+  }
+}
