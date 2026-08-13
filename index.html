@@ -147,7 +147,7 @@
     <div class="rules">
       <div>🚗 <b>Drive</b> freely through a Tamil-style city of gopurams, kolam streets &amp; Chettinad houses.</div>
       <div>🪙 <b>Collect</b> golden coins scattered on the roads.</div>
-      <div>📍 <b>Deliver</b> — follow the teal beacon for delivery runs, or the gold → red beacons for passenger pickup &amp; drop-off. Longer trips pay bigger fares (₹).</div>
+      <div>📍 <b>Missions</b> — each job shows two blips at once: gold <b>S</b> is where you collect the parcel or rider, and teal/red <b>F</b> is the drop-off. Bigger distance = bigger fare (₹).</div>
       <div>🏆 <b>Rank up</b> — every 4 completed trips promotes you, from Trainee Driver up to Chennai Legend.</div>
       <div>⌨️ Desktop: <b>Arrow keys / WASD</b> to drive. 📱 Mobile: use the on-screen pedals.</div>
     </div>
@@ -168,7 +168,7 @@
   </div>
   <div id="missionBox" class="panel">
     <div class="label" id="missionLabel">Mission · Delivery</div>
-    <div class="value" id="missionVal">Drive to the beacon</div>
+    <div class="value" id="missionVal">Drive to the gold S blip</div>
     <svg id="compass" viewBox="0 0 24 24"><polygon points="12,2 19,20 12,15 5,20" fill="#F4A340"/></svg>
   </div>
   <div id="speedBox" class="panel">
@@ -507,12 +507,14 @@ function randomRoadPoint(){
 for(let i=0;i<18;i++) spawnCoin();
 
 // ---------- Delivery mission ----------
-let missionTarget = null;
-let beacon = null;
+let missionTarget = null;   // active THREE.Vector3 the car must currently reach
+let startPos = null, finishPos = null;   // {x,z} for both mission points (minimap + world blips)
+let beaconStart = null, beaconFinish = null;
+let labelStart = null, labelFinish = null;
 let deliveries = 0;
 let missionType = 'delivery';   // 'delivery' | 'passenger'
-let missionStage = 0;           // passenger: 0 = go to pickup, 1 = go to drop-off
-let currentArea = null;
+let missionStage = 0;           // 0 = heading to start blip, 1 = heading to finish blip
+let startArea = null, finishArea = null;
 let currentReward = 0;
 const missionLabelEl = document.getElementById('missionLabel');
 const tripsVal = document.getElementById('tripsVal');
@@ -542,37 +544,59 @@ function randomBuildingPoint(){
 }
 function fareFor(base, dist){ return base + Math.round(Math.min(dist,140)*0.55); }
 
-function placeBeacon(x,z,color){
-  if(beacon){ scene.remove(beacon); }
-  const beaconGeo = new THREE.CylinderGeometry(0.4,0.4,18,10,1,true);
-  const beaconMat = new THREE.MeshBasicMaterial({color, transparent:true, opacity:0.4, side:THREE.DoubleSide});
-  beacon = new THREE.Mesh(beaconGeo, beaconMat);
-  beacon.position.set(x, 9, z);
-  scene.add(beacon);
-  missionTarget = new THREE.Vector3(x, 0, z);
+function makeBeacon(x, z, color, letter){
+  const geo = new THREE.CylinderGeometry(0.4,0.4,18,10,1,true);
+  const mat = new THREE.MeshBasicMaterial({color, transparent:true, opacity:0.42, side:THREE.DoubleSide});
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.position.set(x, 9, z);
+  scene.add(mesh);
+  const hex = '#'+color.toString(16).padStart(6,'0');
+  const label = textSprite(letter, {scale:0.32, bg:hex, border:'#1B1035', color:'#1B1035', fontSize:150});
+  label.position.set(x, 19, z);
+  scene.add(label);
+  return { mesh, label };
+}
+function clearBeacons(){
+  if(beaconStart){ scene.remove(beaconStart); beaconStart=null; }
+  if(beaconFinish){ scene.remove(beaconFinish); beaconFinish=null; }
+  if(labelStart){ scene.remove(labelStart); labelStart=null; }
+  if(labelFinish){ scene.remove(labelFinish); labelFinish=null; }
 }
 
 function newMission(){
+  clearBeacons();
   // alternate mission types so both show up regularly
   missionType = Math.random() < 0.5 ? 'delivery' : 'passenger';
   missionStage = 0;
-  currentArea = pick(areaNames);
+  startArea = pick(areaNames);
+  do { finishArea = pick(areaNames); } while(finishArea === startArea);
+
+  startPos = randomBuildingPoint();
+  finishPos = randomBuildingPoint();
+  let tries = 0;
+  while(Math.hypot(finishPos.x-startPos.x, finishPos.z-startPos.z) < 25 && tries < 20){
+    finishPos = randomBuildingPoint(); tries++;
+  }
+
+  const finishColor = missionType === 'delivery' ? 0x2E7D6B : 0xB33A2E;
+  const s = makeBeacon(startPos.x, startPos.z, 0xF4C542, 'S');
+  const f = makeBeacon(finishPos.x, finishPos.z, finishColor, 'F');
+  beaconStart = s.mesh; labelStart = s.label;
+  beaconFinish = f.mesh; labelFinish = f.label;
+
+  const totalDist = Math.hypot(finishPos.x-startPos.x, finishPos.z-startPos.z);
+  currentReward = missionType === 'delivery' ? fareFor(40, totalDist) : fareFor(60, totalDist);
+
+  missionTarget = new THREE.Vector3(startPos.x, 0, startPos.z);
 
   if(missionType === 'delivery'){
-    const p = randomBuildingPoint();
-    placeBeacon(p.x, p.z, 0x2E7D6B); // teal
-    const dist = Math.hypot(p.x-carState.x, p.z-carState.z);
-    currentReward = fareFor(40, dist);
     missionLabelEl.textContent = 'Mission · Delivery';
     document.getElementById('missionVal').textContent =
-      `Deliver a parcel to ${currentArea.ta} (${currentArea.en}) · ₹${currentReward}`;
+      `Gold blip S: collect parcel at ${startArea.ta} (${startArea.en}) · fare ₹${currentReward}`;
   } else {
-    const p = randomBuildingPoint();
-    placeBeacon(p.x, p.z, 0xF4C542); // gold = pickup
-    currentReward = 20;
     missionLabelEl.textContent = 'Mission · Passenger';
     document.getElementById('missionVal').textContent =
-      `Pick up a rider near ${currentArea.ta} (${currentArea.en})`;
+      `Gold blip S: pick up rider at ${startArea.ta} (${startArea.en}) · fare ₹${currentReward}`;
   }
 }
 newMission();
@@ -602,52 +626,63 @@ function drawMinimap(){
   const range = 90; // world units shown radius
   const unit = (S/(2*range))*scale;
 
-  // World-space points are converted to "north-up, car-centered" offsets first
-  // (dx = +x is east/right, dy = -z so that world-forward is screen-up),
-  // then the whole canvas is rotated by -carState.angle so the car's own
-  // heading always renders as straight up, like a GPS nav / GTA minimap.
+  // Manual rotation math (instead of ctx.rotate) so blip labels can stay upright.
+  // North-up base offset: +x -> screen right, +z -> screen up (dz negated).
+  // Then rotate that offset by -carState.angle so the car's heading always renders as "up".
+  const ang = -carState.angle;
+  const cosA = Math.cos(ang), sinA = Math.sin(ang);
+  function project(wx, wz){
+    const dx = (wx-carState.x)*unit, dz = -(wz-carState.z)*unit;
+    return { x: S/2 + dx*cosA - dz*sinA, y: S/2 + dx*sinA + dz*cosA };
+  }
+
   mmCtx.save();
   mmCtx.beginPath(); mmCtx.arc(S/2,S/2,S/2,0,Math.PI*2); mmCtx.clip();
-  mmCtx.translate(S/2, S/2);
-  mmCtx.rotate(-carState.angle);
-
-  function local(wx, wz){
-    return { x:(wx-carState.x)*unit, y:-(wz-carState.z)*unit };
-  }
 
   mmCtx.strokeStyle = 'rgba(233,198,106,0.55)';
   mmCtx.lineWidth = 3;
   roadPositions.forEach(z=>{
-    const a=local(-WORLD,z), b=local(WORLD,z);
+    const a=project(-WORLD,z), b=project(WORLD,z);
     mmCtx.beginPath(); mmCtx.moveTo(a.x,a.y); mmCtx.lineTo(b.x,b.y); mmCtx.stroke();
   });
   roadPositions.forEach(x=>{
-    const a=local(x,-WORLD), b=local(x,WORLD);
+    const a=project(x,-WORLD), b=project(x,WORLD);
     mmCtx.beginPath(); mmCtx.moveTo(a.x,a.y); mmCtx.lineTo(b.x,b.y); mmCtx.stroke();
   });
 
-  if(missionTarget){
-    mmCtx.fillStyle = missionType==='delivery' ? '#2E7D6B' : (missionStage===0 ? '#F4C542' : '#B33A2E');
-    const p = local(missionTarget.x, missionTarget.z);
-    mmCtx.beginPath(); mmCtx.arc(p.x,p.y,5,0,Math.PI*2); mmCtx.fill();
-  }
+  // coins
   mmCtx.fillStyle = '#F4C542';
   coins.forEach(c=>{
-    const p = local(c.position.x, c.position.z);
+    const p = project(c.position.x, c.position.z);
     mmCtx.beginPath(); mmCtx.arc(p.x,p.y,2.4,0,Math.PI*2); mmCtx.fill();
   });
+
+  function drawBlip(p, color, letter){
+    mmCtx.fillStyle = color;
+    mmCtx.beginPath(); mmCtx.arc(p.x,p.y,6.5,0,Math.PI*2); mmCtx.fill();
+    mmCtx.strokeStyle = '#1B1035'; mmCtx.lineWidth = 1.5; mmCtx.stroke();
+    mmCtx.fillStyle = '#1B1035';
+    mmCtx.font = 'bold 9px sans-serif';
+    mmCtx.textAlign = 'center'; mmCtx.textBaseline = 'middle';
+    mmCtx.fillText(letter, p.x, p.y+0.5);
+  }
+  // both mission blips shown together: gold S = start, colored F = finish
+  if(startPos && missionStage === 0){
+    drawBlip(project(startPos.x, startPos.z), '#F4C542', 'S');
+  }
+  if(finishPos){
+    const finColor = missionType === 'delivery' ? '#2E7D6B' : '#B33A2E';
+    drawBlip(project(finishPos.x, finishPos.z), finColor, 'F');
+  }
   mmCtx.restore();
 
-  // "N" reference marker — rotates around the rim to show true world-north
-  // relative to current heading, same idea as a phone GPS compass.
-  mmCtx.save();
-  mmCtx.translate(S/2,S/2);
-  mmCtx.rotate(-carState.angle);
+  // "N" reference marker on the rim — shows true world-forward relative to current heading
+  const rimR = S/2 - 11;
+  const nx = S/2 + sinA*rimR, ny = S/2 - cosA*rimR;
   mmCtx.fillStyle = 'rgba(246,239,224,0.85)';
-  mmCtx.font = "bold 11px sans-serif";
+  mmCtx.font = 'bold 11px sans-serif';
   mmCtx.textAlign = 'center'; mmCtx.textBaseline = 'middle';
-  mmCtx.fillText('N', 0, -S/2+11);
-  mmCtx.restore();
+  mmCtx.fillText('N', nx, ny);
 
   // car marker — fixed at center, always pointing straight up
   mmCtx.save();
@@ -746,51 +781,41 @@ function update(dt){
     }
   }
 
-  // mission check
+  // mission check — every mission has a gold "S" (start) blip and a colored "F" (finish) blip,
+  // both visible in the world and on the minimap for the whole mission; drive to S first, then F.
   if(missionTarget){
-    beacon.rotation.y += dt;
+    if(beaconStart) beaconStart.rotation.y += dt;
+    if(beaconFinish) beaconFinish.rotation.y += dt;
     const dx = missionTarget.x-carState.x, dz = missionTarget.z-carState.z;
     const dist = Math.sqrt(dx*dx+dz*dz);
-    // compass points from car facing to target
+    // compass points from car facing to active target
     const targetAngle = Math.atan2(dx,dz);
     let rel = targetAngle - carState.angle;
     compassEl.style.transform = `rotate(${rel}rad)`;
-    if(missionType === 'delivery'){
+
+    const verb = missionType === 'delivery' ? 'parcel' : 'rider';
+
+    if(missionStage === 0){
       document.getElementById('missionVal').textContent =
-        `To ${currentArea.ta} (${currentArea.en}) · ${dist.toFixed(0)}m · ₹${currentReward}`;
+        `Gold blip S: ${startArea.ta} (${startArea.en}) · ${dist.toFixed(0)}m away`;
+      if(dist < 6){
+        missionStage = 1;
+        missionTarget = new THREE.Vector3(finishPos.x, 0, finishPos.z);
+        addScore(20, missionType==='delivery' ? 'picked up' : 'pickup');
+        if(beaconStart){ scene.remove(beaconStart); beaconStart=null; }
+        if(labelStart){ scene.remove(labelStart); labelStart=null; }
+        missionLabelEl.textContent = missionType === 'delivery' ? 'Mission · Delivery (drop-off)' : 'Mission · Passenger (drop-off)';
+      }
+    } else {
+      const blipColor = missionType === 'delivery' ? 'teal' : 'red';
+      document.getElementById('missionVal').textContent =
+        `${blipColor==='teal'?'Teal':'Red'} blip F: drop the ${verb} at ${finishArea.ta} (${finishArea.en}) · ${dist.toFixed(0)}m · ₹${currentReward}`;
       if(dist < 6){
         deliveries++;
         tripsVal.textContent = deliveries;
         updateRank();
-        addScore(currentReward,'delivery');
+        addScore(currentReward, missionType==='delivery' ? 'delivered' : 'trip');
         newMission();
-      }
-    } else {
-      if(missionStage === 0){
-        document.getElementById('missionVal').textContent =
-          `Pickup near ${currentArea.ta} · ${dist.toFixed(0)}m away`;
-        if(dist < 6){
-          missionStage = 1;
-          addScore(20,'pickup');
-          const p = randomBuildingPoint();
-          currentArea = pick(areaNames);
-          const dropDist = Math.hypot(p.x-carState.x, p.z-carState.z);
-          currentReward = fareFor(60, dropDist);
-          placeBeacon(p.x, p.z, 0xB33A2E); // red = drop-off
-          missionLabelEl.textContent = 'Mission · Passenger (drop-off)';
-          document.getElementById('missionVal').textContent =
-            `Drop off at ${currentArea.ta} (${currentArea.en}) · ₹${currentReward}`;
-        }
-      } else {
-        document.getElementById('missionVal').textContent =
-          `To ${currentArea.ta} · ${dist.toFixed(0)}m · ₹${currentReward}`;
-        if(dist < 6){
-          deliveries++;
-          tripsVal.textContent = deliveries;
-          updateRank();
-          addScore(currentReward,'trip');
-          newMission();
-        }
       }
     }
   }
