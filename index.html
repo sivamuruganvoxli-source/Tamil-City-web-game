@@ -1,849 +1,1020 @@
 <!DOCTYPE html>
-<html lang="ta">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>தமிழ் நகர் ஓட்டம் — Tamil City Drive</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Baloo+Tamma+2:wght@500;700;800&family=Catamaran:wght@400;600;800&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Mylapore Mysteries: The Vanishing Veena</title>
 <style>
-  :root{
-    --ink:#1B1035;
-    --dusk:#3A1A4A;
-    --marigold:#F4A340;
-    --marigold-deep:#D9832A;
-    --temple-red:#B33A2E;
-    --teal:#1F7A6C;
-    --cream:#F6EFE0;
-    --gold-line: rgba(244,163,64,0.35);
-  }
-  *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
-  html,body{
-    margin:0; padding:0; width:100%; height:100%; overflow:hidden;
-    background:var(--ink); font-family:'Catamaran', sans-serif; color:var(--cream);
-    touch-action:none; overscroll-behavior:none;
-  }
-  #gameCanvas{ position:fixed; inset:0; display:block; width:100%; height:100%; }
-
-  /* ---------- Start Screen ---------- */
-  #startScreen{
-    position:fixed; inset:0; z-index:50;
-    display:flex; align-items:center; justify-content:center;
-    background:
-      radial-gradient(ellipse at 50% 120%, rgba(244,163,64,0.35), transparent 60%),
-      linear-gradient(180deg, var(--ink) 0%, var(--dusk) 55%, #7A3350 80%, var(--marigold) 130%);
-  }
-  .archFrame{
-    position:relative; width:min(92vw, 460px); padding:38px 30px 30px;
-    text-align:center;
-    border: 2px solid var(--gold-line);
-    border-radius: 180px 180px 18px 18px;
-    background: rgba(27,16,53,0.55);
-    backdrop-filter: blur(6px);
-    box-shadow: 0 0 0 8px rgba(244,163,64,0.06), 0 20px 60px rgba(0,0,0,0.5);
-  }
-  .archFrame::before{
-    content:"";
-    position:absolute; left:50%; top:-14px; transform:translateX(-50%);
-    width:70%; height:28px;
-    background: repeating-linear-gradient(90deg, var(--marigold) 0 10px, var(--temple-red) 10px 20px);
-    border-radius: 100px 100px 0 0;
-    opacity:0.9;
-  }
-  .kicker{
-    letter-spacing:.35em; text-transform:uppercase; font-size:11px;
-    color:var(--marigold); font-weight:700; margin-bottom:10px;
-  }
-  .title{
-    font-family:'Baloo Tamma 2', sans-serif; font-weight:800;
-    font-size: clamp(30px, 8vw, 44px); line-height:1.15; margin:0 0 4px;
-    color:var(--cream); text-shadow: 0 2px 0 rgba(0,0,0,0.35);
-  }
-  .subtitle{
-    font-family:'Baloo Tamma 2', sans-serif; font-weight:500;
-    font-size: clamp(14px, 3.6vw, 17px); color:var(--marigold); margin:0 0 20px;
-  }
-  .rules{
-    text-align:left; font-size:13.5px; line-height:1.7; color:rgba(246,239,224,0.85);
-    background:rgba(0,0,0,0.2); border:1px solid var(--gold-line); border-radius:14px;
-    padding:14px 16px; margin-bottom:22px;
-  }
-  .rules b{ color:var(--marigold); }
-  #playBtn{
-    font-family:'Baloo Tamma 2', sans-serif; font-weight:700; font-size:19px;
-    padding:14px 44px; border-radius:100px; border:none; cursor:pointer;
-    background: linear-gradient(180deg, var(--marigold) 0%, var(--marigold-deep) 100%);
-    color:#2A1400; box-shadow: 0 8px 0 #8B5210, 0 14px 24px rgba(0,0,0,0.4);
-    transition: transform .08s ease;
-  }
-  #playBtn:active{ transform: translateY(6px); box-shadow: 0 2px 0 #8B5210; }
-  .hint{ margin-top:14px; font-size:11.5px; color:rgba(246,239,224,0.5); }
-
-  /* ---------- HUD ---------- */
-  #hud{ position:fixed; inset:0; z-index:20; pointer-events:none; display:none; }
-  .panel{
-    position:absolute; background:rgba(27,16,53,0.62); border:1px solid var(--gold-line);
-    border-radius:14px; backdrop-filter: blur(4px);
-  }
-  #scoreBox{ top:14px; left:14px; padding:10px 16px; }
-  #scoreBox .label{ font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--marigold); }
-  #scoreBox .value{ font-family:'Baloo Tamma 2',sans-serif; font-weight:800; font-size:26px; color:var(--cream); }
-
-  #missionBox{ top:14px; left:50%; transform:translateX(-50%); padding:8px 18px; text-align:center; min-width:220px; max-width:78vw; }
-  #missionBox .label{ font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--teal); }
-  #missionBox .value{ font-family:'Baloo Tamma 2',sans-serif; font-weight:700; font-size:14px; color:var(--cream); line-height:1.4; }
-  #compass{
-    width:22px; height:22px; margin:4px auto 0; transition: transform .15s linear;
-  }
-
-  #speedBox{ bottom:14px; left:14px; padding:8px 16px; display:flex; align-items:baseline; gap:6px; }
-  #speedBox .value{ font-family:'Baloo Tamma 2',sans-serif; font-weight:800; font-size:24px; color:var(--marigold); }
-  #speedBox .unit{ font-size:11px; color:rgba(246,239,224,0.7); }
-
-  #minimapWrap{
-    position:absolute; top:14px; right:14px; width:120px; height:120px; border-radius:50%;
-    border:3px solid var(--marigold); box-shadow: 0 0 0 3px rgba(179,58,46,0.5), 0 6px 20px rgba(0,0,0,0.5);
-    overflow:hidden; background:#0f0a1f;
-  }
-  #minimap{ width:100%; height:100%; display:block; }
-
-  #toast{
-    position:absolute; top:44%; left:50%; transform:translate(-50%,-50%) scale(0.9);
-    font-family:'Baloo Tamma 2',sans-serif; font-weight:800; font-size:28px;
-    color:var(--marigold); text-shadow: 0 3px 10px rgba(0,0,0,0.6); opacity:0; pointer-events:none;
-    transition: opacity .2s ease, transform .2s ease;
-  }
-  #toast.show{ opacity:1; transform:translate(-50%,-50%) scale(1); }
-
-  /* ---------- Touch controls ---------- */
-  #touchControls{ position:fixed; inset:0; z-index:25; pointer-events:none; display:none; }
-  .tbtn{
-    position:absolute; pointer-events:auto; display:flex; align-items:center; justify-content:center;
-    border-radius:50%; user-select:none; font-family:'Baloo Tamma 2',sans-serif; font-weight:700;
-    color:var(--cream); background:rgba(27,16,53,0.55); border:2px solid var(--gold-line);
-    -webkit-user-select:none;
-  }
-  #btnGas{ width:92px; height:92px; right:22px; bottom:26px; font-size:14px; background:rgba(31,122,108,0.55); border-color:rgba(31,122,108,0.8); }
-  #btnBrake{ width:70px; height:70px; right:120px; bottom:20px; font-size:12px; background:rgba(179,58,46,0.55); border-color:rgba(179,58,46,0.8); }
-  #btnLeft{ width:66px; height:66px; left:20px; bottom:60px; font-size:22px; }
-  #btnRight{ width:66px; height:66px; left:96px; bottom:60px; font-size:22px; }
-  .tbtn.active{ background:rgba(244,163,64,0.55); border-color:var(--marigold); }
-
-  @media (min-width: 820px){
-    #touchControls{ display:none !important; }
-  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #050510; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; }
+  #game-wrapper { width: 100%; max-width: 900px; position: relative; background: #0d0d1a; border-radius: 14px; overflow: hidden; box-shadow: 0 15px 50px rgba(0,0,0,0.6); border: 1px solid #2a2a4a; }
+  canvas { display: block; width: 100%; height: auto; background: #1a1a2e; }
+  .panel-btn { pointer-events: auto; border: none; color: white; padding: 6px 14px; border-radius: 8px; font-size: 12px; cursor: pointer; font-weight: bold; transition: all 0.2s; }
+  .panel-btn:hover { transform: translateY(-1px); }
+  @keyframes toastIn { from { opacity: 0; transform: translate(-50%, -20px); } to { opacity: 1; transform: translate(-50%, 0); } }
+  @keyframes toastOut { from { opacity: 1; transform: translate(-50%, 0); } to { opacity: 0; transform: translate(-50%, -20px); } }
+  @keyframes float { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-8px);} }
 </style>
 </head>
 <body>
 
-<canvas id="gameCanvas"></canvas>
-
-<!-- Start Screen -->
-<div id="startScreen">
-  <div class="archFrame">
-    <div class="kicker">Chettinad Motors Presents</div>
-    <div class="title">தமிழ் நகர்<br>ஓட்டம்</div>
-    <div class="subtitle">Tamil City Drive — an open-road adventure</div>
-    <div class="rules">
-      <div>🚗 <b>Drive</b> freely through a Tamil-style city of gopurams, kolam streets &amp; Chettinad houses.</div>
-      <div>🪙 <b>Collect</b> golden coins scattered on the roads.</div>
-      <div>📍 <b>Missions</b> — each job shows two blips at once: gold <b>S</b> is where you collect the parcel or rider, and teal/red <b>F</b> is the drop-off. Bigger distance = bigger fare (₹).</div>
-      <div>🏆 <b>Rank up</b> — every 4 completed trips promotes you, from Trainee Driver up to Chennai Legend.</div>
-      <div>⌨️ Desktop: <b>Arrow keys / WASD</b> to drive. 📱 Mobile: use the on-screen pedals.</div>
+<div id="game-wrapper">
+  <canvas id="gameCanvas"></canvas>
+  
+  <div id="ui-layer" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; background: linear-gradient(to bottom, rgba(5,5,15,0.95), transparent);">
+      <div style="display: flex; gap: 14px; align-items: center; color: white; font-size: 13px; flex-wrap: wrap;">
+        <span id="story-chapter" style="font-weight: bold; color: #ffd700; text-shadow: 0 0 10px rgba(255,215,0,0.3); font-size: 13px;">📖 Prologue</span>
+        <span id="time-display" style="color: #87CEEB;">🌙 8:00 PM</span>
+        <span style="color: #90EE90;">₹<span id="money">200</span></span>
+        <span style="color: #ff6b6b;">⚡ <span id="energy">100</span>%</span>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <button id="btn-journal" class="panel-btn" style="background: #4a1a6b; border: 1px solid #7b2cbf; color: #e0aaff;">📓 Journal</button>
+        <button id="btn-inventory" class="panel-btn" style="background: #1a4a6b; border: 1px solid #2cb5bf; color: #a0eaff;">🎒 Items</button>
+      </div>
     </div>
-    <button id="playBtn">ஆட்டத்தை தொடங்கு · Start Drive</button>
-    <div class="hint">Works on desktop, tablet &amp; phone</div>
+    
+    <div id="story-banner" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 88%; max-width: 520px; background: rgba(10, 5, 20, 0.98); border: 2px solid #ffd700; border-radius: 18px; padding: 28px; color: white; pointer-events: auto; text-align: center; box-shadow: 0 0 60px rgba(255,215,0,0.15);">
+      <div id="banner-icon" style="font-size: 52px; margin-bottom: 12px; filter: drop-shadow(0 0 10px rgba(255,215,0,0.3));"></div>
+      <h2 id="banner-title" style="color: #ffd700; margin: 0 0 12px 0; font-size: 24px; letter-spacing: 1px;"></h2>
+      <p id="banner-text" style="font-size: 15px; line-height: 1.8; color: #ccc; margin-bottom: 20px;"></p>
+      <button id="btn-close-banner" style="background: linear-gradient(135deg, #ffd700, #ffb700); color: #1a1a2e; border: none; padding: 12px 36px; border-radius: 24px; font-weight: bold; cursor: pointer; font-size: 15px; box-shadow: 0 4px 15px rgba(255,215,0,0.3);">Continue ➜</button>
+    </div>
+    
+    <div id="dialog-box" style="display: none; position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%); width: 94%; max-width: 580px; background: rgba(8, 8, 22, 0.98); border: 2px solid #7b2cbf; border-radius: 16px; padding: 0; color: white; pointer-events: auto; overflow: hidden; box-shadow: 0 -5px 30px rgba(123,44,191,0.2);">
+      <div style="display: flex; align-items: center; gap: 12px; padding: 12px 18px; background: linear-gradient(90deg, #4a1a6b, transparent); border-bottom: 1px solid #333;">
+        <div id="dialog-avatar" style="font-size: 38px; width: 46px; height: 46px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.08); border-radius: 50%; border: 1px solid rgba(255,255,255,0.15);"></div>
+        <div style="flex: 1;">
+          <div id="dialog-name" style="color: #e0aaff; font-weight: bold; font-size: 15px;"></div>
+          <div id="dialog-role" style="color: #777; font-size: 11px;"></div>
+        </div>
+        <div id="dialog-hint" style="color: #555; font-size: 11px; background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 12px;">Press E ➜</div>
+      </div>
+      <div style="padding: 16px 18px;">
+        <div id="dialog-text" style="font-size: 15.5px; line-height: 1.7; color: #f0f0f0; min-height: 30px;"></div>
+        <div id="dialog-translation" style="font-size: 12.5px; color: #888; font-style: italic; margin-top: 10px; border-left: 2px solid #4a1a6b; padding-left: 12px; display: none;"></div>
+      </div>
+      <div id="choice-container" style="padding: 0 18px 16px 18px; display: flex; flex-direction: column; gap: 8px;"></div>
+    </div>
+    
+    <div id="journal-panel" style="display: none; position: absolute; top: 50px; right: 10px; width: 310px; background: rgba(8, 5, 18, 0.98); border: 2px solid #ffd700; border-radius: 14px; padding: 18px; color: white; pointer-events: auto; max-height: 420px; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+      <h3 style="margin: 0 0 12px 0; color: #ffd700; font-size: 16px; border-bottom: 1px solid #333; padding-bottom: 8px;">📓 Detective Journal</h3>
+      <div id="journal-entries" style="font-size: 13px; line-height: 1.6;"></div>
+      <div style="margin-top: 15px; padding-top: 12px; border-top: 1px solid #333;">
+        <div style="color: #888; font-size: 11px; margin-bottom: 8px; font-weight: bold;">🤝 Relationship Status</div>
+        <div id="relationship-bars" style="display: flex; flex-direction: column; gap: 7px;"></div>
+      </div>
+      <button id="btn-close-journal" style="margin-top: 14px; background: #2a2a3a; border: 1px solid #444; color: #aaa; padding: 8px; border-radius: 8px; cursor: pointer; width: 100%; font-size: 12px; transition: all 0.2s;">Close Journal</button>
+    </div>
+    
+    <div id="inv-panel" style="display: none; position: absolute; top: 50px; right: 10px; width: 270px; background: rgba(8, 5, 18, 0.98); border: 2px solid #2cb5bf; border-radius: 14px; padding: 18px; color: white; pointer-events: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+      <h3 style="margin: 0 0 12px 0; color: #a0eaff; font-size: 16px; border-bottom: 1px solid #333; padding-bottom: 8px;">🎒 Inventory</h3>
+      <div id="inv-list" style="font-size: 13px; max-height: 300px; overflow-y: auto;"></div>
+      <div id="inv-stats" style="margin-top: 12px; padding-top: 10px; border-top: 1px solid #333; font-size: 12px; color: #888;"></div>
+      <button id="btn-close-inv" style="margin-top: 12px; background: #2a2a3a; border: 1px solid #444; color: #aaa; padding: 8px; border-radius: 8px; cursor: pointer; width: 100%; font-size: 12px;">Close Inventory</button>
+    </div>
+    
+    <div id="toast" style="display: none; position: absolute; top: 55px; left: 50%; transform: translateX(-50%); background: rgba(74, 26, 107, 0.95); color: #e0aaff; padding: 10px 28px; border-radius: 24px; font-weight: bold; font-size: 14px; border: 1px solid #7b2cbf; pointer-events: none; box-shadow: 0 4px 20px rgba(123,44,191,0.3); z-index: 50;"></div>
+    
+    <div style="position: absolute; bottom: 18px; left: 15px; pointer-events: none; z-index: 10;">
+      <div id="location-pill" style="background: rgba(0,0,0,0.75); color: #ffd700; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: bold; margin-bottom: 6px; opacity: 0; transition: opacity 0.6s; border: 1px solid rgba(255,215,0,0.25); backdrop-filter: blur(4px);"></div>
+      <div id="objective-pill" style="background: rgba(74, 26, 107, 0.85); color: #e0aaff; padding: 7px 14px; border-radius: 20px; font-size: 12px; max-width: 240px; border: 1px solid rgba(123,44,191,0.4); backdrop-filter: blur(4px); line-height: 1.4;"></div>
+    </div>
+    
+    <div id="mobile-controls" style="position: absolute; bottom: 12px; right: 12px; display: none; pointer-events: none; z-index: 20;">
+      <div style="position: relative; width: 130px; height: 130px; pointer-events: auto;">
+        <button id="mob-up" style="position: absolute; top: 0; left: 43px; width: 44px; height: 44px; background: rgba(255,255,255,0.12); border: 2px solid rgba(255,255,255,0.35); border-radius: 10px; color: white; font-size: 18px; backdrop-filter: blur(4px); cursor: pointer; display: flex; align-items: center; justify-content: center;">▲</button>
+        <button id="mob-left" style="position: absolute; top: 43px; left: 0; width: 44px; height: 44px; background: rgba(255,255,255,0.12); border: 2px solid rgba(255,255,255,0.35); border-radius: 10px; color: white; font-size: 18px; backdrop-filter: blur(4px); cursor: pointer; display: flex; align-items: center; justify-content: center;">◀</button>
+        <button id="mob-right" style="position: absolute; top: 43px; left: 86px; width: 44px; height: 44px; background: rgba(255,255,255,0.12); border: 2px solid rgba(255,255,255,0.35); border-radius: 10px; color: white; font-size: 18px; backdrop-filter: blur(4px); cursor: pointer; display: flex; align-items: center; justify-content: center;">▶</button>
+        <button id="mob-down" style="position: absolute; top: 86px; left: 43px; width: 44px; height: 44px; background: rgba(255,255,255,0.12); border: 2px solid rgba(255,255,255,0.35); border-radius: 10px; color: white; font-size: 18px; backdrop-filter: blur(4px); cursor: pointer; display: flex; align-items: center; justify-content: center;">▼</button>
+      </div>
+      <button id="mob-action" style="position: absolute; bottom: 8px; right: -75px; width: 58px; height: 58px; border-radius: 50%; background: rgba(123, 44, 191, 0.45); border: 2px solid #7b2cbf; color: white; font-weight: bold; font-size: 12px; pointer-events: auto; backdrop-filter: blur(4px); cursor: pointer; display: flex; align-items: center; justify-content: center;">TALK</button>
+    </div>
+  </div>
+  
+  <div id="title-screen" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(180deg, #0a0a1a 0%, #1a0a2e 40%, #2d1b4e 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; z-index: 100; text-align: center;">
+    <div style="font-size: 64px; margin-bottom: 8px; filter: drop-shadow(0 0 25px rgba(255,215,0,0.25)); animation: float 3s ease-in-out infinite;">🛕</div>
+    <h1 style="font-size: 38px; margin: 0; color: #ffd700; text-shadow: 0 0 40px rgba(255,215,0,0.2); letter-spacing: 3px; font-weight: 800;">MYLAPORE MYSTERIES</h1>
+    <p style="font-size: 22px; color: #e0aaff; margin: 10px 0 6px 0; font-weight: 500;">மயிலாப்பூர் மர்மங்கள்</p>
+    <p style="font-size: 14px; color: #777; margin-bottom: 30px; max-width: 420px; line-height: 1.7; padding: 0 20px;">The sacred veena has vanished from Kapaleeshwarar Temple on the eve of the Arubathimoavar festival. You are Arjun, an archaeology student with family ties to this instrument. You have until dawn to uncover the truth. Every choice matters.</p>
+    <div style="display: flex; gap: 10px; margin-bottom: 28px; flex-wrap: wrap; justify-content: center;">
+      <span style="background: rgba(255,255,255,0.06); padding: 6px 14px; border-radius: 20px; font-size: 11px; border: 1px solid rgba(255,255,255,0.12); color: #aaa;">🎭 Branching Story</span>
+      <span style="background: rgba(255,255,255,0.06); padding: 6px 14px; border-radius: 20px; font-size: 11px; border: 1px solid rgba(255,255,255,0.12); color: #aaa;">🗣️ Tamil Dialogues</span>
+      <span style="background: rgba(255,255,255,0.06); padding: 6px 14px; border-radius: 20px; font-size: 11px; border: 1px solid rgba(255,255,255,0.12); color: #aaa;">🔍 Mystery Solving</span>
+      <span style="background: rgba(255,255,255,0.06); padding: 6px 14px; border-radius: 20px; font-size: 11px; border: 1px solid rgba(255,255,255,0.12); color: #aaa;">⚖️ Multiple Endings</span>
+    </div>
+    <button id="btn-start" style="background: linear-gradient(135deg, #7b2cbf, #4a1a6b); border: 2px solid #9d4edd; color: white; padding: 18px 60px; border-radius: 30px; font-size: 19px; font-weight: bold; cursor: pointer; box-shadow: 0 6px 30px rgba(123,44,191,0.4); letter-spacing: 1.5px; transition: all 0.3s;">▶ BEGIN JOURNEY</button>
+    <div style="margin-top: 24px; display: flex; gap: 20px; color: #444; font-size: 12px;">
+      <span>WASD / Arrows to Move</span><span>•</span><span>E / TALK to Interact</span><span>•</span><span>Space to Advance</span>
+    </div>
+    <p style="margin-top: 12px; font-size: 11px; color: #333;">Works on all devices • No installation needed</p>
+  </div>
+  
+  <div id="ending-screen" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(5, 5, 15, 0.98); flex-direction: column; align-items: center; justify-content: center; color: white; z-index: 200; text-align: center; padding: 30px;">
+    <div id="ending-icon" style="font-size: 70px; margin-bottom: 18px; filter: drop-shadow(0 0 20px rgba(255,215,0,0.2));"></div>
+    <h2 id="ending-title" style="font-size: 30px; color: #ffd700; margin-bottom: 12px; letter-spacing: 1px;"></h2>
+    <p id="ending-desc" style="font-size: 15.5px; color: #bbb; max-width: 480px; line-height: 1.85; margin-bottom: 22px;"></p>
+    <div id="ending-stats" style="background: rgba(255,255,255,0.04); padding: 18px 30px; border-radius: 14px; margin-bottom: 28px; font-size: 13px; color: #999; border: 1px solid rgba(255,255,255,0.08); display: flex; gap: 24px; flex-wrap: wrap; justify-content: center;"></div>
+    <button id="btn-restart" style="background: linear-gradient(135deg, #7b2cbf, #4a1a6b); border: 2px solid #9d4edd; color: white; padding: 14px 40px; border-radius: 25px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 20px rgba(123,44,191,0.3);">🔄 Play Again</button>
   </div>
 </div>
 
-<!-- HUD -->
-<div id="hud">
-  <div id="scoreBox" class="panel">
-    <div class="label">Score</div>
-    <div class="value" id="scoreVal">0</div>
-    <div class="label" style="margin-top:6px;">Trips</div>
-    <div class="value" id="tripsVal" style="font-size:18px;">0</div>
-    <div class="label" style="margin-top:6px;">Rank</div>
-    <div class="value" id="rankVal" style="font-size:13px;">Trainee Driver</div>
-  </div>
-  <div id="missionBox" class="panel">
-    <div class="label" id="missionLabel">Mission · Delivery</div>
-    <div class="value" id="missionVal">Drive to the gold S blip</div>
-    <svg id="compass" viewBox="0 0 24 24"><polygon points="12,2 19,20 12,15 5,20" fill="#F4A340"/></svg>
-  </div>
-  <div id="speedBox" class="panel">
-    <div class="value" id="speedVal">0</div>
-    <div class="unit">km/h</div>
-  </div>
-  <div id="minimapWrap"><canvas id="minimap" width="200" height="200"></canvas></div>
-  <div id="toast">+50</div>
-</div>
-
-<!-- Touch controls -->
-<div id="touchControls">
-  <div class="tbtn" id="btnLeft">◀</div>
-  <div class="tbtn" id="btnRight">▶</div>
-  <div class="tbtn" id="btnBrake">BRAKE</div>
-  <div class="tbtn" id="btnGas">GAS</div>
-</div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-(function(){
-"use strict";
-
-/* ============================================================
-   TAMIL CITY DRIVE — single-file three.js open-world driver
-   ============================================================ */
-
-// ---------- Basic setup ----------
 const canvas = document.getElementById('gameCanvas');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias:true });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.shadowMap.enabled = true;
+const ctx = canvas.getContext('2d');
 
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x2a1840);
-scene.fog = new THREE.Fog(0x3a2050, 60, 260);
-
-const camera = new THREE.PerspectiveCamera(62, window.innerWidth/window.innerHeight, 0.1, 500);
-
-window.addEventListener('resize', () => {
-  camera.aspect = window.innerWidth/window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-});
-
-// ---------- Lights ----------
-const hemi = new THREE.HemisphereLight(0xffe3b0, 0x2a1840, 0.9);
-scene.add(hemi);
-const sun = new THREE.DirectionalLight(0xffd8a0, 1.05);
-sun.position.set(60, 90, -40);
-sun.castShadow = true;
-sun.shadow.mapSize.set(2048,2048);
-sun.shadow.camera.left = -120; sun.shadow.camera.right = 120;
-sun.shadow.camera.top = 120; sun.shadow.camera.bottom = -120;
-sun.shadow.camera.far = 260;
-scene.add(sun);
-
-// ---------- Helpers ----------
-function canvasTexture(draw, w, h, repeatX, repeatY){
-  const c = document.createElement('canvas'); c.width=w; c.height=h;
-  const ctx = c.getContext('2d'); draw(ctx, w, h);
-  const tex = new THREE.CanvasTexture(c);
-  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-  if(repeatX || repeatY) tex.repeat.set(repeatX||1, repeatY||1);
-  return tex;
+function resize() {
+  const wrap = document.getElementById('game-wrapper');
+  if(!wrap) return;
+  canvas.width = wrap.clientWidth;
+  canvas.height = Math.min(window.innerHeight * 0.85, 640);
 }
-function textSprite(text, opts){
-  opts = opts||{};
-  const scale = opts.scale || 1;
-  const c = document.createElement('canvas');
-  const size = 256;
-  c.width = size*3; c.height = size;
-  const ctx = c.getContext('2d');
-  ctx.clearRect(0,0,c.width,c.height);
-  // plaque background
-  ctx.fillStyle = opts.bg || 'rgba(179,58,46,0.92)';
-  roundRect(ctx, 6,6,c.width-12,c.height-12, 26); ctx.fill();
-  ctx.strokeStyle = opts.border || '#F4A340'; ctx.lineWidth = 6;
-  roundRect(ctx, 6,6,c.width-12,c.height-12, 26); ctx.stroke();
-  ctx.fillStyle = opts.color || '#F6EFE0';
-  ctx.font = `700 ${opts.fontSize||72}px 'Baloo Tamma 2', sans-serif`;
-  ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.fillText(text, c.width/2, c.height/2+4);
-  const tex = new THREE.CanvasTexture(c);
-  const mat = new THREE.SpriteMaterial({ map:tex, transparent:true });
-  const spr = new THREE.Sprite(mat);
-  spr.scale.set(9*scale, 3*scale, 1);
-  return spr;
-}
-function roundRect(ctx,x,y,w,h,r){
-  ctx.beginPath();
-  ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
-  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
-}
-function rand(min,max){ return min + Math.random()*(max-min); }
-function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+resize();
+window.addEventListener('resize', resize);
 
-// ---------- Ground ----------
-const groundTex = canvasTexture((ctx,w,h)=>{
-  ctx.fillStyle = '#4a7a3a'; ctx.fillRect(0,0,w,h);
-  ctx.fillStyle = 'rgba(60,100,48,0.5)';
-  for(let i=0;i<300;i++){
-    ctx.beginPath();
-    ctx.arc(Math.random()*w, Math.random()*h, rand(2,6), 0, Math.PI*2);
-    ctx.fill();
-  }
-}, 512,512, 40,40);
-const WORLD = 260;
-const ground = new THREE.Mesh(
-  new THREE.PlaneGeometry(WORLD*2, WORLD*2),
-  new THREE.MeshStandardMaterial({ map: groundTex, roughness:1 })
-);
-ground.rotation.x = -Math.PI/2;
-ground.receiveShadow = true;
-scene.add(ground);
+const TILE = 48;
+const MW = 50, MH = 50;
+const SPEED = 2.6;
 
-// ---------- City grid ----------
-const BLOCK = 30;       // distance between road centers
-const ROAD_W = 9;       // road width
-const HALF_N = 4;       // blocks each direction from center => grid (2*HALF_N)+1 roads
-const roadTexH = canvasTexture((ctx,w,h)=>{
-  ctx.fillStyle = '#33303a'; ctx.fillRect(0,0,w,h);
-  ctx.fillStyle = '#e9c66a';
-  for(let x=20;x<w;x+=70) ctx.fillRect(x, h/2-4, 36, 8);
-  ctx.fillStyle = 'rgba(255,255,255,0.06)';
-  ctx.fillRect(0,6,w,4); ctx.fillRect(0,h-10,w,4);
-}, 256,64, 10,1);
-const roadTexV = canvasTexture((ctx,w,h)=>{
-  ctx.fillStyle = '#33303a'; ctx.fillRect(0,0,w,h);
-  ctx.fillStyle = '#e9c66a';
-  for(let y=20;y<h;y+=70) ctx.fillRect(w/2-4, y, 8, 36);
-  ctx.fillStyle = 'rgba(255,255,255,0.06)';
-  ctx.fillRect(6,0,4,h); ctx.fillRect(w-10,0,4,h);
-}, 64,256, 1,10);
+const T = { ROAD:0, HOUSE:1, WATER:2, SAND:3, GRASS:4, TEMPLE:5, TREE:6, MARKET:7, STATION:8, TEASTALL:9, PARK:10, WALL:11, TANK:12, STOREROOM:13 };
+const TC = { [T.ROAD]:'#4a4a5a', [T.HOUSE]:'#5a3020', [T.WATER]:'#1a4a7a', [T.SAND]:'#c4a35a', [T.GRASS]:'#2a5a2a', [T.TEMPLE]:'#8b1a1a', [T.TREE]:'#1a4a1a', [T.MARKET]:'#8a5a1a', [T.STATION]:'#3a3a4a', [T.TEASTALL]:'#5a3a1a', [T.PARK]:'#3a7a3a', [T.WALL]:'#3a3a3a', [T.TANK]:'#2a6a8a', [T.STOREROOM]:'#4a3a2a' };
+const BLOCKED = new Set([T.HOUSE, T.TEMPLE, T.WALL, T.TREE, T.WATER, T.TANK, T.TEASTALL, T.STOREROOM]);
 
-const roadPositions = [];
-for(let i=-HALF_N;i<=HALF_N;i++) roadPositions.push(i*BLOCK);
+let game = { running:false, ended:false, state:'prologue', time:20*60, money:200, karma:0, energy:100 };
+let player = { x:14*TILE, y:24*TILE, dir:'down', moving:false, frame:0 };
+let cam = { x:0, y:0 };
+let keys = {};
+let touchDir = null;
+let map = [];
+let npcs = [];
+let items = [];
+let inventory = {};
+let journal = [];
+let relationships = { gurukkal:50, mallika:50, raju:50, kavitha:50, inspector:50, venkat:20, meena:50, devotee:50 };
+let flags = {};
+let particles = [];
+let inDialog = false;
+let dialogQueue = [];
+let currentNPC = null;
+let typingInterval = null;
+let currentLocation = '';
+let objective = 'Enter the temple and speak to Gurukkal';
+let animTick = 0;
 
-const roadGroup = new THREE.Group();
-roadPositions.forEach(z=>{
-  const m = new THREE.Mesh(new THREE.PlaneGeometry(WORLD*2, ROAD_W), new THREE.MeshStandardMaterial({map:roadTexH, roughness:0.9}));
-  m.rotation.x = -Math.PI/2; m.position.set(0, 0.02, z); m.receiveShadow = true;
-  roadGroup.add(m);
-});
-roadPositions.forEach(x=>{
-  const m = new THREE.Mesh(new THREE.PlaneGeometry(ROAD_W, WORLD*2), new THREE.MeshStandardMaterial({map:roadTexV, roughness:0.9}));
-  m.rotation.x = -Math.PI/2; m.position.set(x, 0.021, 0); m.receiveShadow = true;
-  roadGroup.add(m);
-});
-scene.add(roadGroup);
-
-// ---------- Buildings ----------
-const buildingColors = [0xC96A45, 0xD9832A, 0x8B4A6B, 0x2E7D6B, 0xB33A2E, 0xE8A33D, 0x5B4A8A, 0x3E7CA6];
-const buildings = []; // {minX,maxX,minZ,maxZ}
-const buildingGroup = new THREE.Group();
-
-const gopuramLabels = ['மீனாட்சி','சென்னை','மதுரை','கோவில்','காவேரி','தஞ்சை','அண்ணா','பாரதி','கபிலர்','வள்ளுவர்'];
-
-for(let bi=-HALF_N;bi<HALF_N;bi++){
-  for(let bj=-HALF_N;bj<HALF_N;bj++){
-    const cx = bi*BLOCK + BLOCK/2;
-    const cz = bj*BLOCK + BLOCK/2;
-    // skip center block (spawn area) sometimes for a plaza
-    if(bi===0 && bj===0) continue;
-    const margin = ROAD_W/2 + 2;
-    const usable = BLOCK - margin*2;
-    const count = Math.random() < 0.4 ? 1 : (Math.random()<0.7?2:4);
-    const cell = count===1 ? [[0,0]] : count===2 ? [[-usable*0.22,0],[usable*0.22,0]] : [[-usable*0.22,-usable*0.22],[usable*0.22,-usable*0.22],[-usable*0.22,usable*0.22],[usable*0.22,usable*0.22]];
-    cell.forEach(([ox,oz])=>{
-      const w = rand(usable*0.32, usable*0.46);
-      const d = rand(usable*0.32, usable*0.46);
-      const h = rand(6, count===1?26:16);
-      const color = pick(buildingColors);
-      const bx = cx+ox, bz = cz+oz;
-      const geo = new THREE.BoxGeometry(w,h,d);
-      const mat = new THREE.MeshStandardMaterial({ color, roughness:0.85 });
-      const mesh = new THREE.Mesh(geo, mat);
-      mesh.position.set(bx, h/2, bz);
-      mesh.castShadow = true; mesh.receiveShadow = true;
-      buildingGroup.add(mesh);
-
-      // roof trim (temple-ish stepped top for taller buildings)
-      if(h>14){
-        const trim = new THREE.Mesh(new THREE.BoxGeometry(w*0.7,1.2,d*0.7), new THREE.MeshStandardMaterial({color:0xF4A340}));
-        trim.position.set(bx, h+0.6, bz);
-        trim.castShadow = true;
-        buildingGroup.add(trim);
-      }
-      // windows texture strip via emissive dots (simple)
-      buildings.push({minX:bx-w/2, maxX:bx+w/2, minZ:bz-d/2, maxZ:bz+d/2});
-    });
-    // occasional signboard on a building facing the road
-    if(Math.random()<0.5){
-      const label = textSprite(pick(gopuramLabels), {fontSize:76});
-      label.position.set(cx+rand(-6,6), 7.5, cz+ (bj<0? usable/2+1 : -usable/2-1));
-      buildingGroup.add(label);
-    }
-    // palm tree decoration
-    if(Math.random()<0.6){
-      const tree = makePalmTree();
-      tree.position.set(cx + rand(-usable/2, usable/2)*0.9, 0, cz + rand(-usable/2, usable/2)*0.9);
-      buildingGroup.add(tree);
-    }
-  }
-}
-scene.add(buildingGroup);
-
-function makePalmTree(){
-  const g = new THREE.Group();
-  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.18,0.28,4,6), new THREE.MeshStandardMaterial({color:0x7a5230}));
-  trunk.position.y = 2; trunk.castShadow = true;
-  g.add(trunk);
-  for(let i=0;i<6;i++){
-    const leaf = new THREE.Mesh(new THREE.ConeGeometry(0.25,2.4,4), new THREE.MeshStandardMaterial({color:0x2E7D3A}));
-    leaf.position.set(0,4,0);
-    leaf.rotation.z = Math.PI/2.4;
-    leaf.rotation.y = (i/6)*Math.PI*2;
-    leaf.position.x = Math.cos((i/6)*Math.PI*2)*0.9;
-    leaf.position.z = Math.sin((i/6)*Math.PI*2)*0.9;
-    leaf.castShadow = true;
-    g.add(leaf);
-  }
-  return g;
-}
-
-// Center plaza decoration — a small temple gopuram tower as landmark
-(function centerLandmark(){
-  const g = new THREE.Group();
-  const base = new THREE.Mesh(new THREE.BoxGeometry(8,3,8), new THREE.MeshStandardMaterial({color:0xB33A2E}));
-  base.position.y=1.5; base.castShadow=true; g.add(base);
-  const tiers = 5;
-  let y = 3;
-  for(let i=0;i<tiers;i++){
-    const s = 7 - i*1.1;
-    const tier = new THREE.Mesh(new THREE.BoxGeometry(s,1.6,s), new THREE.MeshStandardMaterial({color: i%2===0?0xF4A340:0x2E7D6B}));
-    tier.position.y = y + 0.8; tier.castShadow=true;
-    g.add(tier);
-    y += 1.6;
-  }
-  const top = new THREE.Mesh(new THREE.ConeGeometry(1.6,3,4), new THREE.MeshStandardMaterial({color:0xE8A33D}));
-  top.position.y = y+1.5; top.castShadow=true; g.add(top);
-  g.position.set(0,0,0);
-  scene.add(g);
-  buildings.push({minX:-4.2,maxX:4.2,minZ:-4.2,maxZ:4.2});
-})();
-
-// ---------- Car ----------
-function makeCar(bodyColor){
-  const g = new THREE.Group();
-  const body = new THREE.Mesh(new THREE.BoxGeometry(2.1,0.7,4.2), new THREE.MeshStandardMaterial({color:bodyColor, roughness:0.4, metalness:0.3}));
-  body.position.y = 0.65; body.castShadow = true;
-  g.add(body);
-  const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.7,0.6,2.1), new THREE.MeshStandardMaterial({color:0xE8DFCF, roughness:0.3}));
-  cabin.position.set(0,1.15,-0.1); cabin.castShadow = true;
-  g.add(cabin);
-  const wheelGeo = new THREE.CylinderGeometry(0.42,0.42,0.4,14);
-  const wheelMat = new THREE.MeshStandardMaterial({color:0x1a1a1a});
-  const wheelPositions = [[-1.05,0.42,1.35],[1.05,0.42,1.35],[-1.05,0.42,-1.35],[1.05,0.42,-1.35]];
-  const wheels = wheelPositions.map(p=>{
-    const w = new THREE.Mesh(wheelGeo, wheelMat);
-    w.rotation.z = Math.PI/2;
-    w.position.set(p[0],p[1],p[2]);
-    w.castShadow = true;
-    g.add(w);
-    return w;
-  });
-  const headlight = new THREE.Mesh(new THREE.BoxGeometry(1.8,0.2,0.1), new THREE.MeshStandardMaterial({color:0xfff3cf, emissive:0xfff3cf, emissiveIntensity:0.6}));
-  headlight.position.set(0,0.6,2.12);
-  g.add(headlight);
-  g.userData.wheels = wheels;
-  return g;
-}
-const car = makeCar(0xF4A340);
-car.position.set(6, 0, 6);
-scene.add(car);
-
-// ---------- Car physics state ----------
-const carState = {
-  x: 6, z: 6, angle: Math.PI, speed: 0
+const BANNERS = {
+  prologue: { icon:'🛕', title:'The Night of the Vanishing Veena', text:'You are Arjun, an archaeology student visiting Mylapore. Tonight, the sacred 300-year-old veena — kept at Kapaleeshwarar Temple for tomorrow\'s Arubathimoavar festival — has vanished. The priest believes it was stolen. You have until dawn to recover it.' },
+  clue_hunt: { icon:'🔍', title:'The Investigation Begins', text:'Gurukkal tells you the veena was last seen at 6 PM. Four people were nearby: Mallika the flower seller, Raju the auto driver, Kavitha at the tea stall, and Murugan by the beach. Someone knows something. Follow every lead.' },
+  market_lead: { icon:'🛍️', title:'The Black Market Lead', text:'The clues point to T. Nagar. An antique collector named Mr. Venkat has been asking about temple artifacts. But he is cunning — you will need evidence or allies to confront him.' },
+  station_clue: { icon:'🚉', title:'The Midnight Train', text:'You learn the veena may be smuggled out on the midnight train to Delhi. Inspector Ramesh at Central Station can stop it — but only if he trusts you enough to act.' },
+  confrontation: { icon:'⚔️', title:'The Final Hour', text:'The trail leads to a hidden storeroom near the station. The veena is inside. How you handle this moment will determine not just your fate, but the soul of the festival.' }
 };
-const MAX_SPEED = 26;      // m/s forward
-const MAX_REV = -10;
-const ACCEL = 14;
-const BRAKE = 26;
-const DRAG = 6;
-const TURN_RATE = 2.2;     // rad/s at full speed factor
 
-// ---------- Input ----------
-const input = { fwd:false, back:false, left:false, right:false };
-window.addEventListener('keydown', e=>{
-  if(['ArrowUp','KeyW'].includes(e.code)) input.fwd = true;
-  if(['ArrowDown','KeyS'].includes(e.code)) input.back = true;
-  if(['ArrowLeft','KeyA'].includes(e.code)) input.left = true;
-  if(['ArrowRight','KeyD'].includes(e.code)) input.right = true;
-});
-window.addEventListener('keyup', e=>{
-  if(['ArrowUp','KeyW'].includes(e.code)) input.fwd = false;
-  if(['ArrowDown','KeyS'].includes(e.code)) input.back = false;
-  if(['ArrowLeft','KeyA'].includes(e.code)) input.left = false;
-  if(['ArrowRight','KeyD'].includes(e.code)) input.right = false;
-});
-function bindTouch(el, onDown, onUp){
-  el.addEventListener('touchstart', e=>{ e.preventDefault(); onDown(); el.classList.add('active'); }, {passive:false});
-  el.addEventListener('touchend', e=>{ e.preventDefault(); onUp(); el.classList.remove('active'); }, {passive:false});
-  el.addEventListener('mousedown', ()=>{ onDown(); el.classList.add('active'); });
-  window.addEventListener('mouseup', ()=>{ onUp(); el.classList.remove('active'); });
-}
-bindTouch(document.getElementById('btnGas'), ()=>input.fwd=true, ()=>input.fwd=false);
-bindTouch(document.getElementById('btnBrake'), ()=>input.back=true, ()=>input.back=false);
-bindTouch(document.getElementById('btnLeft'), ()=>input.left=true, ()=>input.left=false);
-bindTouch(document.getElementById('btnRight'), ()=>input.right=true, ()=>input.right=false);
-
-// ---------- Coins ----------
-const coinGroup = new THREE.Group();
-scene.add(coinGroup);
-const coins = [];
-function spawnCoin(){
-  const geo = new THREE.CylinderGeometry(0.5,0.5,0.15,18);
-  const mat = new THREE.MeshStandardMaterial({color:0xF4C542, emissive:0x8a5a00, emissiveIntensity:0.3, metalness:0.6, roughness:0.3});
-  const coin = new THREE.Mesh(geo, mat);
-  coin.rotation.x = Math.PI/2;
-  const pos = randomRoadPoint();
-  coin.position.set(pos.x, 0.6, pos.z);
-  coin.castShadow = true;
-  coinGroup.add(coin);
-  coins.push(coin);
-}
-function randomRoadPoint(){
-  // pick a random point along a random road segment
-  const horiz = Math.random()<0.5;
-  const idx = roadPositions[Math.floor(Math.random()*roadPositions.length)];
-  const t = rand(-WORLD*0.85, WORLD*0.85);
-  return horiz ? {x:t, z:idx} : {x:idx, z:t};
-}
-for(let i=0;i<18;i++) spawnCoin();
-
-// ---------- Delivery mission ----------
-let missionTarget = null;   // active THREE.Vector3 the car must currently reach
-let startPos = null, finishPos = null;   // {x,z} for both mission points (minimap + world blips)
-let beaconStart = null, beaconFinish = null;
-let labelStart = null, labelFinish = null;
-let deliveries = 0;
-let missionType = 'delivery';   // 'delivery' | 'passenger'
-let missionStage = 0;           // 0 = heading to start blip, 1 = heading to finish blip
-let startArea = null, finishArea = null;
-let currentReward = 0;
-const missionLabelEl = document.getElementById('missionLabel');
-const tripsVal = document.getElementById('tripsVal');
-const rankVal = document.getElementById('rankVal');
-
-const areaNames = [
-  {ta:'மீனாட்சி நகர்', en:'Meenakshi Nagar'},
-  {ta:'கடற்கரை தெரு', en:'Kadarkarai St'},
-  {ta:'காவேரி சந்து', en:'Kaveri Lane'},
-  {ta:'தஞ்சை சந்தை', en:'Thanjai Market'},
-  {ta:'அண்ணா சாலை', en:'Anna Salai'},
-  {ta:'பாரதி பேட்டை', en:'Bharathi Pettai'},
-  {ta:'வள்ளுவர் குடியிருப்பு', en:'Valluvar Colony'},
-  {ta:'கபிலர் தெரு', en:'Kabilar St'},
-  {ta:'செம்மொழி நகர்', en:'Semmozhi Nagar'},
-  {ta:'பொன்னி வீதி', en:'Ponni Veedhi'}
+const NPC_DEFS = [
+  { id:'gurukkal', name:'Gurukkal', role:'Temple Priest', sprite:'👴', color:'#c9a227', x:14*TILE, y:16*TILE,
+    dialogs: {
+      prologue: [
+        { text:'Arjun! Thank the gods you came. The veena... it is gone.', trans:'' },
+        { text:'It was here at evening prayer. When I returned after dinner, the lock was broken.', trans:'' },
+        { text:'Mallika was selling flowers near the entrance. Raju dropped a passenger. Kavitha... she knows old instruments. Murugan saw something by the beach.', trans:'' },
+        { text:'Please, find who did this. The festival cannot begin without the veena. I beg you.', trans:'' }
+      ],
+      clue_hunt: [
+        { text:'Have you spoken to the witnesses? Time is running out, my son.', trans:'' },
+        { text:'The veena belonged to your great-grandmother. It is not just wood and string — it is our heritage.', trans:'' }
+      ],
+      default: [{ text:'May the gods guide you, Arjun.', trans:'' }]
+    }
+  },
+  { id:'mallika', name:'Mallika', role:'Flower Seller', sprite:'👩', color:'#ff69b4', x:14*TILE, y:23*TILE,
+    dialogs: {
+      prologue: [{ text:'You look troubled, anna. Is it about the temple?', trans:'', choices:[
+        { text:'Yes. Did you see anything?', next:'clue1' }
+      ]}],
+      clue1: [{ text:'I saw a man in a brown coat near the temple tank around 7 PM. He carried a long cloth bundle.', trans:'' },
+        { text:'But my flower basket was stolen this morning. I cannot work without it. Can you spare ₹50?', trans:'', choices:[
+          { text:'Give ₹50 (Karma +10, Trust +20)', action:function(){ game.money-=50; game.karma+=10; relationships.mallika+=20; flags.mallika_helped=true; addJournal('Mallika saw a man in a brown coat at the temple tank (7 PM)'); showToast('Mallika trusts you'); } },
+          { text:'I need to keep my money', action:function(){ relationships.mallika-=10; game.karma-=5; addJournal('Mallika refused to share more without help'); showToast('Mallika seems disappointed'); } }
+        ]}
+      ],
+      clue_hunt: [
+        { text: 'That man went toward T. Nagar. Be careful — he had dangerous eyes.', trans:'' }
+      ],
+      default: [{ text:'The jasmine smells sweet tonight.', trans:'' }]
+    }
+  },
+  { id:'raju', name:'Raju', role:'Auto Driver', sprite:'🧔', color:'#e6a817', x:24*TILE, y:25*TILE,
+    dialogs: {
+      prologue: [{ text:'Anna! Terrible news about the temple. I will help however I can.', trans:'', choices:[
+        { text:'Did you see anyone suspicious?', next:'clue1' }
+      ]}],
+      clue1: [{ text:'I dropped a fancy-looking man near T. Nagar market around 7:30. Nervous type. Kept checking his bag.', trans:'' },
+        { text:'Want me to drive you there? I know shortcuts. Just ₹30.', trans:'', choices:[
+          { text:'Pay ₹30 (Unlock fast travel)', action:function(){ if(game.money>=30){ game.money-=30; relationships.raju+=15; flags.raju_ride=true; showToast('Raju will drive you anywhere!'); } else { showToast('Not enough money!'); } } },
+          { text:'I will walk, thanks', action:function(){ relationships.raju+=5; showToast('Raju respects your spirit'); } }
+        ]}
+      ],
+      clue_hunt: [
+        { text: 'Let me know if you need a ride.', trans:'' }
+      ],
+      default: [{ text:'Chennai traffic never sleeps!', trans:'' }]
+    }
+  },
+  { id:'kavitha', name:'Kavitha', role:'Tea Stall Owner', sprite:'👵', color:'#d2691e', x:24*TILE, y:27*TILE,
+    dialogs: {
+      prologue: [{ text:'Arjun! Sit, sit. You look like you need filter coffee.', trans:'', choices:[
+        { text:'The veena is stolen. What do you know?', next:'clue1' }
+      ]}],
+      clue1: [{ text:'That veena... your great-grandmother played it. I remember her fingers dancing on the strings.', trans:'' },
+        { text:'There is an antique dealer in T. Nagar — Mr. Venkat. He hunts temple artifacts for foreign collectors.', trans:'' },
+        { text:'Take this old temple key. It opens the back room of his shop. But be careful.', trans:'', action:function(){ addItem('temple_key','🔑','Old Temple Key','Opens the antique dealer\'s back room'); relationships.kavitha+=15; flags.has_key=true; addJournal('Kavitha gave a key to Venkat\'s back room'); showToast('Received Old Temple Key'); } }
+      ],
+      clue_hunt: [
+        { text:'Mr. Venkat\'s shop is in T. Nagar market. He has guards. Do not go alone.', trans:'' }
+      ],
+      default: [{ text:'Coffee is ready. Strong enough to wake the dead.', trans:'' }]
+    }
+  },
+  { id:'murugan', name:'Murugan', role:'Fisherman', sprite:'🎣', color:'#4682b4', x:12*TILE, y:4*TILE,
+    dialogs: {
+      prologue: [{ text:'The sea is calm tonight. Too calm.', trans:'', choices:[
+        { text:'Did you see anything near the temple?', next:'clue1' }
+      ]}],
+      clue1: [{ text:'Saw a black car on beach road at 8 PM. Foreigner inside. They loaded boxes.', trans:'' },
+        { text:'One box was long and thin. Like... a musical instrument. They said "midnight train to Delhi."', trans:'', action:function(){ flags.knows_train=true; addJournal('Murugan: thieves plan midnight train to Delhi'); showToast('Critical clue: Midnight train!'); } }
+      ],
+      clue_hunt: [
+        { text:'Be careful, son. These people have no respect for our gods.', trans:'' }
+      ],
+      default: [{ text:'The fish know all the secrets of the sea.', trans:'' }]
+    }
+  },
+  { id:'venkat', name:'Mr. Venkat', role:'Antique Collector', sprite:'🕴️', color:'#5a5a5a', x:36*TILE, y:14*TILE, hidden:true,
+    dialogs: {
+      market_lead: [{ text:'Ah, a young customer. Looking for something... historical?', trans:'' },
+        { text:'I deal in rare artifacts. Very rare. Very expensive.', trans:'' },
+        { text:'Why do you ask about temple items? That is dangerous talk in this city.', trans:'', choices:[
+          { text:'I know you have the veena. Return it.', action:function(){ game.karma-=5; flags.confronted_venkat=true; showToast('Venkat tenses up...'); } },
+          { text:'I will pay. Name your price.', action:function(){ game.karma-=10; flags.tried_bribe=true; showToast('Venkat smirks coldly...'); } },
+          { text:'Inspector Ramesh is watching you.', action:function(){ if(relationships.inspector>=60||flags.police_help){ flags.venkat_scared=true; showToast('Venkat panics!'); } else { showToast('Venkat laughs at your bluff'); } } }
+        ]}
+      ],
+      station_clue: [
+        { text: 'Leave. Before my associates make you leave.', trans:'' }
+      ],
+      default: [{ text:'I have nothing more to say.', trans:'' }]
+    }
+  },
+  { id:'inspector', name:'Inspector Ramesh', role:'Police Officer', sprite:'👮', color:'#1a3a6b', x:42*TILE, y:44*TILE,
+    dialogs: {
+      station_clue: [{ text:'Temple theft? We are aware. What is your involvement?', trans:'' },
+        { text:'I need evidence, not stories. Show me something solid.', trans:'', choices:[
+          { text:'Show Mallika\'s testimony', action:function(){ if(flags.mallika_helped){ relationships.inspector+=25; flags.police_help=true; addJournal('Inspector Ramesh is now helping you'); showToast('Inspector takes the case seriously'); } else { showToast('You have no testimony to show'); } } },
+          { text:'Tell him about the midnight train', action:function(){ if(flags.knows_train){ relationships.inspector+=20; flags.police_help=true; addJournal('Ramesh will stake out the station'); showToast('Ramesh agrees to help stop the train'); } else { showToast('You do not know about any train'); } } },
+          { text:'Ask him to trust you', action:function(){ showToast('Ramesh needs proof, not promises'); } }
+        ]}
+      ],
+      default: [
+        { text: 'Come back with evidence.', trans:'' }
+      ]
+    }
+  },
+  { id:'meena', name:'Meena', role:'Street Musician', sprite:'🎻', color:'#9370db', x:13*TILE, y:34*TILE,
+    dialogs: {
+      prologue: [{ text:'I play here every evening. The temple music inspires my violin.', trans:'', choices:[
+        { text:'Did you hear anything unusual tonight?', next:'clue1' }
+      ]}],
+      clue1: [{ text:'Around 7 PM, I heard a vehicle behind the temple. Sounded like a large van.', trans:'' },
+        { text:'Also... I lost my tuning fork. It is bronze, shaped like a small Y. If you find it, I will reward you.', trans:'', action:function(){ flags.meena_quest=true; addJournal('Meena lost her bronze tuning fork in the park'); showToast('Side quest: Find the tuning fork'); } }
+      ],
+      default: [
+        { text: 'Have you seen my tuning fork?', trans:'' }
+      ]
+    }
+  },
+  { id:'devotee', name:'Lakshmi Amma', role:'Elderly Devotee', sprite:'🧓', color:'#cd853f', x:16*TILE, y:23*TILE,
+    dialogs: {
+      prologue: [{ text:'Child, the temple feels empty without the veena\'s voice.', trans:'', choices:[
+        { text:'I will find it, Amma.', next:'clue1' }
+      ]}],
+      clue1: [{ text:'I left a prasad offering near the temple tank. If you bring it to me, I will bless your journey.', trans:'', action:function(){ flags.devotee_quest=true; addJournal('Lakshmi Amma wants prasad from near the temple tank'); showToast('Side quest: Find the prasad offering'); } }
+      ],
+      default: [
+        { text: 'The prasad is near the temple tank...', trans:'' }
+      ]
+    }
+  }
 ];
-const ranks = ['Trainee Driver','Local Cabbie','City Runner','Road Captain','Auto King','Chennai Legend'];
-function updateRank(){
-  rankVal.textContent = ranks[Math.min(ranks.length-1, Math.floor(deliveries/4))];
-}
-updateRank();
 
-function randomBuildingPoint(){
-  const b = pick(buildings);
-  return { x:(b.minX+b.maxX)/2, z:(b.minZ+b.maxZ)/2 };
-}
-function fareFor(base, dist){ return base + Math.round(Math.min(dist,140)*0.55); }
+const ITEM_DEFS = [
+  { x:14*TILE, y:17*TILE, id:'flower_basket', name:'Flower Basket', icon:'🧺', desc:'A basket of jasmine flowers from the temple' },
+  { x:36*TILE, y:16*TILE, id:'chola_coin', name:'Chola Coin', icon:'🪙', desc:'An ancient coin from the Chola dynasty' },
+  { x:16*TILE, y:3*TILE, id:'sea_pearl', name:'Sea Pearl', icon:'🦪', desc:'A luminous pearl from Marina Beach' },
+  { x:15*TILE, y:15*TILE, id:'old_photo', name:'Old Photograph', icon:'🖼️', desc:'A photo of your great-grandmother playing the veena' },
+  { x:11*TILE, y:15*TILE, id:'broken_lock', name:'Broken Lock', icon:'🔓', desc:'The shattered lock from the veena room' },
+  { x:44*TILE, y:44*TILE, id:'train_schedule', name:'Train Schedule', icon:'📋', desc:'Midnight express to Delhi — platform 4' },
+  { x:22*TILE, y:5*TILE, id:'veena_string', name:'Veena String', icon:'🎵', desc:'A broken string found near the beach road' },
+  { x:24*TILE, y:26*TILE, id:'filter_coffee', name:'Filter Coffee', icon:'☕', desc:'Strong Chennai coffee. Restores energy.' },
+  { x:10*TILE, y:34*TILE, id:'tuning_fork', name:'Tuning Fork', icon:'🍴', desc:'Meena\'s bronze tuning fork' },
+  { x:12*TILE, y:19*TILE, id:'prasad', name:'Prasad Offering', icon:'🥥', desc:'Sweet prasad from the temple tank' },
+  { x:40*TILE, y:40*TILE, id:'the_veena', name:'Sacred Veena', icon:'🎸', desc:'The 300-year-old temple veena. Its wood still hums with history.', hidden:true }
+];
 
-function makeBeacon(x, z, color, letter){
-  const geo = new THREE.CylinderGeometry(0.4,0.4,18,10,1,true);
-  const mat = new THREE.MeshBasicMaterial({color, transparent:true, opacity:0.42, side:THREE.DoubleSide});
-  const mesh = new THREE.Mesh(geo, mat);
-  mesh.position.set(x, 9, z);
-  scene.add(mesh);
-  const hex = '#'+color.toString(16).padStart(6,'0');
-  const label = textSprite(letter, {scale:0.32, bg:hex, border:'#1B1035', color:'#1B1035', fontSize:150});
-  label.position.set(x, 19, z);
-  scene.add(label);
-  return { mesh, label };
-}
-function clearBeacons(){
-  if(beaconStart){ scene.remove(beaconStart); beaconStart=null; }
-  if(beaconFinish){ scene.remove(beaconFinish); beaconFinish=null; }
-  if(labelStart){ scene.remove(labelStart); labelStart=null; }
-  if(labelFinish){ scene.remove(labelFinish); labelFinish=null; }
-}
-
-function newMission(){
-  clearBeacons();
-  // alternate mission types so both show up regularly
-  missionType = Math.random() < 0.5 ? 'delivery' : 'passenger';
-  missionStage = 0;
-  startArea = pick(areaNames);
-  do { finishArea = pick(areaNames); } while(finishArea === startArea);
-
-  startPos = randomBuildingPoint();
-  finishPos = randomBuildingPoint();
-  let tries = 0;
-  while(Math.hypot(finishPos.x-startPos.x, finishPos.z-startPos.z) < 25 && tries < 20){
-    finishPos = randomBuildingPoint(); tries++;
+function genMap() {
+  map = [];
+  for(let y=0; y<MH; y++) { map[y]=[]; for(let x=0; x<MW; x++) map[y][x]=T.GRASS; }
+  for(let y=10; y<=22; y++) for(let x=8; x<=20; x++) {
+    if(y===10||y===22||x===8||x===20) map[y][x]=T.TEMPLE;
+    else map[y][x]=T.ROAD;
   }
-
-  const finishColor = missionType === 'delivery' ? 0x2E7D6B : 0xB33A2E;
-  const s = makeBeacon(startPos.x, startPos.z, 0xF4C542, 'S');
-  const f = makeBeacon(finishPos.x, finishPos.z, finishColor, 'F');
-  beaconStart = s.mesh; labelStart = s.label;
-  beaconFinish = f.mesh; labelFinish = f.label;
-
-  const totalDist = Math.hypot(finishPos.x-startPos.x, finishPos.z-startPos.z);
-  currentReward = missionType === 'delivery' ? fareFor(40, totalDist) : fareFor(60, totalDist);
-
-  missionTarget = new THREE.Vector3(startPos.x, 0, startPos.z);
-
-  if(missionType === 'delivery'){
-    missionLabelEl.textContent = 'Mission · Delivery';
-    document.getElementById('missionVal').textContent =
-      `Gold blip S: collect parcel at ${startArea.ta} (${startArea.en}) · fare ₹${currentReward}`;
-  } else {
-    missionLabelEl.textContent = 'Mission · Passenger';
-    document.getElementById('missionVal').textContent =
-      `Gold blip S: pick up rider at ${startArea.ta} (${startArea.en}) · fare ₹${currentReward}`;
+  for(let y=16; y<=20; y++) for(let x=11; x<=17; x++) {
+    if(y>16&&y<20&&x>11&&x<17) map[y][x]=T.TANK;
+  }
+  map[22][14]=T.ROAD; map[22][15]=T.ROAD;
+  for(let i=0; i<MW; i++) { map[6][i]=T.ROAD; map[25][i]=T.ROAD; map[40][i]=T.ROAD; }
+  for(let i=0; i<MH; i++) { map[i][5]=T.ROAD; map[i][22]=T.ROAD; map[i][35]=T.ROAD; map[i][48]=T.ROAD; }
+  for(let y=0; y<6; y++) for(let x=0; x<MW; x++) if(map[y][x]===T.GRASS) map[y][x]=T.SAND;
+  for(let y=0; y<3; y++) for(let x=0; x<MW; x++) map[y][x]=T.WATER;
+  for(let y=8; y<=18; y++) for(let x=32; x<=42; x++) {
+    if(map[y][x]===T.GRASS) { if((x+y)%5===0) map[y][x]=T.MARKET; else map[y][x]=T.ROAD; }
+  }
+  for(let y=38; y<=46; y++) for(let x=38; x<=46; x++) {
+    if(y===38||y===46||x===38||x===46) map[y][x]=T.STATION;
+    else map[y][x]=T.ROAD;
+  }
+  for(let x=40; x<=44; x++) map[42][x]=T.STATION;
+  for(let y=39; y<=41; y++) for(let x=39; x<=41; x++) map[y][x]=T.STOREROOM;
+  for(let y=30; y<=38; y++) for(let x=8; x<=18; x++) if(map[y][x]===T.GRASS) map[y][x]=T.PARK;
+  for(let y=31; y<=37; y+=2) for(let x=9; x<=17; x+=2) if(map[y][x]===T.PARK) map[y][x]=T.TREE;
+  map[25][23]=T.TEASTALL; map[15][36]=T.TEASTALL;
+  for(let i=0; i<45; i++) {
+    let bx=Math.floor(Math.random()*(MW-6))+3;
+    let by=Math.floor(Math.random()*(MH-6))+3;
+    if(map[by][bx]===T.GRASS && !isCriticalPath(bx,by)) {
+      map[by][bx]=T.HOUSE;
+      if(Math.random()>0.6 && bx+1<MW && map[by][bx+1]===T.GRASS && !isCriticalPath(bx+1,by)) map[by][bx+1]=T.HOUSE;
+    }
+  }
+  for(let i=0; i<50; i++) {
+    let tx=Math.floor(Math.random()*MW);
+    let ty=Math.floor(Math.random()*MH);
+    if(map[ty][tx]===T.GRASS && !isCriticalPath(tx,ty)) map[ty][tx]=T.TREE;
   }
 }
-newMission();
 
-// ---------- Score / toast ----------
-let score = 0;
-const scoreVal = document.getElementById('scoreVal');
-const toastEl = document.getElementById('toast');
-function addScore(n, label){
-  score += n;
-  scoreVal.textContent = score;
-  toastEl.textContent = (n>0?'+':'')+n+(label?' '+label:'');
-  toastEl.classList.add('show');
-  clearTimeout(addScore._t);
-  addScore._t = setTimeout(()=>toastEl.classList.remove('show'), 700);
-}
-
-// ---------- Minimap (heading-up: car always points up, world rotates around it) ----------
-const mmCanvas = document.getElementById('minimap');
-const mmCtx = mmCanvas.getContext('2d');
-function drawMinimap(){
-  const S = mmCanvas.width;
-  mmCtx.clearRect(0,0,S,S);
-  mmCtx.fillStyle = '#0f0a1f';
-  mmCtx.beginPath(); mmCtx.arc(S/2,S/2,S/2,0,Math.PI*2); mmCtx.fill();
-  const scale = 0.9;
-  const range = 90; // world units shown radius
-  const unit = (S/(2*range))*scale;
-
-  // Manual rotation math (instead of ctx.rotate) so blip labels can stay upright.
-  // North-up base offset: +x -> screen right, +z -> screen up (dz negated).
-  // Then rotate that offset by -carState.angle so the car's heading always renders as "up".
-  const ang = -carState.angle;
-  const cosA = Math.cos(ang), sinA = Math.sin(ang);
-  function project(wx, wz){
-    const dx = (wx-carState.x)*unit, dz = -(wz-carState.z)*unit;
-    return { x: S/2 + dx*cosA - dz*sinA, y: S/2 + dx*sinA + dz*cosA };
-  }
-
-  mmCtx.save();
-  mmCtx.beginPath(); mmCtx.arc(S/2,S/2,S/2,0,Math.PI*2); mmCtx.clip();
-
-  mmCtx.strokeStyle = 'rgba(233,198,106,0.55)';
-  mmCtx.lineWidth = 3;
-  roadPositions.forEach(z=>{
-    const a=project(-WORLD,z), b=project(WORLD,z);
-    mmCtx.beginPath(); mmCtx.moveTo(a.x,a.y); mmCtx.lineTo(b.x,b.y); mmCtx.stroke();
-  });
-  roadPositions.forEach(x=>{
-    const a=project(x,-WORLD), b=project(x,WORLD);
-    mmCtx.beginPath(); mmCtx.moveTo(a.x,a.y); mmCtx.lineTo(b.x,b.y); mmCtx.stroke();
-  });
-
-  // coins
-  mmCtx.fillStyle = '#F4C542';
-  coins.forEach(c=>{
-    const p = project(c.position.x, c.position.z);
-    mmCtx.beginPath(); mmCtx.arc(p.x,p.y,2.4,0,Math.PI*2); mmCtx.fill();
-  });
-
-  function drawBlip(p, color, letter){
-    mmCtx.fillStyle = color;
-    mmCtx.beginPath(); mmCtx.arc(p.x,p.y,6.5,0,Math.PI*2); mmCtx.fill();
-    mmCtx.strokeStyle = '#1B1035'; mmCtx.lineWidth = 1.5; mmCtx.stroke();
-    mmCtx.fillStyle = '#1B1035';
-    mmCtx.font = 'bold 9px sans-serif';
-    mmCtx.textAlign = 'center'; mmCtx.textBaseline = 'middle';
-    mmCtx.fillText(letter, p.x, p.y+0.5);
-  }
-  // both mission blips shown together: gold S = start, colored F = finish
-  if(startPos && missionStage === 0){
-    drawBlip(project(startPos.x, startPos.z), '#F4C542', 'S');
-  }
-  if(finishPos){
-    const finColor = missionType === 'delivery' ? '#2E7D6B' : '#B33A2E';
-    drawBlip(project(finishPos.x, finishPos.z), finColor, 'F');
-  }
-  mmCtx.restore();
-
-  // "N" reference marker on the rim — shows true world-forward relative to current heading
-  const rimR = S/2 - 11;
-  const nx = S/2 + sinA*rimR, ny = S/2 - cosA*rimR;
-  mmCtx.fillStyle = 'rgba(246,239,224,0.85)';
-  mmCtx.font = 'bold 11px sans-serif';
-  mmCtx.textAlign = 'center'; mmCtx.textBaseline = 'middle';
-  mmCtx.fillText('N', nx, ny);
-
-  // car marker — fixed at center, always pointing straight up
-  mmCtx.save();
-  mmCtx.translate(S/2,S/2);
-  mmCtx.fillStyle = '#F4A340';
-  mmCtx.strokeStyle = '#1B1035'; mmCtx.lineWidth = 1.5;
-  mmCtx.beginPath();
-  mmCtx.moveTo(0,-8); mmCtx.lineTo(6,7); mmCtx.lineTo(-6,7); mmCtx.closePath();
-  mmCtx.fill(); mmCtx.stroke();
-  mmCtx.restore();
-}
-
-// ---------- Compass ----------
-const compassEl = document.getElementById('compass');
-
-// ---------- Camera follow ----------
-const camOffset = new THREE.Vector3(0, 6.5, 11);
-const camLookOffset = new THREE.Vector3(0, 1.5, 4);
-let camPos = new THREE.Vector3(car.position.x, 8, car.position.z-12);
-
-// ---------- Collision helper ----------
-function collides(x,z, margin){
-  for(const b of buildings){
-    if(x > b.minX-margin && x < b.maxX+margin && z > b.minZ-margin && z < b.maxZ+margin) return true;
-  }
+function isCriticalPath(x,y) {
+  if(y===25 || y===6 || y===40 || x===5 || x===22 || x===35 || x===48) return true;
+  if(y>=10&&y<=22 && x>=8&&x<=20) return true;
+  if(y>=38&&y<=46 && x>=38&&x<=46) return true;
+  if(y>=8&&y<=18 && x>=32&&x<=42) return true;
+  if(y>=30&&y<=38 && x>=8&&x<=18) return true;
   return false;
 }
 
-// ---------- Main loop ----------
-let last = performance.now();
-let running = false;
-const speedVal = document.getElementById('speedVal');
-
-function update(dt){
-  // throttle/brake
-  let accel = 0;
-  if(input.fwd) accel += ACCEL;
-  if(input.back) accel -= BRAKE;
-  if(!input.fwd && !input.back){
-    // natural drag toward 0
-    accel = -Math.sign(carState.speed) * DRAG;
-    if(Math.abs(carState.speed) < 0.4) carState.speed = 0;
-  }
-  carState.speed += accel*dt;
-  carState.speed = Math.max(MAX_REV, Math.min(MAX_SPEED, carState.speed));
-
-  // steering — scale by speed so it doesn't spin in place
-  const speedFactor = Math.min(1, Math.abs(carState.speed)/6);
-  let steer = 0;
-  if(input.left) steer += 1;
-  if(input.right) steer -= 1;
-  const dir = carState.speed >= 0 ? 1 : -1;
-  carState.angle += steer * TURN_RATE * speedFactor * dir * dt;
-
-  const nx = carState.x + Math.sin(carState.angle)*carState.speed*dt;
-  const nz = carState.z + Math.cos(carState.angle)*carState.speed*dt;
-
-  if(!collides(nx, nz, 1.1)){
-    carState.x = nx; carState.z = nz;
-  } else {
-    carState.speed *= -0.3; // bounce back a bit
-  }
-  carState.x = Math.max(-WORLD+2, Math.min(WORLD-2, carState.x));
-  carState.z = Math.max(-WORLD+2, Math.min(WORLD-2, carState.z));
-
-  car.position.set(carState.x, 0, carState.z);
-  car.rotation.y = carState.angle;
-  // wheel spin (visual)
-  car.userData.wheels.forEach(w => w.rotation.x -= carState.speed*dt*1.2);
-
-  // camera
-  const behind = new THREE.Vector3(
-    carState.x - Math.sin(carState.angle)*camOffset.z,
-    camOffset.y,
-    carState.z - Math.cos(carState.angle)*camOffset.z
-  );
-  camPos.lerp(behind, Math.min(1, dt*4));
-  camera.position.copy(camPos);
-  const lookAt = new THREE.Vector3(
-    carState.x + Math.sin(carState.angle)*camLookOffset.z,
-    1.2,
-    carState.z + Math.cos(carState.angle)*camLookOffset.z
-  );
-  camera.lookAt(lookAt);
-
-  // coins collect
-  for(let i=coins.length-1;i>=0;i--){
-    const c = coins[i];
-    c.rotation.z += dt*3;
-    const dx = c.position.x-carState.x, dz = c.position.z-carState.z;
-    if(dx*dx+dz*dz < 3.2*3.2){
-      coinGroup.remove(c);
-      coins.splice(i,1);
-      addScore(10,'coin');
-      spawnCoin();
-    }
-  }
-
-  // mission check — every mission has a gold "S" (start) blip and a colored "F" (finish) blip,
-  // both visible in the world and on the minimap for the whole mission; drive to S first, then F.
-  if(missionTarget){
-    if(beaconStart) beaconStart.rotation.y += dt;
-    if(beaconFinish) beaconFinish.rotation.y += dt;
-    const dx = missionTarget.x-carState.x, dz = missionTarget.z-carState.z;
-    const dist = Math.sqrt(dx*dx+dz*dz);
-    // compass points from car facing to active target
-    const targetAngle = Math.atan2(dx,dz);
-    let rel = targetAngle - carState.angle;
-    compassEl.style.transform = `rotate(${rel}rad)`;
-
-    const verb = missionType === 'delivery' ? 'parcel' : 'rider';
-
-    if(missionStage === 0){
-      document.getElementById('missionVal').textContent =
-        `Gold blip S: ${startArea.ta} (${startArea.en}) · ${dist.toFixed(0)}m away`;
-      if(dist < 6){
-        missionStage = 1;
-        missionTarget = new THREE.Vector3(finishPos.x, 0, finishPos.z);
-        addScore(20, missionType==='delivery' ? 'picked up' : 'pickup');
-        if(beaconStart){ scene.remove(beaconStart); beaconStart=null; }
-        if(labelStart){ scene.remove(labelStart); labelStart=null; }
-        missionLabelEl.textContent = missionType === 'delivery' ? 'Mission · Delivery (drop-off)' : 'Mission · Passenger (drop-off)';
-      }
-    } else {
-      const blipColor = missionType === 'delivery' ? 'teal' : 'red';
-      document.getElementById('missionVal').textContent =
-        `${blipColor==='teal'?'Teal':'Red'} blip F: drop the ${verb} at ${finishArea.ta} (${finishArea.en}) · ${dist.toFixed(0)}m · ₹${currentReward}`;
-      if(dist < 6){
-        deliveries++;
-        tripsVal.textContent = deliveries;
-        updateRank();
-        addScore(currentReward, missionType==='delivery' ? 'delivered' : 'trip');
-        newMission();
-      }
-    }
-  }
-
-  speedVal.textContent = Math.abs(Math.round(carState.speed*3.2));
-  drawMinimap();
+function createEntities() {
+  npcs = NPC_DEFS.map(d => ({...d, met:false, active: !d.hidden}));
+  items = ITEM_DEFS.filter(d => !d.hidden).map(d => ({...d}));
 }
 
-function loop(now){
-  requestAnimationFrame(loop);
-  if(!running) return;
-  const dt = Math.min(0.05, (now-last)/1000);
-  last = now;
-  update(dt);
-  renderer.render(scene, camera);
-}
-requestAnimationFrame(loop);
-
-// ---------- Start screen wiring ----------
-document.getElementById('playBtn').addEventListener('click', ()=>{
-  document.getElementById('startScreen').style.display = 'none';
-  document.getElementById('hud').style.display = 'block';
-  document.getElementById('touchControls').style.display = 'block';
-  last = performance.now();
-  running = true;
+window.addEventListener('keydown', function(e) {
+  keys[e.key.toLowerCase()] = true;
+  if(e.key===' '||e.key==='Enter'||e.key.toLowerCase()==='e') doAction();
+  if(e.key==='Escape') { closePanels(); }
 });
+window.addEventListener('keyup', function(e) { keys[e.key.toLowerCase()] = false; });
 
-})();
+function setDir(d){ touchDir = d; }
+function clearDir(){ touchDir = null; }
+
+if('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+  document.getElementById('mobile-controls').style.display = 'block';
+}
+
+document.getElementById('mob-up').addEventListener('touchstart', function(e){ e.preventDefault(); setDir('up'); });
+document.getElementById('mob-up').addEventListener('touchend', function(e){ e.preventDefault(); clearDir(); });
+document.getElementById('mob-down').addEventListener('touchstart', function(e){ e.preventDefault(); setDir('down'); });
+document.getElementById('mob-down').addEventListener('touchend', function(e){ e.preventDefault(); clearDir(); });
+document.getElementById('mob-left').addEventListener('touchstart', function(e){ e.preventDefault(); setDir('left'); });
+document.getElementById('mob-left').addEventListener('touchend', function(e){ e.preventDefault(); clearDir(); });
+document.getElementById('mob-right').addEventListener('touchstart', function(e){ e.preventDefault(); setDir('right'); });
+document.getElementById('mob-right').addEventListener('touchend', function(e){ e.preventDefault(); clearDir(); });
+document.getElementById('mob-action').addEventListener('touchstart', function(e){ e.preventDefault(); doAction(); });
+
+document.getElementById('mob-up').addEventListener('mousedown', function(){ setDir('up'); });
+document.getElementById('mob-up').addEventListener('mouseup', function(){ clearDir(); });
+document.getElementById('mob-down').addEventListener('mousedown', function(){ setDir('down'); });
+document.getElementById('mob-down').addEventListener('mouseup', function(){ clearDir(); });
+document.getElementById('mob-left').addEventListener('mousedown', function(){ setDir('left'); });
+document.getElementById('mob-left').addEventListener('mouseup', function(){ clearDir(); });
+document.getElementById('mob-right').addEventListener('mousedown', function(){ setDir('right'); });
+document.getElementById('mob-right').addEventListener('mouseup', function(){ clearDir(); });
+document.getElementById('mob-action').addEventListener('mousedown', function(){ doAction(); });
+
+document.getElementById('btn-start').addEventListener('click', startGame);
+document.getElementById('btn-restart').addEventListener('click', function(){ location.reload(); });
+document.getElementById('btn-close-banner').addEventListener('click', closeBanner);
+document.getElementById('btn-journal').addEventListener('click', toggleJournal);
+document.getElementById('btn-inventory').addEventListener('click', toggleInventory);
+document.getElementById('btn-close-journal').addEventListener('click', toggleJournal);
+document.getElementById('btn-close-inv').addEventListener('click', toggleInventory);
+
+function update() {
+  if(!game.running || game.ended) return;
+  animTick += 0.05;
+  game.time += 0.025;
+  if(game.time >= 24*60) game.time = 0;
+  if(game.time >= 6*60 && game.time < 6.5*60 && !game.ended && game.state !== 'confrontation') {
+    triggerEnding('too_late'); return;
+  }
+  if(player.moving && game.energy > 0) game.energy -= 0.015;
+  if(game.energy < 100 && !player.moving) game.energy += 0.04;
+  if(game.energy < 0) game.energy = 0;
+  
+  if(inDialog) return;
+  let dx=0, dy=0;
+  if(keys['w']||keys['arrowup']||touchDir==='up'){ dy=-SPEED; player.dir='up'; }
+  if(keys['s']||keys['arrowdown']||touchDir==='down'){ dy=SPEED; player.dir='down'; }
+  if(keys['a']||keys['arrowleft']||touchDir==='left'){ dx=-SPEED; player.dir='left'; }
+  if(keys['d']||keys['arrowright']||touchDir==='right'){ dx=SPEED; player.dir='right'; }
+  
+  player.moving = (dx!==0||dy!==0);
+  if(player.moving) player.frame += 0.12;
+  
+  let nx = player.x + dx;
+  let ny = player.y + dy;
+  let tx = Math.floor((nx + TILE/2) / TILE);
+  let ty = Math.floor((ny + TILE/2) / TILE);
+  
+  if(tx >= 0 && tx < MW && ty >= 0 && ty < MH) {
+    let tile = map[ty][tx];
+    if(!BLOCKED.has(tile)) { player.x = nx; player.y = ny; }
+  }
+  
+  cam.x = player.x - canvas.width/2 + TILE/2;
+  cam.y = player.y - canvas.height/2 + TILE/2;
+  let maxCamX = MW*TILE - canvas.width;
+  let maxCamY = MH*TILE - canvas.height;
+  cam.x = Math.max(0, Math.min(cam.x, Math.max(0, maxCamX)));
+  cam.y = Math.max(0, Math.min(cam.y, Math.max(0, maxCamY)));
+  
+  let px = Math.floor(player.x / TILE);
+  let py = Math.floor(player.y / TILE);
+  let loc = '';
+  if(py < 3) loc = '🌊 Bay of Bengal';
+  else if(py < 6) loc = '🏖️ Marina Beach';
+  else if(px>=8&&px<=20&&py>=10&&py<=22) loc = '🛕 Kapaleeshwarar Temple';
+  else if(px>=32&&px<=42&&py>=8&&py<=18) loc = '🛍️ T. Nagar Market';
+  else if(px>=38&&px<=46&&py>=38&&py<=46) loc = '🚉 Central Station';
+  else if(px>=8&&px<=18&&py>=30&&py<=38) loc = '🌳 Nageswara Park';
+  else if(map[py] && map[py][px] === T.TEASTALL) loc = '☕ Tea Stall';
+  else if(map[py] && map[py][px] === T.STOREROOM) loc = '🏚️ Hidden Storeroom';
+  
+  if(loc !== currentLocation) {
+    currentLocation = loc;
+    let pill = document.getElementById('location-pill');
+    if(loc) { pill.textContent = loc; pill.style.opacity = 1; setTimeout(()=>pill.style.opacity = 0, 4000); }
+  }
+  
+  if(loc.includes('Market') && game.state === 'clue_hunt' && flags.has_key) {
+    setGameState('market_lead');
+  }
+  if(loc.includes('Station') && game.state === 'market_lead' && (flags.knows_train || flags.confronted_venkat)) {
+    setGameState('station_clue');
+  }
+  if(loc.includes('Storeroom') && game.state === 'station_clue' && (flags.police_help || flags.has_key)) {
+    setGameState('confrontation');
+    if(!items.find(i=>i.id==='the_veena')) {
+      items.push({ x:40*TILE, y:40*TILE, id:'the_veena', name:'Sacred Veena', icon:'🎸', desc:'The 300-year-old temple veena.' });
+    }
+  }
+  
+  for(let i=items.length-1; i>=0; i--) {
+    let it = items[i];
+    if(Math.hypot(player.x - it.x, player.y - it.y) < TILE * 0.8) {
+      collectItem(it);
+      items.splice(i, 1);
+    }
+  }
+  
+  if(hasItem('tuning_fork') && flags.meena_quest && !flags.meena_rewarded) {
+    flags.meena_rewarded = true;
+    game.money += 30;
+    relationships.meena += 25;
+    addJournal('Returned the tuning fork to Meena. She rewarded you ₹30.');
+    showToast('Quest complete: Meena\'s Fork (+₹30)');
+  }
+  if(hasItem('prasad') && flags.devotee_quest && !flags.devotee_blessed) {
+    flags.devotee_blessed = true;
+    game.karma += 15;
+    relationships.devotee += 30;
+    addJournal('Lakshmi Amma blessed you. Karma increased.');
+    showToast('Blessing received! Karma +15');
+  }
+  if(hasItem('filter_coffee')) {
+    delete inventory['filter_coffee'];
+    game.energy = Math.min(100, game.energy + 30);
+    showToast('Energy restored! (+30%)');
+  }
+  
+  particles = particles.filter(p => p.life > 0);
+  particles.forEach(p => { p.x += p.vx; p.y += p.vy; p.life -= 0.018; p.vy += 0.06; });
+  
+  let venkat = npcs.find(n => n.id === 'venkat');
+  if(venkat && game.state === 'market_lead' && !venkat.active) {
+    venkat.active = true;
+    showToast('New location: T. Nagar Market');
+  }
+  
+  updateUI();
+}
+
+function collectItem(it) {
+  inventory[it.id] = { icon: it.icon, name: it.name, desc: it.desc };
+  showToast('Picked up: ' + it.icon + ' ' + it.name);
+  createParticles(it.x + TILE/2, it.y + TILE/2, '#ffd700');
+  addJournal('Found: ' + it.name + ' at ' + currentLocation);
+  if(it.id === 'the_veena') {
+    setTimeout(() => resolveEnding(), 800);
+  }
+}
+
+function resolveEnding() {
+  if(flags.police_help && flags.venkat_scared) {
+    triggerEnding('justice');
+  } else if(flags.venkat_scared && !flags.police_help) {
+    triggerEnding('mercy');
+  } else if(flags.has_key && flags.confronted_venkat) {
+    triggerEnding('alone');
+  } else {
+    triggerEnding('justice');
+  }
+}
+
+function addItem(id, icon, name, desc) {
+  inventory[id] = { icon, name, desc };
+}
+function hasItem(id) { return !!inventory[id]; }
+function addJournal(text) {
+  journal.push({ time: formatTime(), text: text });
+}
+function showToast(text) {
+  let t = document.getElementById('toast');
+  t.textContent = text;
+  t.style.display = 'block';
+  t.style.animation = 'toastIn 0.3s ease';
+  setTimeout(() => {
+    t.style.animation = 'toastOut 0.3s ease';
+    setTimeout(() => t.style.display = 'none', 300);
+  }, 2200);
+}
+function createParticles(x, y, color) {
+  for(let i=0; i<10; i++) {
+    particles.push({ x: x, y: y, vx: (Math.random()-0.5) * 4, vy: (Math.random()-0.5) * 4 - 2, life: 1, color: color });
+  }
+}
+function formatTime() {
+  let h = Math.floor(game.time / 60);
+  let m = Math.floor(game.time % 60);
+  let period = h < 12 ? 'AM' : 'PM';
+  let dh = h % 12 || 12;
+  return dh + ':' + m.toString().padStart(2,'0') + ' ' + period;
+}
+
+function draw() {
+  ctx.fillStyle = '#0d0d1a';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.save();
+  ctx.translate(-cam.x, -cam.y);
+  
+  let sx = Math.floor(cam.x / TILE);
+  let sy = Math.floor(cam.y / TILE);
+  let ex = sx + Math.ceil(canvas.width / TILE) + 2;
+  let ey = sy + Math.ceil(canvas.height / TILE) + 2;
+  
+  for(let y = sy; y <= ey; y++) {
+    for(let x = sx; x <= ex; x++) {
+      if(y < 0 || y >= MH || x < 0 || x >= MW) continue;
+      let tile = map[y][x];
+      let px = x * TILE;
+      let py = y * TILE;
+      ctx.fillStyle = TC[tile] || '#333';
+      ctx.fillRect(px, py, TILE, TILE);
+      ctx.strokeStyle = 'rgba(0,0,0,0.06)';
+      ctx.lineWidth = 0.5;
+      ctx.strokeRect(px, py, TILE, TILE);
+      
+      if(tile === T.TEMPLE) {
+        ctx.fillStyle = '#ffd700';
+        ctx.fillRect(px+6, py+4, TILE-12, 5);
+        ctx.fillStyle = '#8b1a1a';
+        ctx.fillRect(px+18, py+10, 4, TILE-14);
+        ctx.fillRect(px+10, py+16, 20, 3);
+        ctx.fillStyle = '#ffd700';
+        ctx.beginPath(); ctx.arc(px+10, py+10, 2, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(px+TILE-10, py+10, 2, 0, Math.PI*2); ctx.fill();
+      }
+      else if(tile === T.TANK) {
+        ctx.fillStyle = 'rgba(100,200,255,0.2)';
+        ctx.fillRect(px+2, py+2, TILE-4, TILE-4);
+        ctx.fillStyle = 'rgba(255,255,255,0.15)';
+        let off = Math.sin(animTick + x) * 3;
+        ctx.fillRect(px+6+off, py+8, 8, 2);
+        ctx.fillRect(px+20-off, py+20, 6, 2);
+        ctx.fillStyle = '#8b7355';
+        ctx.fillRect(px, py+TILE-6, TILE, 3);
+      }
+      else if(tile === T.TEASTALL) {
+        ctx.fillStyle = '#4a2a1a';
+        ctx.fillRect(px+6, py+10, TILE-12, TILE-20);
+        ctx.fillStyle = '#ff6347';
+        ctx.fillRect(px+4, py+6, TILE-8, 4);
+        ctx.fillStyle = '#fff';
+        ctx.font = '16px Arial';
+        ctx.fillText('☕', px+12, py+30);
+        ctx.fillStyle = 'rgba(255,255,255,0.2)';
+        ctx.beginPath(); ctx.arc(px+20, py+4+Math.sin(animTick*2)*2, 2, 0, Math.PI*2); ctx.fill();
+      }
+      else if(tile === T.TREE) {
+        ctx.fillStyle = '#1a4a1a';
+        ctx.beginPath(); ctx.arc(px+TILE/2, py+TILE/2, TILE/2.3, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#3a2a1a';
+        ctx.fillRect(px+TILE/2-3, py+TILE/2+2, 6, TILE/2-2);
+      }
+      else if(tile === T.MARKET) {
+        ctx.fillStyle = '#6a3a0a';
+        ctx.fillRect(px+4, py+24, TILE-8, 16);
+        ctx.fillStyle = '#ff6347';
+        ctx.fillRect(px+16, py+6, 4, 18);
+        ctx.fillRect(px+28, py+6, 4, 18);
+        ctx.fillStyle = '#ffd700';
+        ctx.fillRect(px+4, py+22, TILE-8, 3);
+      }
+      else if(tile === T.STATION) {
+        ctx.fillStyle = '#2a2a3a';
+        ctx.fillRect(px+3, py+3, TILE-6, TILE-6);
+        ctx.fillStyle = '#555';
+        ctx.fillRect(px+8, py+8, TILE-16, 3);
+        ctx.fillStyle = '#fff';
+        ctx.font = '10px Arial';
+        ctx.fillText('🚂', px+13, py+28);
+      }
+      else if(tile === T.STOREROOM) {
+        ctx.fillStyle = '#3a2a1a';
+        ctx.fillRect(px+4, py+4, TILE-8, TILE-8);
+        ctx.fillStyle = '#666';
+        ctx.fillRect(px+16, py+14, 6, 10);
+        ctx.fillStyle = '#ffd700';
+        ctx.beginPath(); ctx.arc(px+20, py+18, 1.5, 0, Math.PI*2); ctx.fill();
+      }
+      else if(tile === T.WATER) {
+        ctx.fillStyle = 'rgba(255,255,255,0.08)';
+        let waveX = (animTick * 8 + x * 15) % (TILE + 10) - 5;
+        ctx.fillRect(px + waveX, py + 14, 10, 2);
+      }
+      else if(tile === T.SAND) {
+        ctx.fillStyle = 'rgba(255,255,255,0.04)';
+        ctx.beginPath(); ctx.arc(px+10+Math.sin(x*y)*5, py+20, 1.5, 0, Math.PI*2); ctx.fill();
+      }
+      else if(tile === T.HOUSE) {
+        let hour = game.time / 60;
+        if(hour > 19 || hour < 5) {
+          ctx.fillStyle = 'rgba(255,200,100,0.15)';
+          ctx.fillRect(px+12, py+12, 8, 8);
+        }
+      }
+    }
+  }
+  
+  let hour = game.time / 60;
+  if(hour > 18 || hour < 6) {
+    let lampPositions = [[22,6],[35,6],[22,25],[35,25],[22,40],[5,25],[5,40],[48,25]];
+    lampPositions.forEach(([lx,ly]) => {
+      if(lx >= sx && lx <= ex && ly >= sy && ly <= ey) {
+        let lpx = lx*TILE + TILE/2;
+        let lpy = ly*TILE + TILE/2;
+        let grad = ctx.createRadialGradient(lpx, lpy, 2, lpx, lpy, 60);
+        grad.addColorStop(0, 'rgba(255,220,150,0.15)');
+        grad.addColorStop(1, 'rgba(255,220,150,0)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(lpx-60, lpy-60, 120, 120);
+      }
+    });
+  }
+  
+  items.forEach(it => {
+    let grad = ctx.createRadialGradient(it.x+TILE/2, it.y+TILE/2, 2, it.x+TILE/2, it.y+TILE/2, 18);
+    grad.addColorStop(0, 'rgba(255,215,0,0.3)');
+    grad.addColorStop(1, 'rgba(255,215,0,0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(it.x-5, it.y-5, TILE+10, TILE+10);
+    ctx.font = '22px Arial';
+    ctx.fillText(it.icon, it.x + 10, it.y + 32);
+  });
+  
+  npcs.forEach(npc => {
+    if(!npc.active) return;
+    ctx.fillStyle = 'rgba(0,0,0,0.25)';
+    ctx.beginPath(); ctx.ellipse(npc.x+TILE/2, npc.y+TILE-4, 14, 4, 0, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = npc.color;
+    ctx.beginPath(); ctx.arc(npc.x+TILE/2, npc.y+TILE/2, 14, 0, Math.PI*2); ctx.fill();
+    ctx.font = '22px Arial';
+    ctx.fillText(npc.sprite, npc.x+10, npc.y+30);
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    let ntext = npc.name;
+    let tw = ctx.measureText(ntext).width;
+    ctx.fillRect(npc.x-8, npc.y-20, tw+16, 18);
+    ctx.fillStyle = '#e0aaff';
+    ctx.font = '10px Arial';
+    ctx.fillText(ntext, npc.x, npc.y-7);
+    let dist = Math.hypot(player.x-npc.x, player.y-npc.y);
+    if(dist < TILE*1.6) {
+      ctx.fillStyle = '#7b2cbf';
+      ctx.font = 'bold 12px Arial';
+      ctx.fillText('E', npc.x+20, npc.y-28);
+    }
+  });
+  
+  let px = player.x + TILE/2;
+  let py = player.y + TILE/2;
+  ctx.fillStyle = 'rgba(0,0,0,0.25)';
+  ctx.beginPath(); ctx.ellipse(px, py+18, 12, 4, 0, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#7b2cbf';
+  ctx.beginPath(); ctx.arc(px, py, 13, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#e0aaff';
+  ctx.beginPath(); ctx.arc(px+(player.dir==='left'?-5:player.dir==='right'?5:0), py+(player.dir==='up'?-5:player.dir==='down'?5:0), 4, 0, Math.PI*2); ctx.fill();
+  if(player.moving) {
+    ctx.strokeStyle = '#7b2cbf';
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(px-5, py+12); ctx.lineTo(px-8+Math.sin(player.frame)*4, py+20);
+    ctx.moveTo(px+5, py+12); ctx.lineTo(px+8-Math.sin(player.frame)*4, py+20); ctx.stroke();
+  }
+  
+  particles.forEach(p => { ctx.fillStyle = p.color; ctx.globalAlpha = p.life; ctx.fillRect(p.x, p.y, 4, 4); ctx.globalAlpha = 1; });
+  
+  ctx.restore();
+  
+  let dark = 0;
+  if(hour < 5) dark = 0.5;
+  else if(hour < 6) dark = 0.5 - (hour-5)*0.4;
+  else if(hour > 19) dark = (hour-19)*0.12;
+  else if(hour > 20) dark = 0.5;
+  
+  if(dark > 0) {
+    ctx.fillStyle = 'rgba(5,5,20,' + dark + ')';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    let spx = player.x - cam.x + TILE/2;
+    let spy = player.y - cam.y + TILE/2;
+    let grad = ctx.createRadialGradient(spx, spy, 10, spx, spy, 90);
+    grad.addColorStop(0, 'rgba(255,220,150,0.25)');
+    grad.addColorStop(1, 'rgba(255,220,150,0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+}
+
+function updateUI() {
+  let h = Math.floor(game.time/60);
+  let icon = (h < 6 || h > 18) ? '🌙' : '☀️';
+  document.getElementById('time-display').textContent = icon + ' ' + formatTime();
+  document.getElementById('money').textContent = game.money;
+  document.getElementById('energy').textContent = Math.floor(game.energy);
+  document.getElementById('objective-pill').textContent = '🎯 ' + objective;
+  let chapters = {prologue:'📖 Prologue', clue_hunt:'🔍 The Clues', market_lead:'🛍️ Black Market', station_clue:'🚉 Midnight Train', confrontation:'⚔️ Confrontation'};
+  document.getElementById('story-chapter').textContent = chapters[game.state] || '📖 Prologue';
+}
+
+function doAction() {
+  if(inDialog) { advanceDialog(); return; }
+  for(let npc of npcs) {
+    if(!npc.active) continue;
+    let dist = Math.hypot(player.x - npc.x, player.y - npc.y);
+    if(dist < TILE*1.6) { startDialog(npc); return; }
+  }
+}
+
+function startDialog(npc) {
+  inDialog = true;
+  currentNPC = npc;
+  
+  let set = 'default';
+  if(npc.dialogs[game.state]) set = game.state;
+  else if(!npc.met && npc.dialogs.prologue) set = 'prologue';
+  else if(npc.met && npc.dialogs.clue_hunt) set = 'clue_hunt';
+  else if(npc.met && npc.dialogs.market_lead) set = 'market_lead';
+  else if(npc.met && npc.dialogs.station_clue) set = 'station_clue';
+  else if(!npc.met && npc.dialogs.first) set = 'first';
+  else if(npc.met && npc.dialogs.repeat) set = 'repeat';
+  else if(npc.dialogs.default) set = 'default';
+  
+  dialogQueue = JSON.parse(JSON.stringify(npc.dialogs[set] || npc.dialogs.default || [{text:'...', trans:''}]));
+  npc.met = true;
+  
+  if(npc.id === 'gurukkal' && game.state === 'prologue') {
+    setTimeout(() => setGameState('clue_hunt'), 600);
+  }
+  if(npc.id === 'kavitha' && game.state === 'clue_hunt') {
+    setTimeout(() => setGameState('market_lead'), 600);
+  }
+  if(npc.id === 'murugan' && game.state === 'market_lead') {
+    setTimeout(() => setGameState('station_clue'), 600);
+  }
+  if(npc.id === 'inspector' && flags.police_help && game.state === 'station_clue') {
+    setTimeout(() => setGameState('confrontation'), 600);
+  }
+  
+  advanceDialog();
+}
+
+function advanceDialog() {
+  let box = document.getElementById('dialog-box');
+  let choicesDiv = document.getElementById('choice-container');
+  choicesDiv.innerHTML = '';
+  
+  if(dialogQueue.length === 0) {
+    inDialog = false;
+    box.style.display = 'none';
+    currentNPC = null;
+    return;
+  }
+  
+  let line = dialogQueue.shift();
+  box.style.display = 'block';
+  document.getElementById('dialog-avatar').textContent = currentNPC.sprite;
+  document.getElementById('dialog-name').textContent = currentNPC.name;
+  document.getElementById('dialog-role').textContent = currentNPC.role;
+  
+  let textEl = document.getElementById('dialog-text');
+  let transEl = document.getElementById('dialog-translation');
+  textEl.textContent = '';
+  transEl.textContent = line.trans ? '"' + line.trans + '"' : '';
+  transEl.style.display = line.trans ? 'block' : 'none';
+  
+  if(typingInterval) clearInterval(typingInterval);
+  let i = 0;
+   typingInterval = setInterval(() => {
+    if(i < line.text.length) {
+      textEl.textContent += line.text[i];
+      i++;
+    } else {
+      clearInterval(typingInterval);
+    }
+  }, 18);
+  
+  if(line.choices) {
+    line.choices.forEach(choice => {
+      let btn = document.createElement('button');
+      btn.textContent = choice.text;
+      btn.style.cssText = 'background:rgba(123,44,191,0.25);border:1px solid #7b2cbf;color:#e0aaff;padding:10px 15px;border-radius:8px;cursor:pointer;font-size:13px;text-align:left;transition:all 0.2s;font-family:inherit;';
+      btn.onmouseenter = function() { this.style.background = 'rgba(123,44,191,0.45)'; };
+      btn.onmouseleave = function() { this.style.background = 'rgba(123,44,191,0.25)'; };
+      btn.onclick = function() {
+        if(choice.action) choice.action();
+        if(choice.next && currentNPC.dialogs[choice.next]) {
+          dialogQueue = JSON.parse(JSON.stringify(currentNPC.dialogs[choice.next]));
+        }
+        advanceDialog();
+      };
+      choicesDiv.appendChild(btn);
+    });
+  }
+  
+  if(line.action) line.action();
+}
+
+function setGameState(state) {
+  if(BANNERS[state] && game.state !== state) {
+    game.state = state;
+    objective = BANNERS[state].objective || 'Continue investigating';
+    showBanner(BANNERS[state]);
+    addJournal('Chapter: ' + BANNERS[state].title);
+  }
+}
+
+function showBanner(banner) {
+  let el = document.getElementById('story-banner');
+  document.getElementById('banner-icon').textContent = banner.icon;
+  document.getElementById('banner-title').textContent = banner.title;
+  document.getElementById('banner-text').textContent = banner.text;
+  el.style.display = 'block';
+  game.running = false;
+}
+
+function closeBanner() {
+  document.getElementById('story-banner').style.display = 'none';
+  game.running = true;
+}
+
+function closePanels() {
+  document.getElementById('journal-panel').style.display = 'none';
+  document.getElementById('inv-panel').style.display = 'none';
+}
+
+function toggleJournal() {
+  let panel = document.getElementById('journal-panel');
+  let invPanel = document.getElementById('inv-panel');
+  if(panel.style.display === 'block') {
+    panel.style.display = 'none';
+    return;
+  }
+  panel.style.display = 'block';
+  invPanel.style.display = 'none';
+  
+  let entries = document.getElementById('journal-entries');
+  if(journal.length === 0) {
+    entries.innerHTML = '<div style="color:#666;text-align:center;padding:15px;">No entries yet. Explore and talk to people.</div>';
+  } else {
+    entries.innerHTML = journal.slice().reverse().map(j => 
+      '<div style="margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #222;"><span style="color:#7b2cbf;font-size:11px;">🕐 ' + j.time + '</span><div style="color:#ccc;margin-top:3px;">' + j.text + '</div></div>'
+    ).join('');
+  }
+  
+  let bars = document.getElementById('relationship-bars');
+  bars.innerHTML = Object.entries(relationships).map(([name,val]) => {
+    let color = val > 60 ? '#90EE90' : val > 30 ? '#ffd700' : '#ff6b6b';
+    let label = name.charAt(0).toUpperCase() + name.slice(1);
+    return '<div style="display:flex;align-items:center;gap:8px;"><span style="width:75px;font-size:11px;color:#aaa;">' + label + '</span><div style="flex:1;height:8px;background:#222;border-radius:4px;overflow:hidden;"><div style="width:' + val + '%;height:100%;background:' + color + ';transition:width 0.3s;"></div></div><span style="width:28px;font-size:11px;color:' + color + ';">' + val + '</span></div>';
+  }).join('');
+}
+
+function toggleInventory() {
+  let panel = document.getElementById('inv-panel');
+  let journalPanel = document.getElementById('journal-panel');
+  if(panel.style.display === 'block') {
+    panel.style.display = 'none';
+    return;
+  }
+  panel.style.display = 'block';
+  journalPanel.style.display = 'none';
+  
+  let list = document.getElementById('inv-list');
+  let invItems = Object.entries(inventory);
+  if(invItems.length === 0) {
+    list.innerHTML = '<div style="color:#666;text-align:center;padding:15px;">Your bag is empty.</div>';
+  } else {
+    list.innerHTML = invItems.map(([id,item]) => 
+      '<div style="display:flex;align-items:center;gap:10px;padding:8px;border-bottom:1px solid #222;"><span style="font-size:22px;">' + item.icon + '</span><div><div style="color:#a0eaff;font-weight:bold;font-size:13px;">' + item.name + '</div><div style="color:#666;font-size:11px;margin-top:2px;">' + item.desc + '</div></div></div>'
+    ).join('');
+  }
+  
+  document.getElementById('inv-stats').innerHTML = 
+    'Items: ' + invItems.length + ' &nbsp;|&nbsp; Money: ₹' + game.money + ' &nbsp;|&nbsp; Karma: ' + game.karma;
+}
+
+function triggerEnding(type) {
+  game.running = false;
+  game.ended = true;
+  let screen = document.getElementById('ending-screen');
+  screen.style.display = 'flex';
+  
+  let icon = document.getElementById('ending-icon');
+  let title = document.getElementById('ending-title');
+  let desc = document.getElementById('ending-desc');
+  let stats = document.getElementById('ending-stats');
+  
+  if(type === 'justice') {
+    icon.textContent = '⚖️';
+    title.textContent = 'Justice Served';
+    desc.textContent = 'With Inspector Ramesh\'s help, you recovered the veena and arrested Mr. Venkat. The Arubathimoavar festival proceeded at dawn, the veena\'s sacred notes filling the temple air. Your grandmother would be proud. The thief faces trial, and the temple is safe once more.';
+  } else if(type === 'mercy') {
+    icon.textContent = '🕊️';
+    title.textContent = 'The Merciful Path';
+    desc.textContent = 'You convinced Venkat to return the veena voluntarily, promising to help him find legal buyers for his other artifacts. The festival was saved, and a man found redemption. Sometimes compassion is the greater victory. The veena sang at dawn, and so did your heart.';
+  } else if(type === 'alone') {
+    icon.textContent = '🎯';
+    title.textContent = 'Lone Wolf';
+    desc.textContent = 'You snuck into the storeroom alone and retrieved the veena without police help. Dangerous, but effective. The festival began on time — though Inspector Ramesh was not pleased with your methods. Some victories require walking alone.';
+  } else if(type === 'too_late') {
+    icon.textContent = '🌅';
+    title.textContent = 'Dawn Breaks';
+    desc.textContent = 'Time ran out. The festival began without the veena, its absence a hollow ache in every devotee\'s heart. But you will not stop searching. Some mysteries demand more than one night to solve. The veena is still out there... somewhere.';
+  }
+  
+  let h = Math.floor(game.time/60);
+  let m = Math.floor(game.time%60);
+  let timeStr = (h%12||12) + ':' + m.toString().padStart(2,'0') + (h<12?' AM':' PM');
+  stats.innerHTML = '<div>⏰ Time: ' + timeStr + '</div><div>💰 Money: ₹' + game.money + '</div><div>☯️ Karma: ' + game.karma + '</div><div>⚡ Energy: ' + Math.floor(game.energy) + '%</div>';
+}
+
+function loop() {
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
+
+function startGame() {
+  document.getElementById('title-screen').style.display = 'none';
+  genMap();
+  createEntities();
+  game.running = true;
+  
+  setTimeout(() => {
+    showBanner(BANNERS.prologue);
+    addJournal('Arrived at Mylapore. The sacred veena has been stolen from Kapaleeshwarar Temple on the eve of the festival.');
+    addJournal('Objective: Enter the temple and speak to Gurukkal, the head priest.');
+  }, 400);
+  
+  loop();
+}
 </script>
 </body>
 </html>
