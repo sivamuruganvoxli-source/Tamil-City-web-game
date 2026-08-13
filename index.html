@@ -89,9 +89,9 @@
   #scoreBox .label{ font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--marigold); }
   #scoreBox .value{ font-family:'Baloo Tamma 2',sans-serif; font-weight:800; font-size:26px; color:var(--cream); }
 
-  #missionBox{ top:14px; left:50%; transform:translateX(-50%); padding:8px 18px; text-align:center; min-width:200px; }
+  #missionBox{ top:14px; left:50%; transform:translateX(-50%); padding:8px 18px; text-align:center; min-width:220px; max-width:78vw; }
   #missionBox .label{ font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--teal); }
-  #missionBox .value{ font-family:'Baloo Tamma 2',sans-serif; font-weight:700; font-size:15px; color:var(--cream); }
+  #missionBox .value{ font-family:'Baloo Tamma 2',sans-serif; font-weight:700; font-size:14px; color:var(--cream); line-height:1.4; }
   #compass{
     width:22px; height:22px; margin:4px auto 0; transition: transform .15s linear;
   }
@@ -147,7 +147,8 @@
     <div class="rules">
       <div>🚗 <b>Drive</b> freely through a Tamil-style city of gopurams, kolam streets &amp; Chettinad houses.</div>
       <div>🪙 <b>Collect</b> golden coins scattered on the roads.</div>
-      <div>📍 <b>Deliver</b> — follow the teal beacon for delivery runs, or the gold → red beacons for passenger pickup &amp; drop-off.</div>
+      <div>📍 <b>Deliver</b> — follow the teal beacon for delivery runs, or the gold → red beacons for passenger pickup &amp; drop-off. Longer trips pay bigger fares (₹).</div>
+      <div>🏆 <b>Rank up</b> — every 4 completed trips promotes you, from Trainee Driver up to Chennai Legend.</div>
       <div>⌨️ Desktop: <b>Arrow keys / WASD</b> to drive. 📱 Mobile: use the on-screen pedals.</div>
     </div>
     <button id="playBtn">ஆட்டத்தை தொடங்கு · Start Drive</button>
@@ -162,6 +163,8 @@
     <div class="value" id="scoreVal">0</div>
     <div class="label" style="margin-top:6px;">Trips</div>
     <div class="value" id="tripsVal" style="font-size:18px;">0</div>
+    <div class="label" style="margin-top:6px;">Rank</div>
+    <div class="value" id="rankVal" style="font-size:13px;">Trainee Driver</div>
   </div>
   <div id="missionBox" class="panel">
     <div class="label" id="missionLabel">Mission · Delivery</div>
@@ -509,13 +512,35 @@ let beacon = null;
 let deliveries = 0;
 let missionType = 'delivery';   // 'delivery' | 'passenger'
 let missionStage = 0;           // passenger: 0 = go to pickup, 1 = go to drop-off
+let currentArea = null;
+let currentReward = 0;
 const missionLabelEl = document.getElementById('missionLabel');
 const tripsVal = document.getElementById('tripsVal');
+const rankVal = document.getElementById('rankVal');
+
+const areaNames = [
+  {ta:'மீனாட்சி நகர்', en:'Meenakshi Nagar'},
+  {ta:'கடற்கரை தெரு', en:'Kadarkarai St'},
+  {ta:'காவேரி சந்து', en:'Kaveri Lane'},
+  {ta:'தஞ்சை சந்தை', en:'Thanjai Market'},
+  {ta:'அண்ணா சாலை', en:'Anna Salai'},
+  {ta:'பாரதி பேட்டை', en:'Bharathi Pettai'},
+  {ta:'வள்ளுவர் குடியிருப்பு', en:'Valluvar Colony'},
+  {ta:'கபிலர் தெரு', en:'Kabilar St'},
+  {ta:'செம்மொழி நகர்', en:'Semmozhi Nagar'},
+  {ta:'பொன்னி வீதி', en:'Ponni Veedhi'}
+];
+const ranks = ['Trainee Driver','Local Cabbie','City Runner','Road Captain','Auto King','Chennai Legend'];
+function updateRank(){
+  rankVal.textContent = ranks[Math.min(ranks.length-1, Math.floor(deliveries/4))];
+}
+updateRank();
 
 function randomBuildingPoint(){
   const b = pick(buildings);
   return { x:(b.minX+b.maxX)/2, z:(b.minZ+b.maxZ)/2 };
 }
+function fareFor(base, dist){ return base + Math.round(Math.min(dist,140)*0.55); }
 
 function placeBeacon(x,z,color){
   if(beacon){ scene.remove(beacon); }
@@ -531,17 +556,23 @@ function newMission(){
   // alternate mission types so both show up regularly
   missionType = Math.random() < 0.5 ? 'delivery' : 'passenger';
   missionStage = 0;
+  currentArea = pick(areaNames);
 
   if(missionType === 'delivery'){
     const p = randomBuildingPoint();
     placeBeacon(p.x, p.z, 0x2E7D6B); // teal
+    const dist = Math.hypot(p.x-carState.x, p.z-carState.z);
+    currentReward = fareFor(40, dist);
     missionLabelEl.textContent = 'Mission · Delivery';
-    document.getElementById('missionVal').textContent = 'Reach the teal beacon';
+    document.getElementById('missionVal').textContent =
+      `Deliver a parcel to ${currentArea.ta} (${currentArea.en}) · ₹${currentReward}`;
   } else {
     const p = randomBuildingPoint();
     placeBeacon(p.x, p.z, 0xF4C542); // gold = pickup
+    currentReward = 20;
     missionLabelEl.textContent = 'Mission · Passenger';
-    document.getElementById('missionVal').textContent = 'Pick up the passenger (gold beacon)';
+    document.getElementById('missionVal').textContent =
+      `Pick up a rider near ${currentArea.ta} (${currentArea.en})`;
   }
 }
 newMission();
@@ -559,7 +590,7 @@ function addScore(n, label){
   addScore._t = setTimeout(()=>toastEl.classList.remove('show'), 700);
 }
 
-// ---------- Minimap ----------
+// ---------- Minimap (heading-up: car always points up, world rotates around it) ----------
 const mmCanvas = document.getElementById('minimap');
 const mmCtx = mmCanvas.getContext('2d');
 function drawMinimap(){
@@ -569,48 +600,63 @@ function drawMinimap(){
   mmCtx.beginPath(); mmCtx.arc(S/2,S/2,S/2,0,Math.PI*2); mmCtx.fill();
   const scale = 0.9;
   const range = 90; // world units shown radius
+  const unit = (S/(2*range))*scale;
+
+  // World-space points are converted to "north-up, car-centered" offsets first
+  // (dx = +x is east/right, dy = -z so that world-forward is screen-up),
+  // then the whole canvas is rotated by -carState.angle so the car's own
+  // heading always renders as straight up, like a GPS nav / GTA minimap.
   mmCtx.save();
   mmCtx.beginPath(); mmCtx.arc(S/2,S/2,S/2,0,Math.PI*2); mmCtx.clip();
-  const unit = (S/(2*range))*scale;
-  // world -> map: +x is right (unchanged), +z is "forward/up" on screen so it must
-  // subtract from screen-y (canvas y grows downward). Car is always drawn at map center.
-  const cx = S/2;
-  const cz = S/2;
-  function mapX(wx){ return cx + (wx - carState.x)*unit; }
-  function mapY(wz){ return cz - (wz - carState.z)*unit; }
+  mmCtx.translate(S/2, S/2);
+  mmCtx.rotate(-carState.angle);
+
+  function local(wx, wz){
+    return { x:(wx-carState.x)*unit, y:-(wz-carState.z)*unit };
+  }
 
   mmCtx.strokeStyle = 'rgba(233,198,106,0.55)';
   mmCtx.lineWidth = 3;
   roadPositions.forEach(z=>{
-    mmCtx.beginPath();
-    mmCtx.moveTo(mapX(-WORLD), mapY(z));
-    mmCtx.lineTo(mapX(WORLD), mapY(z));
-    mmCtx.stroke();
+    const a=local(-WORLD,z), b=local(WORLD,z);
+    mmCtx.beginPath(); mmCtx.moveTo(a.x,a.y); mmCtx.lineTo(b.x,b.y); mmCtx.stroke();
   });
   roadPositions.forEach(x=>{
-    mmCtx.beginPath();
-    mmCtx.moveTo(mapX(x), mapY(-WORLD));
-    mmCtx.lineTo(mapX(x), mapY(WORLD));
-    mmCtx.stroke();
+    const a=local(x,-WORLD), b=local(x,WORLD);
+    mmCtx.beginPath(); mmCtx.moveTo(a.x,a.y); mmCtx.lineTo(b.x,b.y); mmCtx.stroke();
   });
-  // mission
+
   if(missionTarget){
     mmCtx.fillStyle = missionType==='delivery' ? '#2E7D6B' : (missionStage===0 ? '#F4C542' : '#B33A2E');
-    mmCtx.beginPath(); mmCtx.arc(mapX(missionTarget.x), mapY(missionTarget.z), 5, 0, Math.PI*2); mmCtx.fill();
+    const p = local(missionTarget.x, missionTarget.z);
+    mmCtx.beginPath(); mmCtx.arc(p.x,p.y,5,0,Math.PI*2); mmCtx.fill();
   }
-  // coins
   mmCtx.fillStyle = '#F4C542';
   coins.forEach(c=>{
-    mmCtx.beginPath(); mmCtx.arc(mapX(c.position.x), mapY(c.position.z), 2.4, 0, Math.PI*2); mmCtx.fill();
+    const p = local(c.position.x, c.position.z);
+    mmCtx.beginPath(); mmCtx.arc(p.x,p.y,2.4,0,Math.PI*2); mmCtx.fill();
   });
   mmCtx.restore();
-  // car marker (center, fixed)
+
+  // "N" reference marker — rotates around the rim to show true world-north
+  // relative to current heading, same idea as a phone GPS compass.
   mmCtx.save();
   mmCtx.translate(S/2,S/2);
-  mmCtx.rotate(carState.angle);
+  mmCtx.rotate(-carState.angle);
+  mmCtx.fillStyle = 'rgba(246,239,224,0.85)';
+  mmCtx.font = "bold 11px sans-serif";
+  mmCtx.textAlign = 'center'; mmCtx.textBaseline = 'middle';
+  mmCtx.fillText('N', 0, -S/2+11);
+  mmCtx.restore();
+
+  // car marker — fixed at center, always pointing straight up
+  mmCtx.save();
+  mmCtx.translate(S/2,S/2);
   mmCtx.fillStyle = '#F4A340';
+  mmCtx.strokeStyle = '#1B1035'; mmCtx.lineWidth = 1.5;
   mmCtx.beginPath();
-  mmCtx.moveTo(0,-8); mmCtx.lineTo(6,7); mmCtx.lineTo(-6,7); mmCtx.closePath(); mmCtx.fill();
+  mmCtx.moveTo(0,-8); mmCtx.lineTo(6,7); mmCtx.lineTo(-6,7); mmCtx.closePath();
+  mmCtx.fill(); mmCtx.stroke();
   mmCtx.restore();
 }
 
@@ -710,29 +756,39 @@ function update(dt){
     let rel = targetAngle - carState.angle;
     compassEl.style.transform = `rotate(${rel}rad)`;
     if(missionType === 'delivery'){
-      document.getElementById('missionVal').textContent = `Delivery ${dist.toFixed(0)}m away`;
+      document.getElementById('missionVal').textContent =
+        `To ${currentArea.ta} (${currentArea.en}) · ${dist.toFixed(0)}m · ₹${currentReward}`;
       if(dist < 6){
         deliveries++;
         tripsVal.textContent = deliveries;
-        addScore(50,'delivery');
+        updateRank();
+        addScore(currentReward,'delivery');
         newMission();
       }
     } else {
       if(missionStage === 0){
-        document.getElementById('missionVal').textContent = `Pickup ${dist.toFixed(0)}m away`;
+        document.getElementById('missionVal').textContent =
+          `Pickup near ${currentArea.ta} · ${dist.toFixed(0)}m away`;
         if(dist < 6){
           missionStage = 1;
           addScore(20,'pickup');
           const p = randomBuildingPoint();
+          currentArea = pick(areaNames);
+          const dropDist = Math.hypot(p.x-carState.x, p.z-carState.z);
+          currentReward = fareFor(60, dropDist);
           placeBeacon(p.x, p.z, 0xB33A2E); // red = drop-off
-          document.getElementById('missionVal').textContent = 'Drop off the passenger (red beacon)';
+          missionLabelEl.textContent = 'Mission · Passenger (drop-off)';
+          document.getElementById('missionVal').textContent =
+            `Drop off at ${currentArea.ta} (${currentArea.en}) · ₹${currentReward}`;
         }
       } else {
-        document.getElementById('missionVal').textContent = `Drop-off ${dist.toFixed(0)}m away`;
+        document.getElementById('missionVal').textContent =
+          `To ${currentArea.ta} · ${dist.toFixed(0)}m · ₹${currentReward}`;
         if(dist < 6){
           deliveries++;
           tripsVal.textContent = deliveries;
-          addScore(80,'trip');
+          updateRank();
+          addScore(currentReward,'trip');
           newMission();
         }
       }
