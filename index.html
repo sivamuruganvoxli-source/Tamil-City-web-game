@@ -1,191 +1,715 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ta">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Tamil City</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>தமிழ் நகர் ஓட்டம் — Tamil City Drive</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+Tamma+2:wght@500;700;800&family=Catamaran:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#10151b;font-family:system-ui,Arial,sans-serif;touch-action:none}
-canvas{display:block;width:100%;height:100%;background:#8fcf7a}
-button{font:inherit;border:0;cursor:pointer}
-#hud{position:fixed;inset:0;pointer-events:none;color:#fff}
-.panel{background:rgba(12,18,25,.82);border:1px solid rgba(255,255,255,.15);box-shadow:0 8px 30px #0005;border-radius:14px}
-#stats{position:absolute;top:12px;left:12px;padding:10px 13px;min-width:210px}
-.stat{margin:4px 0;font-size:13px}.bar{display:inline-block;width:105px;height:8px;background:#26313b;border-radius:5px;vertical-align:middle;overflow:hidden}.fill{height:100%;width:100%;background:#5ee17d}
-#mission{position:absolute;top:12px;left:50%;transform:translateX(-50%);padding:10px 16px;text-align:center;max-width:430px;font-size:13px}
-#map{position:absolute;top:12px;right:12px;width:145px;height:100px;padding:4px}
-#map canvas{width:100%;height:100%;border-radius:9px}
-#toast{position:absolute;top:126px;left:50%;transform:translateX(-50%);padding:9px 14px;opacity:0;transition:.25s;white-space:nowrap}
-#menu{position:fixed;inset:0;background:linear-gradient(135deg,#09202aee,#35120eee);display:flex;align-items:center;justify-content:center;z-index:5}
-.menuBox{width:min(520px,90vw);padding:30px;text-align:center;color:#fff;background:#111a22ee;border:1px solid #ffffff20;border-radius:24px;box-shadow:0 25px 80px #0009}
-h1{font-size:clamp(42px,10vw,72px);margin:0 0 5px;letter-spacing:-3px}h1 span{color:#ffca55}
-.subtitle{opacity:.8;margin-bottom:25px}.mainBtn{width:100%;padding:14px;margin:7px 0;border-radius:12px;background:#ffb83e;color:#241600;font-weight:800}.secondary{background:#293744;color:#fff}
-#controls{position:absolute;inset:0;pointer-events:none}
-#joy{position:absolute;left:22px;bottom:25px;width:132px;height:132px;border-radius:50%;background:#ffffff18;border:2px solid #fff3;pointer-events:auto}
-#knob{position:absolute;width:55px;height:55px;border-radius:50%;background:#ffffff45;left:37px;top:37px}
-.action{position:absolute;bottom:30px;width:64px;height:64px;border-radius:50%;background:#ffffff22;border:2px solid #fff4;color:#fff;font-weight:800;pointer-events:auto}
-#jump{right:118px}#act{right:38px;background:#ffb83e;color:#241600}
-#vehicle{right:118px;bottom:105px;font-size:11px}
-#pause{right:15px;top:130px;width:44px;height:44px;border-radius:12px;background:#ffffff22;color:#fff;pointer-events:auto}
-#help{font-size:12px;opacity:.7;line-height:1.5;margin-top:15px}
-.hidden{display:none!important}
-@media(max-width:600px){
- #stats{min-width:165px;padding:7px 9px}.stat{font-size:11px}.bar{width:70px}
- #mission{top:12px;max-width:180px;font-size:11px}
- #map{width:105px;height:74px;top:65px}
- #toast{top:145px;font-size:12px}
-}
+  :root{
+    --ink:#1B1035;
+    --dusk:#3A1A4A;
+    --marigold:#F4A340;
+    --marigold-deep:#D9832A;
+    --temple-red:#B33A2E;
+    --teal:#1F7A6C;
+    --cream:#F6EFE0;
+    --gold-line: rgba(244,163,64,0.35);
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+  html,body{
+    margin:0; padding:0; width:100%; height:100%; overflow:hidden;
+    background:var(--ink); font-family:'Catamaran', sans-serif; color:var(--cream);
+    touch-action:none; overscroll-behavior:none;
+  }
+  #gameCanvas{ position:fixed; inset:0; display:block; width:100%; height:100%; }
+
+  /* ---------- Start Screen ---------- */
+  #startScreen{
+    position:fixed; inset:0; z-index:50;
+    display:flex; align-items:center; justify-content:center;
+    background:
+      radial-gradient(ellipse at 50% 120%, rgba(244,163,64,0.35), transparent 60%),
+      linear-gradient(180deg, var(--ink) 0%, var(--dusk) 55%, #7A3350 80%, var(--marigold) 130%);
+  }
+  .archFrame{
+    position:relative; width:min(92vw, 460px); padding:38px 30px 30px;
+    text-align:center;
+    border: 2px solid var(--gold-line);
+    border-radius: 180px 180px 18px 18px;
+    background: rgba(27,16,53,0.55);
+    backdrop-filter: blur(6px);
+    box-shadow: 0 0 0 8px rgba(244,163,64,0.06), 0 20px 60px rgba(0,0,0,0.5);
+  }
+  .archFrame::before{
+    content:"";
+    position:absolute; left:50%; top:-14px; transform:translateX(-50%);
+    width:70%; height:28px;
+    background: repeating-linear-gradient(90deg, var(--marigold) 0 10px, var(--temple-red) 10px 20px);
+    border-radius: 100px 100px 0 0;
+    opacity:0.9;
+  }
+  .kicker{
+    letter-spacing:.35em; text-transform:uppercase; font-size:11px;
+    color:var(--marigold); font-weight:700; margin-bottom:10px;
+  }
+  .title{
+    font-family:'Baloo Tamma 2', sans-serif; font-weight:800;
+    font-size: clamp(30px, 8vw, 44px); line-height:1.15; margin:0 0 4px;
+    color:var(--cream); text-shadow: 0 2px 0 rgba(0,0,0,0.35);
+  }
+  .subtitle{
+    font-family:'Baloo Tamma 2', sans-serif; font-weight:500;
+    font-size: clamp(14px, 3.6vw, 17px); color:var(--marigold); margin:0 0 20px;
+  }
+  .rules{
+    text-align:left; font-size:13.5px; line-height:1.7; color:rgba(246,239,224,0.85);
+    background:rgba(0,0,0,0.2); border:1px solid var(--gold-line); border-radius:14px;
+    padding:14px 16px; margin-bottom:22px;
+  }
+  .rules b{ color:var(--marigold); }
+  #playBtn{
+    font-family:'Baloo Tamma 2', sans-serif; font-weight:700; font-size:19px;
+    padding:14px 44px; border-radius:100px; border:none; cursor:pointer;
+    background: linear-gradient(180deg, var(--marigold) 0%, var(--marigold-deep) 100%);
+    color:#2A1400; box-shadow: 0 8px 0 #8B5210, 0 14px 24px rgba(0,0,0,0.4);
+    transition: transform .08s ease;
+  }
+  #playBtn:active{ transform: translateY(6px); box-shadow: 0 2px 0 #8B5210; }
+  .hint{ margin-top:14px; font-size:11.5px; color:rgba(246,239,224,0.5); }
+
+  /* ---------- HUD ---------- */
+  #hud{ position:fixed; inset:0; z-index:20; pointer-events:none; display:none; }
+  .panel{
+    position:absolute; background:rgba(27,16,53,0.62); border:1px solid var(--gold-line);
+    border-radius:14px; backdrop-filter: blur(4px);
+  }
+  #scoreBox{ top:14px; left:14px; padding:10px 16px; }
+  #scoreBox .label{ font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--marigold); }
+  #scoreBox .value{ font-family:'Baloo Tamma 2',sans-serif; font-weight:800; font-size:26px; color:var(--cream); }
+
+  #missionBox{ top:14px; left:50%; transform:translateX(-50%); padding:8px 18px; text-align:center; min-width:200px; }
+  #missionBox .label{ font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--teal); }
+  #missionBox .value{ font-family:'Baloo Tamma 2',sans-serif; font-weight:700; font-size:15px; color:var(--cream); }
+  #compass{
+    width:22px; height:22px; margin:4px auto 0; transition: transform .15s linear;
+  }
+
+  #speedBox{ bottom:14px; left:14px; padding:8px 16px; display:flex; align-items:baseline; gap:6px; }
+  #speedBox .value{ font-family:'Baloo Tamma 2',sans-serif; font-weight:800; font-size:24px; color:var(--marigold); }
+  #speedBox .unit{ font-size:11px; color:rgba(246,239,224,0.7); }
+
+  #minimapWrap{
+    position:absolute; top:14px; right:14px; width:120px; height:120px; border-radius:50%;
+    border:3px solid var(--marigold); box-shadow: 0 0 0 3px rgba(179,58,46,0.5), 0 6px 20px rgba(0,0,0,0.5);
+    overflow:hidden; background:#0f0a1f;
+  }
+  #minimap{ width:100%; height:100%; display:block; }
+
+  #toast{
+    position:absolute; top:44%; left:50%; transform:translate(-50%,-50%) scale(0.9);
+    font-family:'Baloo Tamma 2',sans-serif; font-weight:800; font-size:28px;
+    color:var(--marigold); text-shadow: 0 3px 10px rgba(0,0,0,0.6); opacity:0; pointer-events:none;
+    transition: opacity .2s ease, transform .2s ease;
+  }
+  #toast.show{ opacity:1; transform:translate(-50%,-50%) scale(1); }
+
+  /* ---------- Touch controls ---------- */
+  #touchControls{ position:fixed; inset:0; z-index:25; pointer-events:none; display:none; }
+  .tbtn{
+    position:absolute; pointer-events:auto; display:flex; align-items:center; justify-content:center;
+    border-radius:50%; user-select:none; font-family:'Baloo Tamma 2',sans-serif; font-weight:700;
+    color:var(--cream); background:rgba(27,16,53,0.55); border:2px solid var(--gold-line);
+    -webkit-user-select:none;
+  }
+  #btnGas{ width:92px; height:92px; right:22px; bottom:26px; font-size:14px; background:rgba(31,122,108,0.55); border-color:rgba(31,122,108,0.8); }
+  #btnBrake{ width:70px; height:70px; right:120px; bottom:20px; font-size:12px; background:rgba(179,58,46,0.55); border-color:rgba(179,58,46,0.8); }
+  #btnLeft{ width:66px; height:66px; left:20px; bottom:60px; font-size:22px; }
+  #btnRight{ width:66px; height:66px; left:96px; bottom:60px; font-size:22px; }
+  .tbtn.active{ background:rgba(244,163,64,0.55); border-color:var(--marigold); }
+
+  @media (min-width: 820px){
+    #touchControls{ display:none !important; }
+  }
 </style>
 </head>
 <body>
-<canvas id="game"></canvas>
 
-<div id="menu">
- <div class="menuBox">
-  <h1>Tamil <span>City</span></h1>
-  <div class="subtitle">Explore • Drive • Complete Missions • Earn ₹</div>
-  <button class="mainBtn" id="play">PLAY CITY</button>
-  <button class="mainBtn secondary" id="how">HOW TO PLAY</button>
-  <div id="help" class="hidden">
-   Desktop: WASD / Arrow keys to move • E to interact • Space to jump • P to pause<br>
-   Mobile: use the joystick and action buttons.<br><br>
-   Explore the city and complete the yellow mission markers.
+<canvas id="gameCanvas"></canvas>
+
+<!-- Start Screen -->
+<div id="startScreen">
+  <div class="archFrame">
+    <div class="kicker">Chettinad Motors Presents</div>
+    <div class="title">தமிழ் நகர்<br>ஓட்டம்</div>
+    <div class="subtitle">Tamil City Drive — an open-road adventure</div>
+    <div class="rules">
+      <div>🚗 <b>Drive</b> freely through a Tamil-style city of gopurams, kolam streets &amp; Chettinad houses.</div>
+      <div>🪙 <b>Collect</b> golden coins scattered on the roads.</div>
+      <div>📍 <b>Deliver</b> — follow the glowing beacon to complete delivery missions and score points.</div>
+      <div>⌨️ Desktop: <b>Arrow keys / WASD</b> to drive. 📱 Mobile: use the on-screen pedals.</div>
+    </div>
+    <button id="playBtn">ஆட்டத்தை தொடங்கு · Start Drive</button>
+    <div class="hint">Works on desktop, tablet &amp; phone</div>
   </div>
- </div>
 </div>
 
-<div id="hud" class="hidden">
- <div id="stats" class="panel">
-  <div class="stat">❤️ Health <span class="bar"><i id="health" class="fill"></i></span></div>
-  <div class="stat">⚡ Energy <span class="bar"><i id="energy" class="fill"></i></span></div>
-  <div class="stat">💰 ₹<b id="money">100</b></div>
-  <div class="stat">🕐 <b id="clock">08:00</b></div>
-  <div class="stat">🚗 <b id="speed">Walk</b></div>
- </div>
- <div id="mission" class="panel">MISSION<br><b id="missionText">Find the Tea Kadai</b></div>
- <div id="map" class="panel"><canvas id="mini"></canvas></div>
- <div id="toast" class="panel"></div>
- <button id="pause">Ⅱ</button>
- <div id="controls">
-  <div id="joy"><div id="knob"></div></div>
-  <button class="action" id="jump">JUMP</button>
-  <button class="action" id="act">E</button>
-  <button class="action" id="vehicle">CAR</button>
- </div>
+<!-- HUD -->
+<div id="hud">
+  <div id="scoreBox" class="panel">
+    <div class="label">Score</div>
+    <div class="value" id="scoreVal">0</div>
+  </div>
+  <div id="missionBox" class="panel">
+    <div class="label" id="missionLabel">Mission</div>
+    <div class="value" id="missionVal">Drive to the beacon</div>
+    <svg id="compass" viewBox="0 0 24 24"><polygon points="12,2 19,20 12,15 5,20" fill="#F4A340"/></svg>
+  </div>
+  <div id="speedBox" class="panel">
+    <div class="value" id="speedVal">0</div>
+    <div class="unit">km/h</div>
+  </div>
+  <div id="minimapWrap"><canvas id="minimap" width="200" height="200"></canvas></div>
+  <div id="toast">+50</div>
 </div>
 
+<!-- Touch controls -->
+<div id="touchControls">
+  <div class="tbtn" id="btnLeft">◀</div>
+  <div class="tbtn" id="btnRight">▶</div>
+  <div class="tbtn" id="btnBrake">BRAKE</div>
+  <div class="tbtn" id="btnGas">GAS</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-const c=document.getElementById('game'),ctx=c.getContext('2d'), mini=document.getElementById('mini'),mx=mini.getContext('2d');
-let W,H,dpr=1,running=false,paused=false,last=0,keys={},touch={x:0,y:0};
-const world={w:3600,h:2400};
-const player={x:420,y:500,r:17,health:100,energy:100,money:100,vehicle:null,speed:180};
-const roads=[
- {x:0,y:400,w:3600,h:170},{x:0,y:1080,w:3600,h:180},{x:0,y:1750,w:3600,h:180},
- {x:350,y:0,w:180,h:2400},{x:1250,y:0,w:180,h:2400},{x:2200,y:0,w:180,h:2400},{x:3050,y:0,w:180,h:2400}
-];
-const buildings=[
- ['தேநீர் கடை',120,150,250,180,'#d98c46'],['பேக்கரி',600,130,270,190,'#e8b75d'],
- ['பள்ளி',900,620,350,260,'#d98f83'],['கல்லூரி',1500,620,420,280,'#a98bd1'],
- ['மருத்துவமனை',2350,170,410,240,'#d8e7e9'],['காய்கறி சந்தை',2750,620,350,250,'#82b86d'],
- ['உணவகம்',600,1320,300,220,'#d26e61'],['மருந்தகம்',1550,1320,300,220,'#73b8c7'],
- ['கோவில்',2450,1320,430,260,'#d99b4d'],['ரயில் நிலையம்',800,1980,520,220,'#7f8f9f'],
- ['பேருந்து நிலையம்',1450,1980,500,220,'#7896a8'],['பூங்கா',2300,1950,500,260,'#5eaa68']
-];
-const npcs=[];
-for(let i=0;i<26;i++) npcs.push({x:180+Math.random()*3200,y:250+Math.random()*1900,r:9,dx:Math.random()*2-1,dy:Math.random()*2-1,t:Math.random()*10});
-const missions=[
- {x:245,y:240,name:'Tea delivery',desc:'Go to the Tea Kadai',reward:120},
- {x:760,y:1410,name:'Food delivery',desc:'Deliver food to the customer',reward:180},
- {x:1660,y:760,name:'College visit',desc:'Reach the college',reward:100},
- {x:2940,y:760,name:'Market shopping',desc:'Visit the vegetable market',reward:140},
- {x:2550,y:1460,name:'Temple visit',desc:'Deliver an offering',reward:160},
- {x:1700,y:2070,name:'Bus trip',desc:'Reach the bus station',reward:220},
- {x:1040,y:2090,name:'Rail parcel',desc:'Deliver a parcel',reward:250},
- {x:2550,y:2080,name:'Park delivery',desc:'Find the park customer',reward:200}
-];
-let mi=0;
-const missionText=document.getElementById('missionText');
-function resize(){dpr=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;c.width=W*dpr;c.height=H*dpr;c.style.width=W+'px';c.style.height=H+'px';ctx.setTransform(dpr,0,0,dpr,0,0)}
-addEventListener('resize',resize);resize();
+(function(){
+"use strict";
 
-function save(){localStorage.tamilCity=JSON.stringify({player,mi})}
-function load(){try{let s=JSON.parse(localStorage.tamilCity);if(s){Object.assign(player,s.player);mi=s.mi||0}}catch(e){}}
-function toast(t){let el=document.getElementById('toast');el.textContent=t;el.style.opacity=1;clearTimeout(toast.t);toast.t=setTimeout(()=>el.style.opacity=0,2200)}
-function updateHud(){
- document.getElementById('money').textContent=Math.floor(player.money);
- document.getElementById('health').style.width=player.health+'%';
- document.getElementById('energy').style.width=player.energy+'%';
- document.getElementById('speed').textContent=player.vehicle?'🚗 '+Math.round(player.speed)+' km/h':'Walk';
- let m=missions[mi%missions.length];missionText.textContent=m.desc+' • ₹'+m.reward;
+/* ============================================================
+   TAMIL CITY DRIVE — single-file three.js open-world driver
+   ============================================================ */
+
+// ---------- Basic setup ----------
+const canvas = document.getElementById('gameCanvas');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias:true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x2a1840);
+scene.fog = new THREE.Fog(0x3a2050, 60, 260);
+
+const camera = new THREE.PerspectiveCamera(62, window.innerWidth/window.innerHeight, 0.1, 500);
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth/window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// ---------- Lights ----------
+const hemi = new THREE.HemisphereLight(0xffe3b0, 0x2a1840, 0.9);
+scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xffd8a0, 1.05);
+sun.position.set(60, 90, -40);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048,2048);
+sun.shadow.camera.left = -120; sun.shadow.camera.right = 120;
+sun.shadow.camera.top = 120; sun.shadow.camera.bottom = -120;
+sun.shadow.camera.far = 260;
+scene.add(sun);
+
+// ---------- Helpers ----------
+function canvasTexture(draw, w, h, repeatX, repeatY){
+  const c = document.createElement('canvas'); c.width=w; c.height=h;
+  const ctx = c.getContext('2d'); draw(ctx, w, h);
+  const tex = new THREE.CanvasTexture(c);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  if(repeatX || repeatY) tex.repeat.set(repeatX||1, repeatY||1);
+  return tex;
 }
-function nearestBuilding(){let best=null,bd=999;for(const b of buildings){let x=b[1]+b[3]/2,y=b[2]+b[4]/2,d=Math.hypot(player.x-x,player.y-y);if(d<bd){bd=d;best=b}}return {b:best,d:bd}}
-function interact(){
- let m=missions[mi%missions.length],d=Math.hypot(player.x-m.x,player.y-m.y);
- if(d<90){player.money+=m.reward;player.energy=Math.min(100,player.energy+15);toast('Mission complete! +₹'+m.reward);mi++;save();updateHud();return}
- let nb=nearestBuilding(); if(nb.d<110){toast(nb.b[0]+' • Press E to interact');}
+function textSprite(text, opts){
+  opts = opts||{};
+  const scale = opts.scale || 1;
+  const c = document.createElement('canvas');
+  const size = 256;
+  c.width = size*3; c.height = size;
+  const ctx = c.getContext('2d');
+  ctx.clearRect(0,0,c.width,c.height);
+  // plaque background
+  ctx.fillStyle = opts.bg || 'rgba(179,58,46,0.92)';
+  roundRect(ctx, 6,6,c.width-12,c.height-12, 26); ctx.fill();
+  ctx.strokeStyle = opts.border || '#F4A340'; ctx.lineWidth = 6;
+  roundRect(ctx, 6,6,c.width-12,c.height-12, 26); ctx.stroke();
+  ctx.fillStyle = opts.color || '#F6EFE0';
+  ctx.font = `700 ${opts.fontSize||72}px 'Baloo Tamma 2', sans-serif`;
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(text, c.width/2, c.height/2+4);
+  const tex = new THREE.CanvasTexture(c);
+  const mat = new THREE.SpriteMaterial({ map:tex, transparent:true });
+  const spr = new THREE.Sprite(mat);
+  spr.scale.set(9*scale, 3*scale, 1);
+  return spr;
 }
-function toggleVehicle(){
- if(player.vehicle){player.vehicle=null;player.speed=180;toast('Exited vehicle');return}
- let nearest=npcs.reduce((a,n)=>Math.hypot(n.x-player.x,n.y-player.y)<Math.hypot(a.x-player.x,a.y-player.y)?n:a,npcs[0]);
- if(Math.hypot(nearest.x-player.x,nearest.y-player.y)<70){player.vehicle='Auto';player.speed=420;toast('Entered Auto Rickshaw');}
- else toast('Move near a vehicle');
+function roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
 }
-function collide(x,y){
- if(x<20||y<20||x>world.w-20||y>world.h-20)return true;
- for(const b of buildings) if(x>b[1]-18&&x<b[1]+b[3]+18&&y>b[2]-18&&y<b[2]+b[4]+18)return true;
- return false;
+function rand(min,max){ return min + Math.random()*(max-min); }
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+// ---------- Ground ----------
+const groundTex = canvasTexture((ctx,w,h)=>{
+  ctx.fillStyle = '#4a7a3a'; ctx.fillRect(0,0,w,h);
+  ctx.fillStyle = 'rgba(60,100,48,0.5)';
+  for(let i=0;i<300;i++){
+    ctx.beginPath();
+    ctx.arc(Math.random()*w, Math.random()*h, rand(2,6), 0, Math.PI*2);
+    ctx.fill();
+  }
+}, 512,512, 40,40);
+const WORLD = 260;
+const ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(WORLD*2, WORLD*2),
+  new THREE.MeshStandardMaterial({ map: groundTex, roughness:1 })
+);
+ground.rotation.x = -Math.PI/2;
+ground.receiveShadow = true;
+scene.add(ground);
+
+// ---------- City grid ----------
+const BLOCK = 30;       // distance between road centers
+const ROAD_W = 9;       // road width
+const HALF_N = 4;       // blocks each direction from center => grid (2*HALF_N)+1 roads
+const roadTexH = canvasTexture((ctx,w,h)=>{
+  ctx.fillStyle = '#33303a'; ctx.fillRect(0,0,w,h);
+  ctx.fillStyle = '#e9c66a';
+  for(let x=20;x<w;x+=70) ctx.fillRect(x, h/2-4, 36, 8);
+  ctx.fillStyle = 'rgba(255,255,255,0.06)';
+  ctx.fillRect(0,6,w,4); ctx.fillRect(0,h-10,w,4);
+}, 256,64, 10,1);
+const roadTexV = canvasTexture((ctx,w,h)=>{
+  ctx.fillStyle = '#33303a'; ctx.fillRect(0,0,w,h);
+  ctx.fillStyle = '#e9c66a';
+  for(let y=20;y<h;y+=70) ctx.fillRect(w/2-4, y, 8, 36);
+  ctx.fillStyle = 'rgba(255,255,255,0.06)';
+  ctx.fillRect(6,0,4,h); ctx.fillRect(w-10,0,4,h);
+}, 64,256, 1,10);
+
+const roadPositions = [];
+for(let i=-HALF_N;i<=HALF_N;i++) roadPositions.push(i*BLOCK);
+
+const roadGroup = new THREE.Group();
+roadPositions.forEach(z=>{
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(WORLD*2, ROAD_W), new THREE.MeshStandardMaterial({map:roadTexH, roughness:0.9}));
+  m.rotation.x = -Math.PI/2; m.position.set(0, 0.02, z); m.receiveShadow = true;
+  roadGroup.add(m);
+});
+roadPositions.forEach(x=>{
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(ROAD_W, WORLD*2), new THREE.MeshStandardMaterial({map:roadTexV, roughness:0.9}));
+  m.rotation.x = -Math.PI/2; m.position.set(x, 0.021, 0); m.receiveShadow = true;
+  roadGroup.add(m);
+});
+scene.add(roadGroup);
+
+// ---------- Buildings ----------
+const buildingColors = [0xC96A45, 0xD9832A, 0x8B4A6B, 0x2E7D6B, 0xB33A2E, 0xE8A33D, 0x5B4A8A, 0x3E7CA6];
+const buildings = []; // {minX,maxX,minZ,maxZ}
+const buildingGroup = new THREE.Group();
+
+const gopuramLabels = ['மீனாட்சி','சென்னை','மதுரை','கோவில்','காவேரி','தஞ்சை','அண்ணா','பாரதி','கபிலர்','வள்ளுவர்'];
+
+for(let bi=-HALF_N;bi<HALF_N;bi++){
+  for(let bj=-HALF_N;bj<HALF_N;bj++){
+    const cx = bi*BLOCK + BLOCK/2;
+    const cz = bj*BLOCK + BLOCK/2;
+    // skip center block (spawn area) sometimes for a plaza
+    if(bi===0 && bj===0) continue;
+    const margin = ROAD_W/2 + 2;
+    const usable = BLOCK - margin*2;
+    const count = Math.random() < 0.4 ? 1 : (Math.random()<0.7?2:4);
+    const cell = count===1 ? [[0,0]] : count===2 ? [[-usable*0.22,0],[usable*0.22,0]] : [[-usable*0.22,-usable*0.22],[usable*0.22,-usable*0.22],[-usable*0.22,usable*0.22],[usable*0.22,usable*0.22]];
+    cell.forEach(([ox,oz])=>{
+      const w = rand(usable*0.32, usable*0.46);
+      const d = rand(usable*0.32, usable*0.46);
+      const h = rand(6, count===1?26:16);
+      const color = pick(buildingColors);
+      const bx = cx+ox, bz = cz+oz;
+      const geo = new THREE.BoxGeometry(w,h,d);
+      const mat = new THREE.MeshStandardMaterial({ color, roughness:0.85 });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(bx, h/2, bz);
+      mesh.castShadow = true; mesh.receiveShadow = true;
+      buildingGroup.add(mesh);
+
+      // roof trim (temple-ish stepped top for taller buildings)
+      if(h>14){
+        const trim = new THREE.Mesh(new THREE.BoxGeometry(w*0.7,1.2,d*0.7), new THREE.MeshStandardMaterial({color:0xF4A340}));
+        trim.position.set(bx, h+0.6, bz);
+        trim.castShadow = true;
+        buildingGroup.add(trim);
+      }
+      // windows texture strip via emissive dots (simple)
+      buildings.push({minX:bx-w/2, maxX:bx+w/2, minZ:bz-d/2, maxZ:bz+d/2});
+    });
+    // occasional signboard on a building facing the road
+    if(Math.random()<0.5){
+      const label = textSprite(pick(gopuramLabels), {fontSize:76});
+      label.position.set(cx+rand(-6,6), 7.5, cz+ (bj<0? usable/2+1 : -usable/2-1));
+      buildingGroup.add(label);
+    }
+    // palm tree decoration
+    if(Math.random()<0.6){
+      const tree = makePalmTree();
+      tree.position.set(cx + rand(-usable/2, usable/2)*0.9, 0, cz + rand(-usable/2, usable/2)*0.9);
+      buildingGroup.add(tree);
+    }
+  }
 }
+scene.add(buildingGroup);
+
+function makePalmTree(){
+  const g = new THREE.Group();
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.18,0.28,4,6), new THREE.MeshStandardMaterial({color:0x7a5230}));
+  trunk.position.y = 2; trunk.castShadow = true;
+  g.add(trunk);
+  for(let i=0;i<6;i++){
+    const leaf = new THREE.Mesh(new THREE.ConeGeometry(0.25,2.4,4), new THREE.MeshStandardMaterial({color:0x2E7D3A}));
+    leaf.position.set(0,4,0);
+    leaf.rotation.z = Math.PI/2.4;
+    leaf.rotation.y = (i/6)*Math.PI*2;
+    leaf.position.x = Math.cos((i/6)*Math.PI*2)*0.9;
+    leaf.position.z = Math.sin((i/6)*Math.PI*2)*0.9;
+    leaf.castShadow = true;
+    g.add(leaf);
+  }
+  return g;
+}
+
+// Center plaza decoration — a small temple gopuram tower as landmark
+(function centerLandmark(){
+  const g = new THREE.Group();
+  const base = new THREE.Mesh(new THREE.BoxGeometry(8,3,8), new THREE.MeshStandardMaterial({color:0xB33A2E}));
+  base.position.y=1.5; base.castShadow=true; g.add(base);
+  const tiers = 5;
+  let y = 3;
+  for(let i=0;i<tiers;i++){
+    const s = 7 - i*1.1;
+    const tier = new THREE.Mesh(new THREE.BoxGeometry(s,1.6,s), new THREE.MeshStandardMaterial({color: i%2===0?0xF4A340:0x2E7D6B}));
+    tier.position.y = y + 0.8; tier.castShadow=true;
+    g.add(tier);
+    y += 1.6;
+  }
+  const top = new THREE.Mesh(new THREE.ConeGeometry(1.6,3,4), new THREE.MeshStandardMaterial({color:0xE8A33D}));
+  top.position.y = y+1.5; top.castShadow=true; g.add(top);
+  g.position.set(0,0,0);
+  scene.add(g);
+  buildings.push({minX:-4.2,maxX:4.2,minZ:-4.2,maxZ:4.2});
+})();
+
+// ---------- Car ----------
+function makeCar(bodyColor){
+  const g = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.BoxGeometry(2.1,0.7,4.2), new THREE.MeshStandardMaterial({color:bodyColor, roughness:0.4, metalness:0.3}));
+  body.position.y = 0.65; body.castShadow = true;
+  g.add(body);
+  const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.7,0.6,2.1), new THREE.MeshStandardMaterial({color:0xE8DFCF, roughness:0.3}));
+  cabin.position.set(0,1.15,-0.1); cabin.castShadow = true;
+  g.add(cabin);
+  const wheelGeo = new THREE.CylinderGeometry(0.42,0.42,0.4,14);
+  const wheelMat = new THREE.MeshStandardMaterial({color:0x1a1a1a});
+  const wheelPositions = [[-1.05,0.42,1.35],[1.05,0.42,1.35],[-1.05,0.42,-1.35],[1.05,0.42,-1.35]];
+  const wheels = wheelPositions.map(p=>{
+    const w = new THREE.Mesh(wheelGeo, wheelMat);
+    w.rotation.z = Math.PI/2;
+    w.position.set(p[0],p[1],p[2]);
+    w.castShadow = true;
+    g.add(w);
+    return w;
+  });
+  const headlight = new THREE.Mesh(new THREE.BoxGeometry(1.8,0.2,0.1), new THREE.MeshStandardMaterial({color:0xfff3cf, emissive:0xfff3cf, emissiveIntensity:0.6}));
+  headlight.position.set(0,0.6,2.12);
+  g.add(headlight);
+  g.userData.wheels = wheels;
+  return g;
+}
+const car = makeCar(0xF4A340);
+car.position.set(6, 0, 6);
+scene.add(car);
+
+// ---------- Car physics state ----------
+const carState = {
+  x: 6, z: 6, angle: Math.PI, speed: 0
+};
+const MAX_SPEED = 26;      // m/s forward
+const MAX_REV = -10;
+const ACCEL = 14;
+const BRAKE = 26;
+const DRAG = 6;
+const TURN_RATE = 2.2;     // rad/s at full speed factor
+
+// ---------- Input ----------
+const input = { fwd:false, back:false, left:false, right:false };
+window.addEventListener('keydown', e=>{
+  if(['ArrowUp','KeyW'].includes(e.code)) input.fwd = true;
+  if(['ArrowDown','KeyS'].includes(e.code)) input.back = true;
+  if(['ArrowLeft','KeyA'].includes(e.code)) input.left = true;
+  if(['ArrowRight','KeyD'].includes(e.code)) input.right = true;
+});
+window.addEventListener('keyup', e=>{
+  if(['ArrowUp','KeyW'].includes(e.code)) input.fwd = false;
+  if(['ArrowDown','KeyS'].includes(e.code)) input.back = false;
+  if(['ArrowLeft','KeyA'].includes(e.code)) input.left = false;
+  if(['ArrowRight','KeyD'].includes(e.code)) input.right = false;
+});
+function bindTouch(el, onDown, onUp){
+  el.addEventListener('touchstart', e=>{ e.preventDefault(); onDown(); el.classList.add('active'); }, {passive:false});
+  el.addEventListener('touchend', e=>{ e.preventDefault(); onUp(); el.classList.remove('active'); }, {passive:false});
+  el.addEventListener('mousedown', ()=>{ onDown(); el.classList.add('active'); });
+  window.addEventListener('mouseup', ()=>{ onUp(); el.classList.remove('active'); });
+}
+bindTouch(document.getElementById('btnGas'), ()=>input.fwd=true, ()=>input.fwd=false);
+bindTouch(document.getElementById('btnBrake'), ()=>input.back=true, ()=>input.back=false);
+bindTouch(document.getElementById('btnLeft'), ()=>input.left=true, ()=>input.left=false);
+bindTouch(document.getElementById('btnRight'), ()=>input.right=true, ()=>input.right=false);
+
+// ---------- Coins ----------
+const coinGroup = new THREE.Group();
+scene.add(coinGroup);
+const coins = [];
+function spawnCoin(){
+  const geo = new THREE.CylinderGeometry(0.5,0.5,0.15,18);
+  const mat = new THREE.MeshStandardMaterial({color:0xF4C542, emissive:0x8a5a00, emissiveIntensity:0.3, metalness:0.6, roughness:0.3});
+  const coin = new THREE.Mesh(geo, mat);
+  coin.rotation.x = Math.PI/2;
+  const pos = randomRoadPoint();
+  coin.position.set(pos.x, 0.6, pos.z);
+  coin.castShadow = true;
+  coinGroup.add(coin);
+  coins.push(coin);
+}
+function randomRoadPoint(){
+  // pick a random point along a random road segment
+  const horiz = Math.random()<0.5;
+  const idx = roadPositions[Math.floor(Math.random()*roadPositions.length)];
+  const t = rand(-WORLD*0.85, WORLD*0.85);
+  return horiz ? {x:t, z:idx} : {x:idx, z:t};
+}
+for(let i=0;i<18;i++) spawnCoin();
+
+// ---------- Delivery mission ----------
+let missionTarget = null;
+let beacon = null;
+let deliveries = 0;
+function newMission(){
+  if(beacon){ scene.remove(beacon); }
+  const b = pick(buildings);
+  const bx = (b.minX+b.maxX)/2, bz = (b.minZ+b.maxZ)/2;
+  missionTarget = new THREE.Vector3(bx, 0, bz);
+  const beaconGeo = new THREE.CylinderGeometry(0.4,0.4,18,10,1,true);
+  const beaconMat = new THREE.MeshBasicMaterial({color:0x2E7D6B, transparent:true, opacity:0.35, side:THREE.DoubleSide});
+  beacon = new THREE.Mesh(beaconGeo, beaconMat);
+  beacon.position.set(bx, 9, bz);
+  scene.add(beacon);
+  document.getElementById('missionVal').textContent = 'Reach the teal beacon';
+}
+newMission();
+
+// ---------- Score / toast ----------
+let score = 0;
+const scoreVal = document.getElementById('scoreVal');
+const toastEl = document.getElementById('toast');
+function addScore(n, label){
+  score += n;
+  scoreVal.textContent = score;
+  toastEl.textContent = (n>0?'+':'')+n+(label?' '+label:'');
+  toastEl.classList.add('show');
+  clearTimeout(addScore._t);
+  addScore._t = setTimeout(()=>toastEl.classList.remove('show'), 700);
+}
+
+// ---------- Minimap ----------
+const mmCanvas = document.getElementById('minimap');
+const mmCtx = mmCanvas.getContext('2d');
+function drawMinimap(){
+  const S = mmCanvas.width;
+  mmCtx.clearRect(0,0,S,S);
+  mmCtx.fillStyle = '#0f0a1f';
+  mmCtx.beginPath(); mmCtx.arc(S/2,S/2,S/2,0,Math.PI*2); mmCtx.fill();
+  const scale = 0.9;
+  const range = 90; // world units shown radius
+  mmCtx.save();
+  mmCtx.beginPath(); mmCtx.arc(S/2,S/2,S/2,0,Math.PI*2); mmCtx.clip();
+  const cx = S/2 - carState.x*(S/(2*range))*scale;
+  const cz = S/2 - carState.z*(S/(2*range))*scale;
+  const unit = (S/(2*range))*scale;
+
+  mmCtx.strokeStyle = 'rgba(233,198,106,0.55)';
+  mmCtx.lineWidth = 3;
+  roadPositions.forEach(z=>{
+    mmCtx.beginPath();
+    mmCtx.moveTo(cx - WORLD*unit, cz + z*unit);
+    mmCtx.lineTo(cx + WORLD*unit, cz + z*unit);
+    mmCtx.stroke();
+  });
+  roadPositions.forEach(x=>{
+    mmCtx.beginPath();
+    mmCtx.moveTo(cx + x*unit, cz - WORLD*unit);
+    mmCtx.lineTo(cx + x*unit, cz + WORLD*unit);
+    mmCtx.stroke();
+  });
+  // mission
+  if(missionTarget){
+    mmCtx.fillStyle = '#2E7D6B';
+    mmCtx.beginPath(); mmCtx.arc(cx+missionTarget.x*unit, cz+missionTarget.z*unit, 5, 0, Math.PI*2); mmCtx.fill();
+  }
+  // coins
+  mmCtx.fillStyle = '#F4C542';
+  coins.forEach(c=>{
+    mmCtx.beginPath(); mmCtx.arc(cx+c.position.x*unit, cz+c.position.z*unit, 2.4, 0, Math.PI*2); mmCtx.fill();
+  });
+  mmCtx.restore();
+  // car marker (center, fixed)
+  mmCtx.save();
+  mmCtx.translate(S/2,S/2);
+  mmCtx.rotate(carState.angle);
+  mmCtx.fillStyle = '#F4A340';
+  mmCtx.beginPath();
+  mmCtx.moveTo(0,-8); mmCtx.lineTo(6,7); mmCtx.lineTo(-6,7); mmCtx.closePath(); mmCtx.fill();
+  mmCtx.restore();
+}
+
+// ---------- Compass ----------
+const compassEl = document.getElementById('compass');
+
+// ---------- Camera follow ----------
+const camOffset = new THREE.Vector3(0, 6.5, -11);
+const camLookOffset = new THREE.Vector3(0, 1.5, 4);
+let camPos = new THREE.Vector3(car.position.x, 8, car.position.z-12);
+
+// ---------- Collision helper ----------
+function collides(x,z, margin){
+  for(const b of buildings){
+    if(x > b.minX-margin && x < b.maxX+margin && z > b.minZ-margin && z < b.maxZ+margin) return true;
+  }
+  return false;
+}
+
+// ---------- Main loop ----------
+let last = performance.now();
+let running = false;
+const speedVal = document.getElementById('speedVal');
+
 function update(dt){
- if(paused)return;
- let ax=(keys.a||keys.ArrowLeft?-1:0)+(keys.d||keys.ArrowRight?1:0)+touch.x;
- let ay=(keys.w||keys.ArrowUp?-1:0)+(keys.s||keys.ArrowDown?1:0)+touch.y;
- let len=Math.hypot(ax,ay);if(len>1){ax/=len;ay/=len}
- let sp=player.vehicle?player.speed:180;
- if(len){let nx=player.x+ax*sp*dt,ny=player.y+ay*sp*dt;if(!collide(nx,player.y))player.x=nx;if(!collide(player.x,ny))player.y=ny;player.energy=Math.max(0,player.energy-dt*(player.vehicle?0.8:1.5))}
- else player.energy=Math.min(100,player.energy+dt*2);
- for(const n of npcs){n.t+=dt;n.x+=n.dx*22*dt;n.y+=n.dy*22*dt;if(collide(n.x,n.y)){n.dx*=-1;n.dy*=-1}}
- let m=missions[mi%missions.length];if(Math.hypot(player.x-m.x,player.y-m.y)<90)toast('Mission target reached! Press E');
- let minutes=(performance.now()/1000*1.2+480)%1440;let hh=String(Math.floor(minutes/60)).padStart(2,'0'),mm=String(Math.floor(minutes%60)).padStart(2,'0');document.getElementById('clock').textContent=hh+':'+mm;
- updateHud();
+  // throttle/brake
+  let accel = 0;
+  if(input.fwd) accel += ACCEL;
+  if(input.back) accel -= BRAKE;
+  if(!input.fwd && !input.back){
+    // natural drag toward 0
+    accel = -Math.sign(carState.speed) * DRAG;
+    if(Math.abs(carState.speed) < 0.4) carState.speed = 0;
+  }
+  carState.speed += accel*dt;
+  carState.speed = Math.max(MAX_REV, Math.min(MAX_SPEED, carState.speed));
+
+  // steering — scale by speed so it doesn't spin in place
+  const speedFactor = Math.min(1, Math.abs(carState.speed)/6);
+  let steer = 0;
+  if(input.left) steer += 1;
+  if(input.right) steer -= 1;
+  const dir = carState.speed >= 0 ? 1 : -1;
+  carState.angle += steer * TURN_RATE * speedFactor * dir * dt;
+
+  const nx = carState.x + Math.sin(carState.angle)*carState.speed*dt;
+  const nz = carState.z + Math.cos(carState.angle)*carState.speed*dt;
+
+  if(!collides(nx, nz, 1.1)){
+    carState.x = nx; carState.z = nz;
+  } else {
+    carState.speed *= -0.3; // bounce back a bit
+  }
+  carState.x = Math.max(-WORLD+2, Math.min(WORLD-2, carState.x));
+  carState.z = Math.max(-WORLD+2, Math.min(WORLD-2, carState.z));
+
+  car.position.set(carState.x, 0, carState.z);
+  car.rotation.y = carState.angle;
+  // wheel spin (visual)
+  car.userData.wheels.forEach(w => w.rotation.x -= carState.speed*dt*1.2);
+
+  // camera
+  const behind = new THREE.Vector3(
+    carState.x - Math.sin(carState.angle)*camOffset.z,
+    camOffset.y,
+    carState.z - Math.cos(carState.angle)*camOffset.z
+  );
+  camPos.lerp(behind, Math.min(1, dt*4));
+  camera.position.copy(camPos);
+  const lookAt = new THREE.Vector3(
+    carState.x + Math.sin(carState.angle)*camLookOffset.z,
+    1.2,
+    carState.z + Math.cos(carState.angle)*camLookOffset.z
+  );
+  camera.lookAt(lookAt);
+
+  // coins collect
+  for(let i=coins.length-1;i>=0;i--){
+    const c = coins[i];
+    c.rotation.z += dt*3;
+    const dx = c.position.x-carState.x, dz = c.position.z-carState.z;
+    if(dx*dx+dz*dz < 3.2*3.2){
+      coinGroup.remove(c);
+      coins.splice(i,1);
+      addScore(10,'coin');
+      spawnCoin();
+    }
+  }
+
+  // mission check
+  if(missionTarget){
+    beacon.rotation.y += dt;
+    const dx = missionTarget.x-carState.x, dz = missionTarget.z-carState.z;
+    const dist = Math.sqrt(dx*dx+dz*dz);
+    // compass points from car facing to target
+    const targetAngle = Math.atan2(dx,dz);
+    let rel = targetAngle - carState.angle;
+    compassEl.style.transform = `rotate(${rel}rad)`;
+    document.getElementById('missionVal').textContent = `Beacon ${dist.toFixed(0)}m away`;
+    if(dist < 6){
+      deliveries++;
+      addScore(50,'delivery');
+      newMission();
+    }
+  }
+
+  speedVal.textContent = Math.abs(Math.round(carState.speed*3.2));
+  drawMinimap();
 }
-function draw(){
- ctx.clearRect(0,0,W,H);
- let camX=Math.max(0,Math.min(world.w-W,player.x-W/2)),camY=Math.max(0,Math.min(world.h-H,player.y-H/2));
- ctx.save();ctx.translate(-camX,-camY);
- ctx.fillStyle='#87c776';ctx.fillRect(0,0,world.w,world.h);
- // roads
- for(const r of roads){ctx.fillStyle='#51575c';ctx.fillRect(r.x,r.y,r.w,r.h);ctx.strokeStyle='#d9c66d';ctx.lineWidth=4;ctx.setLineDash([28,24]);ctx.beginPath();if(r.w>r.h){ctx.moveTo(r.x,r.y+r.h/2);ctx.lineTo(r.x+r.w,r.y+r.h/2)}else{ctx.moveTo(r.x+r.w/2,r.y);ctx.lineTo(r.x+r.w/2,r.y+r.h)}ctx.stroke();ctx.setLineDash([])}
- // buildings
- for(const b of buildings){ctx.fillStyle=b[5];ctx.fillRect(b[1],b[2],b[3],b[4]);ctx.strokeStyle='#26333b';ctx.lineWidth=4;ctx.strokeRect(b[1],b[2],b[3],b[4]);ctx.fillStyle='#17232b';ctx.font='bold 20px system-ui';ctx.textAlign='center';ctx.fillText(b[0],b[1]+b[3]/2,b[2]+b[4]/2);for(let xx=b[1]+30;xx<b[1]+b[3]-15;xx+=55){ctx.fillStyle='#dff4ee';ctx.fillRect(xx,b[2]+25,25,20);}}
- // trees
- for(let i=0;i<70;i++){let x=(i*311)%world.w,y=(i*173)%world.h;if(roads.some(r=>x>r.x-15&&x<r.x+r.w+15&&y>r.y-15&&y<r.y+r.h+15))continue;ctx.fillStyle='#6a4930';ctx.fillRect(x-3,y,6,22);ctx.fillStyle='#32834a';ctx.beginPath();ctx.arc(x,y,22,0,Math.PI*2);ctx.fill()}
- // mission marker
- let m=missions[mi%missions.length];ctx.fillStyle='#ffd34d';ctx.beginPath();ctx.arc(m.x,m.y,25+Math.sin(performance.now()/180)*5,0,Math.PI*2);ctx.fill();ctx.fillStyle='#382600';ctx.font='bold 18px system-ui';ctx.textAlign='center';ctx.fillText('★',m.x,m.y+7);
- // NPCs
- for(const n of npcs){ctx.fillStyle='#202a33';ctx.beginPath();ctx.arc(n.x,n.y,n.r,0,Math.PI*2);ctx.fill();ctx.fillStyle='#f1b48a';ctx.beginPath();ctx.arc(n.x,n.y-9,6,0,Math.PI*2);ctx.fill()}
- // player
- ctx.save();ctx.translate(player.x,player.y);ctx.fillStyle=player.vehicle?'#e78d35':'#2d73d5';ctx.beginPath();ctx.roundRect(-18,-12,36,24,8);ctx.fill();if(!player.vehicle){ctx.fillStyle='#f1b48a';ctx.beginPath();ctx.arc(0,-18,8,0,Math.PI*2);ctx.fill()}else{ctx.fillStyle='#222';ctx.beginPath();ctx.arc(-13,13,6,0,Math.PI*2);ctx.arc(13,13,6,0,Math.PI*2);ctx.fill()}ctx.restore();
- ctx.restore();
- // mini map
- mx.clearRect(0,0,mini.width,mini.height);let sx=mini.width/world.w,sy=mini.height/world.h;mx.fillStyle='#79b76d';mx.fillRect(0,0,mini.width,mini.height);mx.fillStyle='#555';for(const r of roads)mx.fillRect(r.x*sx,r.y*sy,r.w*sx,r.h*sy);for(const b of buildings){mx.fillStyle='#d9a25a';mx.fillRect(b[1]*sx,b[2]*sy,b[3]*sx,b[4]*sy)}let m2=missions[mi%missions.length];mx.fillStyle='#ffd34d';mx.beginPath();mx.arc(m2.x*sx,m2.y*sy,3,0,7);mx.fill();mx.fillStyle='#f33';mx.beginPath();mx.arc(player.x*sx,player.y*sy,4,0,7);mx.fill();
+
+function loop(now){
+  requestAnimationFrame(loop);
+  if(!running) return;
+  const dt = Math.min(0.05, (now-last)/1000);
+  last = now;
+  update(dt);
+  renderer.render(scene, camera);
 }
-function loop(t){if(!last)last=t;let dt=Math.min(.04,(t-last)/1000);last=t;if(running){update(dt);draw()}requestAnimationFrame(loop)}
 requestAnimationFrame(loop);
 
-document.getElementById('play').onclick=()=>{load();running=true;document.getElementById('menu').classList.add('hidden');document.getElementById('hud').classList.remove('hidden');updateHud();toast('Welcome to Tamil City!');}
-document.getElementById('how').onclick=()=>document.getElementById('help').classList.toggle('hidden');
-document.getElementById('pause').onclick=()=>{paused=!paused;toast(paused?'Game Paused':'Game Resumed')}
-addEventListener('keydown',e=>{keys[e.key]=true;if(e.key==='e'||e.key==='E')interact();if(e.key==='v'||e.key==='V')toggleVehicle();if(e.key==='p'||e.key==='P')paused=!paused});
-addEventListener('keyup',e=>keys[e.key]=false);
-document.getElementById('act').onclick=interact;document.getElementById('vehicle').onclick=toggleVehicle;
-document.getElementById('jump').onclick=()=>{player.energy=Math.max(0,player.energy-3);toast('Jump!')};
+// ---------- Start screen wiring ----------
+document.getElementById('playBtn').addEventListener('click', ()=>{
+  document.getElementById('startScreen').style.display = 'none';
+  document.getElementById('hud').style.display = 'block';
+  document.getElementById('touchControls').style.display = 'block';
+  last = performance.now();
+  running = true;
+});
 
-const joy=document.getElementById('joy'),knob=document.getElementById('knob');let joyId=null;
-function joyMove(e){let r=joy.getBoundingClientRect(),x=e.clientX-r.left-66,y=e.clientY-r.top-66,d=Math.min(45,Math.hypot(x,y)),a=Math.atan2(y,x);touch.x=Math.cos(a)*d/45;touch.y=Math.sin(a)*d/45;knob.style.transform=`translate(${touch.x*38}px,${touch.y*38}px)`}
-joy.addEventListener('pointerdown',e=>{joyId=e.pointerId;joy.setPointerCapture(joyId);joyMove(e)});
-joy.addEventListener('pointermove',e=>{if(e.pointerId===joyId)joyMove(e)});
-joy.addEventListener('pointerup',()=>{joyId=null;touch.x=touch.y=0;knob.style.transform='translate(0,0)'});
-joy.addEventListener('pointercancel',()=>{joyId=null;touch.x=touch.y=0;knob.style.transform='translate(0,0)'});
+})();
 </script>
 </body>
 </html>
