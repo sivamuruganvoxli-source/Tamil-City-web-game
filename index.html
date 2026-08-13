@@ -2,675 +2,190 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Mylapore Mysteries: The Vanishing Veena</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Tamil City</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: #050510; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; }
-  #game-wrapper { width: 100%; max-width: 900px; position: relative; background: #0d0d1a; border-radius: 14px; overflow: hidden; box-shadow: 0 15px 50px rgba(0,0,0,0.6); border: 1px solid #2a2a4a; }
-  canvas { display: block; width: 100%; height: auto; background: #1a1a2e; }
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#10151b;font-family:system-ui,Arial,sans-serif;touch-action:none}
+canvas{display:block;width:100%;height:100%;background:#8fcf7a}
+button{font:inherit;border:0;cursor:pointer}
+#hud{position:fixed;inset:0;pointer-events:none;color:#fff}
+.panel{background:rgba(12,18,25,.82);border:1px solid rgba(255,255,255,.15);box-shadow:0 8px 30px #0005;border-radius:14px}
+#stats{position:absolute;top:12px;left:12px;padding:10px 13px;min-width:210px}
+.stat{margin:4px 0;font-size:13px}.bar{display:inline-block;width:105px;height:8px;background:#26313b;border-radius:5px;vertical-align:middle;overflow:hidden}.fill{height:100%;width:100%;background:#5ee17d}
+#mission{position:absolute;top:12px;left:50%;transform:translateX(-50%);padding:10px 16px;text-align:center;max-width:430px;font-size:13px}
+#map{position:absolute;top:12px;right:12px;width:145px;height:100px;padding:4px}
+#map canvas{width:100%;height:100%;border-radius:9px}
+#toast{position:absolute;top:126px;left:50%;transform:translateX(-50%);padding:9px 14px;opacity:0;transition:.25s;white-space:nowrap}
+#menu{position:fixed;inset:0;background:linear-gradient(135deg,#09202aee,#35120eee);display:flex;align-items:center;justify-content:center;z-index:5}
+.menuBox{width:min(520px,90vw);padding:30px;text-align:center;color:#fff;background:#111a22ee;border:1px solid #ffffff20;border-radius:24px;box-shadow:0 25px 80px #0009}
+h1{font-size:clamp(42px,10vw,72px);margin:0 0 5px;letter-spacing:-3px}h1 span{color:#ffca55}
+.subtitle{opacity:.8;margin-bottom:25px}.mainBtn{width:100%;padding:14px;margin:7px 0;border-radius:12px;background:#ffb83e;color:#241600;font-weight:800}.secondary{background:#293744;color:#fff}
+#controls{position:absolute;inset:0;pointer-events:none}
+#joy{position:absolute;left:22px;bottom:25px;width:132px;height:132px;border-radius:50%;background:#ffffff18;border:2px solid #fff3;pointer-events:auto}
+#knob{position:absolute;width:55px;height:55px;border-radius:50%;background:#ffffff45;left:37px;top:37px}
+.action{position:absolute;bottom:30px;width:64px;height:64px;border-radius:50%;background:#ffffff22;border:2px solid #fff4;color:#fff;font-weight:800;pointer-events:auto}
+#jump{right:118px}#act{right:38px;background:#ffb83e;color:#241600}
+#vehicle{right:118px;bottom:105px;font-size:11px}
+#pause{right:15px;top:130px;width:44px;height:44px;border-radius:12px;background:#ffffff22;color:#fff;pointer-events:auto}
+#help{font-size:12px;opacity:.7;line-height:1.5;margin-top:15px}
+.hidden{display:none!important}
+@media(max-width:600px){
+ #stats{min-width:165px;padding:7px 9px}.stat{font-size:11px}.bar{width:70px}
+ #mission{top:12px;max-width:180px;font-size:11px}
+ #map{width:105px;height:74px;top:65px}
+ #toast{top:145px;font-size:12px}
+}
 </style>
-<base target="_blank">
 </head>
 <body>
+<canvas id="game"></canvas>
 
-<div id="game-wrapper">
-  <canvas id="gameCanvas"></canvas>
-  
-  <div id="ui-layer" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
-    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; background: linear-gradient(to bottom, rgba(5,5,15,0.9), transparent);">
-      <div style="display: flex; gap: 18px; align-items: center; color: white; font-size: 14px;">
-        <span id="story-chapter" style="font-weight: bold; color: #ffd700;">📖 Prologue</span>
-        <span id="time-display" style="color: #87CEEB;">🌙 8:00 PM</span>
-        <span style="color: #90EE90;">₹<span id="money">200</span></span>
-      </div>
-      <div style="display: flex; gap: 8px;">
-        <button onclick="toggleJournal()" style="pointer-events: auto; background: #4a1a6b; border: 1px solid #7b2cbf; color: #e0aaff; padding: 6px 14px; border-radius: 8px; font-size: 12px; cursor: pointer; font-weight: bold;">📓 Journal</button>
-        <button onclick="toggleInventory()" style="pointer-events: auto; background: #1a4a6b; border: 1px solid #2cb5bf; color: #a0eaff; padding: 6px 14px; border-radius: 8px; font-size: 12px; cursor: pointer; font-weight: bold;">🎒 Items</button>
-      </div>
-    </div>
-    
-    <div id="story-banner" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 85%; max-width: 500px; background: rgba(10, 5, 20, 0.97); border: 2px solid #ffd700; border-radius: 16px; padding: 25px; color: white; pointer-events: auto; text-align: center; box-shadow: 0 0 40px rgba(255,215,0,0.2);">
-      <div id="banner-icon" style="font-size: 48px; margin-bottom: 10px;"></div>
-      <h2 id="banner-title" style="color: #ffd700; margin: 0 0 10px 0; font-size: 22px;"></h2>
-      <p id="banner-text" style="font-size: 15px; line-height: 1.7; color: #ddd; margin-bottom: 15px;"></p>
-      <button onclick="closeBanner()" style="background: #ffd700; color: #1a1a2e; border: none; padding: 10px 30px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 14px;">Continue ➜</button>
-    </div>
-    
-    <div id="dialog-box" style="display: none; position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 92%; max-width: 560px; background: rgba(8, 8, 20, 0.97); border: 2px solid #7b2cbf; border-radius: 16px; padding: 0; color: white; pointer-events: auto; overflow: hidden;">
-      <div style="display: flex; align-items: center; gap: 12px; padding: 12px 18px; background: linear-gradient(90deg, #4a1a6b, transparent); border-bottom: 1px solid #333;">
-        <div id="dialog-avatar" style="font-size: 36px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
-        <div>
-          <div id="dialog-name" style="color: #e0aaff; font-weight: bold; font-size: 15px;"></div>
-          <div id="dialog-role" style="color: #888; font-size: 11px;"></div>
-        </div>
-        <div style="margin-left: auto; color: #666; font-size: 11px;">Press E or Tap ➜</div>
-      </div>
-      <div style="padding: 15px 18px;">
-        <div id="dialog-text" style="font-size: 15.5px; line-height: 1.7; color: #f0f0f0; min-height: 50px;"></div>
-        <div id="dialog-translation" style="font-size: 12.5px; color: #888; font-style: italic; margin-top: 8px; border-left: 2px solid #4a1a6b; padding-left: 10px;"></div>
-      </div>
-      <div id="choice-container" style="padding: 0 18px 15px 18px; display: flex; flex-direction: column; gap: 8px;"></div>
-    </div>
-    
-    <div id="journal-panel" style="display: none; position: absolute; top: 50px; right: 10px; width: 300px; background: rgba(8, 5, 15, 0.97); border: 2px solid #ffd700; border-radius: 14px; padding: 18px; color: white; pointer-events: auto; max-height: 400px; overflow-y: auto;">
-      <h3 style="margin: 0 0 12px 0; color: #ffd700; font-size: 16px; border-bottom: 1px solid #333; padding-bottom: 8px;">📓 Detective Journal</h3>
-      <div id="journal-entries" style="font-size: 13px; line-height: 1.6;"></div>
-      <div style="margin-top: 15px; padding-top: 12px; border-top: 1px solid #333;">
-        <div style="color: #888; font-size: 11px; margin-bottom: 5px;">Relationship Status:</div>
-        <div id="relationship-bars" style="display: flex; flex-direction: column; gap: 6px;"></div>
-      </div>
-      <button onclick="toggleJournal()" style="margin-top: 12px; background: #333; border: 1px solid #555; color: white; padding: 6px; border-radius: 6px; cursor: pointer; width: 100%; font-size: 12px;">Close</button>
-    </div>
-    
-    <div id="inv-panel" style="display: none; position: absolute; top: 50px; right: 10px; width: 260px; background: rgba(8, 5, 15, 0.97); border: 2px solid #2cb5bf; border-radius: 14px; padding: 18px; color: white; pointer-events: auto;">
-      <h3 style="margin: 0 0 12px 0; color: #a0eaff; font-size: 16px; border-bottom: 1px solid #333; padding-bottom: 8px;">🎒 Inventory</h3>
-      <div id="inv-list" style="font-size: 13px;"></div>
-      <button onclick="toggleInventory()" style="margin-top: 12px; background: #333; border: 1px solid #555; color: white; padding: 6px; border-radius: 6px; cursor: pointer; width: 100%; font-size: 12px;">Close</button>
-    </div>
-    
-    <div id="toast" style="display: none; position: absolute; top: 60px; left: 50%; transform: translateX(-50%); background: rgba(74, 26, 107, 0.95); color: #e0aaff; padding: 10px 24px; border-radius: 20px; font-weight: bold; font-size: 14px; border: 1px solid #7b2cbf; pointer-events: none;"></div>
-    
-    <div style="position: absolute; bottom: 20px; left: 15px; pointer-events: none;">
-      <div id="location-pill" style="background: rgba(0,0,0,0.7); color: #ffd700; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: bold; margin-bottom: 6px; opacity: 0; transition: opacity 0.5s; border: 1px solid rgba(255,215,0,0.3);"></div>
-      <div id="objective-pill" style="background: rgba(74, 26, 107, 0.8); color: #e0aaff; padding: 6px 14px; border-radius: 20px; font-size: 12px; max-width: 220px; border: 1px solid rgba(123,44,191,0.4);"></div>
-    </div>
-    
-    <div id="mobile-controls" style="position: absolute; bottom: 15px; right: 15px; display: none; pointer-events: none;">
-      <div style="position: relative; width: 130px; height: 130px; pointer-events: auto;">
-        <button ontouchstart="setDir('up')" onmousedown="setDir('up')" onmouseup="clearDir()" ontouchend="clearDir()" style="position: absolute; top: 0; left: 43px; width: 44px; height: 44px; background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.4); border-radius: 10px; color: white; font-size: 18px; backdrop-filter: blur(4px);">▲</button>
-        <button ontouchstart="setDir('left')" onmousedown="setDir('left')" onmouseup="clearDir()" ontouchend="clearDir()" style="position: absolute; top: 43px; left: 0; width: 44px; height: 44px; background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.4); border-radius: 10px; color: white; font-size: 18px; backdrop-filter: blur(4px);">◀</button>
-        <button ontouchstart="setDir('right')" onmousedown="setDir('right')" onmouseup="clearDir()" ontouchend="clearDir()" style="position: absolute; top: 43px; left: 86px; width: 44px; height: 44px; background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.4); border-radius: 10px; color: white; font-size: 18px; backdrop-filter: blur(4px);">▶</button>
-        <button ontouchstart="setDir('down')" onmousedown="setDir('down')" onmouseup="clearDir()" ontouchend="clearDir()" style="position: absolute; top: 86px; left: 43px; width: 44px; height: 44px; background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.4); border-radius: 10px; color: white; font-size: 18px; backdrop-filter: blur(4px);">▼</button>
-      </div>
-      <button ontouchstart="doAction()" onmousedown="doAction()" style="position: absolute; bottom: 0; right: -80px; width: 60px; height: 60px; border-radius: 50%; background: rgba(123, 44, 191, 0.5); border: 2px solid #7b2cbf; color: white; font-weight: bold; font-size: 13px; pointer-events: auto; backdrop-filter: blur(4px);">TALK</button>
-    </div>
+<div id="menu">
+ <div class="menuBox">
+  <h1>Tamil <span>City</span></h1>
+  <div class="subtitle">Explore • Drive • Complete Missions • Earn ₹</div>
+  <button class="mainBtn" id="play">PLAY CITY</button>
+  <button class="mainBtn secondary" id="how">HOW TO PLAY</button>
+  <div id="help" class="hidden">
+   Desktop: WASD / Arrow keys to move • E to interact • Space to jump • P to pause<br>
+   Mobile: use the joystick and action buttons.<br><br>
+   Explore the city and complete the yellow mission markers.
   </div>
-  
-  <div id="title-screen" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(180deg, #0a0a1a 0%, #1a0a2e 40%, #2d1b4e 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; z-index: 100; text-align: center;">
-    <div style="font-size: 60px; margin-bottom: 5px; filter: drop-shadow(0 0 20px rgba(255,215,0,0.3));">🛕</div>
-    <h1 style="font-size: 36px; margin: 0; color: #ffd700; text-shadow: 0 0 30px rgba(255,215,0,0.3); letter-spacing: 2px;">MYLAPORE MYSTERIES</h1>
-    <p style="font-size: 20px; color: #e0aaff; margin: 8px 0 5px 0; font-weight: 500;">மயிலாப்பூர் மர்மங்கள்</p>
-    <p style="font-size: 13px; color: #888; margin-bottom: 25px; max-width: 380px; line-height: 1.6;">The sacred veena has vanished from Kapaleeshwarar Temple. You have one night to uncover the truth. Every choice matters.</p>
-    <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 25px;">
-      <span style="background: rgba(255,255,255,0.08); padding: 5px 12px; border-radius: 15px; font-size: 11px; border: 1px solid rgba(255,255,255,0.1);">🎭 Branching Story</span>
-      <span style="background: rgba(255,255,255,0.08); padding: 5px 12px; border-radius: 15px; font-size: 11px; border: 1px solid rgba(255,255,255,0.1);">🗣️ Tamil Dialogues</span>
-      <span style="background: rgba(255,255,255,0.08); padding: 5px 12px; border-radius: 15px; font-size: 11px; border: 1px solid rgba(255,255,255,0.1);">🔍 Mystery Solving</span>
-    </div>
-    <button onclick="startGame()" style="background: linear-gradient(135deg, #7b2cbf, #4a1a6b); border: 2px solid #9d4edd; color: white; padding: 16px 55px; border-radius: 30px; font-size: 18px; font-weight: bold; cursor: pointer; box-shadow: 0 5px 25px rgba(123,44,191,0.4); letter-spacing: 1px;">▶ BEGIN JOURNEY</button>
-    <div style="margin-top: 20px; display: flex; gap: 15px; color: #555; font-size: 11px;">
-      <span>WASD / Arrows to Move</span><span>•</span><span>E / TALK to Interact</span>
-    </div>
-  </div>
-  
-  <div id="ending-screen" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(5, 5, 15, 0.98); flex-direction: column; align-items: center; justify-content: center; color: white; z-index: 200; text-align: center; padding: 30px;">
-    <div id="ending-icon" style="font-size: 64px; margin-bottom: 15px;"></div>
-    <h2 id="ending-title" style="font-size: 28px; color: #ffd700; margin-bottom: 10px;"></h2>
-    <p id="ending-desc" style="font-size: 15px; color: #ccc; max-width: 450px; line-height: 1.8; margin-bottom: 20px;"></p>
-    <div id="ending-stats" style="background: rgba(255,255,255,0.05); padding: 15px 25px; border-radius: 12px; margin-bottom: 25px; font-size: 13px; color: #aaa; border: 1px solid rgba(255,255,255,0.1);"></div>
-    <button onclick="location.reload()" style="background: #7b2cbf; border: none; color: white; padding: 12px 35px; border-radius: 25px; font-size: 15px; font-weight: bold; cursor: pointer;">🔄 Play Again</button>
-  </div>
+ </div>
+</div>
+
+<div id="hud" class="hidden">
+ <div id="stats" class="panel">
+  <div class="stat">❤️ Health <span class="bar"><i id="health" class="fill"></i></span></div>
+  <div class="stat">⚡ Energy <span class="bar"><i id="energy" class="fill"></i></span></div>
+  <div class="stat">💰 ₹<b id="money">100</b></div>
+  <div class="stat">🕐 <b id="clock">08:00</b></div>
+  <div class="stat">🚗 <b id="speed">Walk</b></div>
+ </div>
+ <div id="mission" class="panel">MISSION<br><b id="missionText">Find the Tea Kadai</b></div>
+ <div id="map" class="panel"><canvas id="mini"></canvas></div>
+ <div id="toast" class="panel"></div>
+ <button id="pause">Ⅱ</button>
+ <div id="controls">
+  <div id="joy"><div id="knob"></div></div>
+  <button class="action" id="jump">JUMP</button>
+  <button class="action" id="act">E</button>
+  <button class="action" id="vehicle">CAR</button>
+ </div>
 </div>
 
 <script>
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
+const c=document.getElementById('game'),ctx=c.getContext('2d'), mini=document.getElementById('mini'),mx=mini.getContext('2d');
+let W,H,dpr=1,running=false,paused=false,last=0,keys={},touch={x:0,y:0};
+const world={w:3600,h:2400};
+const player={x:420,y:500,r:17,health:100,energy:100,money:100,vehicle:null,speed:180};
+const roads=[
+ {x:0,y:400,w:3600,h:170},{x:0,y:1080,w:3600,h:180},{x:0,y:1750,w:3600,h:180},
+ {x:350,y:0,w:180,h:2400},{x:1250,y:0,w:180,h:2400},{x:2200,y:0,w:180,h:2400},{x:3050,y:0,w:180,h:2400}
+];
+const buildings=[
+ ['தேநீர் கடை',120,150,250,180,'#d98c46'],['பேக்கரி',600,130,270,190,'#e8b75d'],
+ ['பள்ளி',900,620,350,260,'#d98f83'],['கல்லூரி',1500,620,420,280,'#a98bd1'],
+ ['மருத்துவமனை',2350,170,410,240,'#d8e7e9'],['காய்கறி சந்தை',2750,620,350,250,'#82b86d'],
+ ['உணவகம்',600,1320,300,220,'#d26e61'],['மருந்தகம்',1550,1320,300,220,'#73b8c7'],
+ ['கோவில்',2450,1320,430,260,'#d99b4d'],['ரயில் நிலையம்',800,1980,520,220,'#7f8f9f'],
+ ['பேருந்து நிலையம்',1450,1980,500,220,'#7896a8'],['பூங்கா',2300,1950,500,260,'#5eaa68']
+];
+const npcs=[];
+for(let i=0;i<26;i++) npcs.push({x:180+Math.random()*3200,y:250+Math.random()*1900,r:9,dx:Math.random()*2-1,dy:Math.random()*2-1,t:Math.random()*10});
+const missions=[
+ {x:245,y:240,name:'Tea delivery',desc:'Go to the Tea Kadai',reward:120},
+ {x:760,y:1410,name:'Food delivery',desc:'Deliver food to the customer',reward:180},
+ {x:1660,y:760,name:'College visit',desc:'Reach the college',reward:100},
+ {x:2940,y:760,name:'Market shopping',desc:'Visit the vegetable market',reward:140},
+ {x:2550,y:1460,name:'Temple visit',desc:'Deliver an offering',reward:160},
+ {x:1700,y:2070,name:'Bus trip',desc:'Reach the bus station',reward:220},
+ {x:1040,y:2090,name:'Rail parcel',desc:'Deliver a parcel',reward:250},
+ {x:2550,y:2080,name:'Park delivery',desc:'Find the park customer',reward:200}
+];
+let mi=0;
+const missionText=document.getElementById('missionText');
+function resize(){dpr=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;c.width=W*dpr;c.height=H*dpr;c.style.width=W+'px';c.style.height=H+'px';ctx.setTransform(dpr,0,0,dpr,0,0)}
+addEventListener('resize',resize);resize();
 
-function resize() {
-  const w = document.getElementById('game-wrapper').clientWidth;
-  canvas.width = w;
-  canvas.height = Math.min(window.innerHeight * 0.82, 620);
+function save(){localStorage.tamilCity=JSON.stringify({player,mi})}
+function load(){try{let s=JSON.parse(localStorage.tamilCity);if(s){Object.assign(player,s.player);mi=s.mi||0}}catch(e){}}
+function toast(t){let el=document.getElementById('toast');el.textContent=t;el.style.opacity=1;clearTimeout(toast.t);toast.t=setTimeout(()=>el.style.opacity=0,2200)}
+function updateHud(){
+ document.getElementById('money').textContent=Math.floor(player.money);
+ document.getElementById('health').style.width=player.health+'%';
+ document.getElementById('energy').style.width=player.energy+'%';
+ document.getElementById('speed').textContent=player.vehicle?'🚗 '+Math.round(player.speed)+' km/h':'Walk';
+ let m=missions[mi%missions.length];missionText.textContent=m.desc+' • ₹'+m.reward;
 }
-resize();
-window.addEventListener('resize', resize);
-
-const TILE = 48;
-const MW = 50, MH = 50;
-const SPEED = 2.8;
-
-const T = { ROAD:0, HOUSE:1, WATER:2, SAND:3, GRASS:4, TEMPLE:5, TREE:6, MARKET:7, STATION:8, TEASTALL:9, PARK:10, WALL:11, TANK:12 };
-const TC = { [T.ROAD]:'#4a4a5a', [T.HOUSE]:'#6b3a1a', [T.WATER]:'#1a5a8a', [T.SAND]:'#c4a35a', [T.GRASS]:'#2a5a2a', [T.TEMPLE]:'#8b1a1a', [T.TREE]:'#1a4a1a', [T.MARKET]:'#8a5a1a', [T.STATION]:'#3a3a4a', [T.TEASTALL]:'#5a3a1a', [T.PARK]:'#3a7a3a', [T.WALL]:'#3a3a3a', [T.TANK]:'#2a6a8a' };
-
-let game = { running:false, state:'prologue', time:20*60, money:200, karma:0 };
-let player = { x:25*TILE, y:25*TILE, dir:'down', moving:false, frame:0 };
-let cam = { x:0, y:0 };
-let keys = {}, touchDir = null;
-let map = [];
-let npcs = [];
-let items = [];
-let inventory = {};
-let journal = [];
-let relationships = { priest:50, mallika:50, raju:50, kavitha:50, inspector:50 };
-let inDialog = false;
-let dialogQueue = [];
-let currentNPC = null;
-let particles = [];
-let currentLocation = '';
-let objective = 'Visit the temple and speak to the priest';
-let storyFlags = {};
-let typingInterval = null;
-
-const STORY = {
-  prologue: {
-    banner: { icon:'🛕', title:'The Night of the Vanishing Veena', text:'You are Arjun, an archaeology student visiting Mylapore. Tonight, the sacred 300-year-old veena — kept at Kapaleeshwarar Temple for tomorrow\'s Arubathimoovar festival — has vanished. The priest believes it was stolen. You have until dawn to recover it.' },
-    objective: 'Go to the temple and speak to Gurukkal (Priest)'
-  },
-  clue_hunt: {
-    banner: { icon:'🔍', title:'The Investigation Begins', text:'Gurukkal tells you the veena was last seen at 6 PM. Three people were nearby: Mallika the flower seller, Raju the auto driver, and Kavitha at the tea stall. Someone knows something.' },
-    objective: 'Interview witnesses: Mallika, Raju, and Kavitha'
-  },
-  market_lead: {
-    banner: { icon:'🛍️', title:'The Black Market Lead', text:'You learn that an antique collector in T. Nagar has been asking about temple artifacts. This might be where the veena was taken. But you need proof before confronting him.' },
-    objective: 'Go to T. Nagar Market and investigate the antique shop'
-  },
-  station_clue: {
-    banner: { icon:'🚉', title:'The Railway Connection', text:'The antique dealer plans to smuggle the veena out of Chennai by the midnight train. Inspector Ramesh at Central Station can help — if he trusts you.' },
-    objective: 'Go to Central Station and convince Inspector Ramesh'
-  },
-  confrontation: {
-    banner: { icon:'⚔️', title:'The Final Confrontation', text:'You\'ve tracked the thief to a hidden storeroom near the station. The veena is here. How you handle this moment will determine everything.' },
-    objective: 'Confront the collector and recover the veena'
-  }
-};
-
-const NPC_DATA = {
-  gurukkal: {
-    name: 'Gurukkal', role: 'Temple Priest', sprite: '👴', color: '#c9a227',
-    x: 12*TILE, y: 14*TILE,
-    dialogs: {
-      first: [
-        { text: 'Arjun! Thank the gods you came. The veena... it is gone.', trans: '' },
-        { text: 'It was here at evening prayer. When I returned after dinner, the lock was broken.', trans: '' },
-        { text: 'Mallika was selling flowers near the entrance. Raju dropped a passenger. Kavitha... she knows old instruments.', trans: '' },
-        { text: 'Please, find who did this. The festival cannot begin without the veena.', trans: '' }
-      ],
-      repeat: [ { text: 'Have you found any clues, my son?', trans: '' } ]
-    }
-  },
-  mallika: {
-    name: 'Mallika', role: 'Flower Seller', sprite: '👩', color: '#ff69b4',
-    x: 8*TILE, y: 18*TILE,
-    dialogs: {
-      first: [
-        { text: 'Oh, the veena? Yes, I saw a man in a brown coat near the temple tank around 7 PM.', trans: '' },
-        { text: 'He was carrying a long cloth bundle. Looked heavy.', trans: '' },
-        { text: 'But I need help first — my flower basket was stolen this morning. Can you spare ₹50?', trans: '', choices: [
-          { text: 'Give ₹50 (Karma +10)', action: function() { game.money -= 50; game.karma += 10; relationships.mallika += 20; addItem('flower_clue', '🌸', 'Mallika\'s Testimony'); addJournal('Mallika saw a man in a brown coat carrying a bundle near the temple tank at 7 PM'); showToast('Mallika trusts you now'); } },
-          { text: 'I need to keep my money', action: function() { relationships.mallika -= 10; game.karma -= 5; addJournal('Mallika refused to talk without money'); showToast('Mallika seems disappointed'); } }
-        ]}
-      ],
-      repeat: [ { text: 'That man went toward T. Nagar, I think. Be careful, Arjun.', trans: '' } ]
-    }
-  },
-  raju: {
-    name: 'Raju', role: 'Auto Driver', sprite: '🧔', color: '#e6a817',
-    x: 18*TILE, y: 20*TILE,
-    dialogs: {
-      first: [
-        { text: 'Anna! I heard about the theft. Terrible business.', trans: '' },
-        { text: 'I did drop a fancy-looking man near T. Nagar market around 7:30. He was nervous, kept checking his bag.', trans: '' },
-        { text: 'Want me to take you there? Only ₹30. I know the shortcuts.', trans: '', choices: [
-          { text: 'Pay ₹30 for a ride (Fast travel unlocked)', action: function() { game.money -= 30; relationships.raju += 15; storyFlags.has_auto_ride = true; showToast('Raju will drive you anywhere now'); } },
-          { text: 'I\'ll walk, thanks', action: function() { relationships.raju += 5; showToast('Raju respects your spirit'); } }
-        ]}
-      ],
-      repeat: [ { text: 'Let me know if you need a ride, anna.', trans: '' } ]
-    }
-  },
-  kavitha: {
-    name: 'Kavitha', role: 'Tea Stall Owner', sprite: '👵', color: '#d2691e',
-    x: 15*TILE, y: 28*TILE,
-    dialogs: {
-      first: [
-        { text: 'The veena... I know that instrument. It belonged to your great-grandmother, didn\'t it?', trans: '' },
-        { text: 'There\'s an antique dealer in T. Nagar — Mr. Venkat. He\'s been hunting Tamil temple artifacts for foreign buyers.', trans: '' },
-        { text: 'Here, take this old temple key. It might open the back room of his shop.', trans: '', choices: [
-          { text: 'Accept the key', action: function() { addItem('temple_key', '🔑', 'Old Temple Key'); relationships.kavitha += 15; addJournal('Kavitha gave you a key to the antique dealer\'s back room'); showToast('Received Old Temple Key'); } }
-        ]}
-      ],
-      repeat: [ { text: 'Mr. Venkat\'s shop is in the northeast corner of T. Nagar market. Be careful — he has guards.', trans: '' } ]
-    }
-  },
-  venkat: {
-    name: 'Mr. Venkat', role: 'Antique Collector', sprite: '🕴️', color: '#4a4a4a',
-    x: 38*TILE, y: 12*TILE,
-    dialogs: {
-      first: [
-        { text: 'Ah, a customer. Looking for something... historical?', trans: '' },
-        { text: 'I deal in many fine artifacts. Rare. Expensive.', trans: '' },
-        { text: 'Why do you ask about temple items? That\'s dangerous talk.', trans: '', choices: [
-          { text: 'I know you have the veena. Give it back.', action: function() { game.karma -= 5; storyFlags.confronted_dealer = true; showToast('Venkat looks nervous...'); } },
-          { text: 'I\'m willing to buy it. Name your price.', action: function() { game.karma -= 10; storyFlags.tried_bribe = true; showToast('Venkat smirks...'); } },
-          { text: 'The police are already watching you.', action: function() { if(relationships.inspector >= 60) { storyFlags.bluff_worked = true; showToast('Venkat panics!'); } else { showToast('Venkat laughs at your bluff'); } } }
-        ]}
-      ],
-      repeat: [ { text: 'Leave my shop. Now.', trans: '' } ]
-    }
-  },
-  inspector: {
-    name: 'Inspector Ramesh', role: 'Police Officer', sprite: '👮', color: '#1a3a6b',
-    x: 42*TILE, y: 42*TILE,
-    dialogs: {
-      first: [
-        { text: 'Temple theft? We\'re already investigating. What do you know?', trans: '' },
-        { text: 'If you have solid evidence, I can help. But I need proof — not rumors.', trans: '', choices: [
-          { text: 'Show Mallika\'s testimony', action: function() { if(hasItem('flower_clue')) { relationships.inspector += 25; addJournal('Inspector Ramesh believes you now'); showToast('Inspector takes note of the evidence'); } else { showToast('You have no evidence to show'); } } },
-          { text: 'Tell him about the midnight train', action: function() { if(storyFlags.knows_train_plan) { relationships.inspector += 20; storyFlags.police_help = true; showToast('Ramesh agrees to stake out the station'); } else { showToast('You don\'t know about any train plan'); } } }
-        ]}
-      ],
-      repeat: [ { text: 'Come back when you have real evidence.', trans: '' } ]
-    }
-  },
-  fisherman: {
-    name: 'Murugan', role: 'Fisherman', sprite: '🎣', color: '#4682b4',
-    x: 10*TILE, y: 5*TILE,
-    dialogs: {
-      first: [
-        { text: 'Saw a fancy car near the beach road at 8 PM. Foreigner inside.', trans: '' },
-        { text: 'They were loading boxes. One looked like... an instrument case.', trans: '' },
-        { text: 'Said something about a "midnight train to Delhi."', trans: '', action: function() { storyFlags.knows_train_plan = true; addJournal('Murugan heard the thieves plan to take the midnight train to Delhi'); showToast('Critical clue: Midnight train!'); } }
-      ],
-      repeat: [ { text: 'Be careful, son. These are dangerous people.', trans: '' } ]
-    }
-  }
-};
-
-function genMap() {
-  map = [];
-  for(let y=0; y<MH; y++) { map[y]=[]; for(let x=0; x<MW; x++) map[y][x]=T.GRASS; }
-  
-  // Temple complex
-  for(let y=10; y<22; y++) for(let x=8; x<20; x++) {
-    if(y===10||y===21||x===8||x===19) map[y][x]=T.TEMPLE;
-    else map[y][x]=T.ROAD;
-  }
-  map[10][13]=T.TEMPLE; map[10][14]=T.TEMPLE;
-  
-  // Roads
-  for(let i=0; i<MW; i++) { map[6][i]=T.ROAD; map[25][i]=T.ROAD; map[40][i]=T.ROAD; }
-  for(let i=0; i<MH; i++) { map[i][5]=T.ROAD; map[i][22]=T.ROAD; map[i][35]=T.ROAD; map[i][48]=T.ROAD; }
-  
-  // Beach
-  for(let y=0; y<6; y++) for(let x=0; x<MW; x++) map[y][x]=T.SAND;
-  for(let y=0; y<3; y++) for(let x=0; x<MW; x++) map[y][x]=T.WATER;
-  
-  // T. Nagar Market
-  for(let y=8; y<18; y++) for(let x=32; x<42; x++) {
-    if((x+y)%4===0) map[y][x]=T.MARKET; else if(map[y][x]===T.GRASS) map[y][x]=T.ROAD;
-  }
-  
-  // Central Station
-  for(let y=38; y<46; y++) for(let x=38; x<46; x++) {
-    if(y===38||y===45||x===38||x===45) map[y][x]=T.STATION; else map[y][x]=T.ROAD;
-  }
-  
-  // Park
-  for(let y=30; y<38; y++) for(let x=8; x<18; x++) map[y][x]=T.PARK;
-  for(let y=31; y<37; y+=2) for(let x=9; x<17; x+=2) map[y][x]=T.TREE;
-  
-  // Tea stalls
-  map[26][23]=T.TEASTALL; map[15][36]=T.TEASTALL;
-  
-  // Houses
-  for(let i=0; i<50; i++) {
-    let bx=Math.floor(Math.random()*(MW-4))+2, by=Math.floor(Math.random()*(MH-4))+2;
-    if(map[by][bx]===T.GRASS) { map[by][bx]=T.HOUSE; if(Math.random()>0.6) map[by][bx+1]=T.HOUSE; }
-  }
-  
-  // Trees
-  for(let i=0; i<40; i++) {
-    let tx=Math.floor(Math.random()*MW), ty=Math.floor(Math.random()*MH);
-    if(map[ty][tx]===T.GRASS) map[ty][tx]=T.TREE;
-  }
+function nearestBuilding(){let best=null,bd=999;for(const b of buildings){let x=b[1]+b[3]/2,y=b[2]+b[4]/2,d=Math.hypot(player.x-x,player.y-y);if(d<bd){bd=d;best=b}}return {b:best,d:bd}}
+function interact(){
+ let m=missions[mi%missions.length],d=Math.hypot(player.x-m.x,player.y-m.y);
+ if(d<90){player.money+=m.reward;player.energy=Math.min(100,player.energy+15);toast('Mission complete! +₹'+m.reward);mi++;save();updateHud();return}
+ let nb=nearestBuilding(); if(nb.d<110){toast(nb.b[0]+' • Press E to interact');}
 }
+function toggleVehicle(){
+ if(player.vehicle){player.vehicle=null;player.speed=180;toast('Exited vehicle');return}
+ let nearest=npcs.reduce((a,n)=>Math.hypot(n.x-player.x,n.y-player.y)<Math.hypot(a.x-player.x,a.y-player.y)?n:a,npcs[0]);
+ if(Math.hypot(nearest.x-player.x,nearest.y-player.y)<70){player.vehicle='Auto';player.speed=420;toast('Entered Auto Rickshaw');}
+ else toast('Move near a vehicle');
+}
+function collide(x,y){
+ if(x<20||y<20||x>world.w-20||y>world.h-20)return true;
+ for(const b of buildings) if(x>b[1]-18&&x<b[1]+b[3]+18&&y>b[2]-18&&y<b[2]+b[4]+18)return true;
+ return false;
+}
+function update(dt){
+ if(paused)return;
+ let ax=(keys.a||keys.ArrowLeft?-1:0)+(keys.d||keys.ArrowRight?1:0)+touch.x;
+ let ay=(keys.w||keys.ArrowUp?-1:0)+(keys.s||keys.ArrowDown?1:0)+touch.y;
+ let len=Math.hypot(ax,ay);if(len>1){ax/=len;ay/=len}
+ let sp=player.vehicle?player.speed:180;
+ if(len){let nx=player.x+ax*sp*dt,ny=player.y+ay*sp*dt;if(!collide(nx,player.y))player.x=nx;if(!collide(player.x,ny))player.y=ny;player.energy=Math.max(0,player.energy-dt*(player.vehicle?0.8:1.5))}
+ else player.energy=Math.min(100,player.energy+dt*2);
+ for(const n of npcs){n.t+=dt;n.x+=n.dx*22*dt;n.y+=n.dy*22*dt;if(collide(n.x,n.y)){n.dx*=-1;n.dy*=-1}}
+ let m=missions[mi%missions.length];if(Math.hypot(player.x-m.x,player.y-m.y)<90)toast('Mission target reached! Press E');
+ let minutes=(performance.now()/1000*1.2+480)%1440;let hh=String(Math.floor(minutes/60)).padStart(2,'0'),mm=String(Math.floor(minutes%60)).padStart(2,'0');document.getElementById('clock').textContent=hh+':'+mm;
+ updateHud();
+}
+function draw(){
+ ctx.clearRect(0,0,W,H);
+ let camX=Math.max(0,Math.min(world.w-W,player.x-W/2)),camY=Math.max(0,Math.min(world.h-H,player.y-H/2));
+ ctx.save();ctx.translate(-camX,-camY);
+ ctx.fillStyle='#87c776';ctx.fillRect(0,0,world.w,world.h);
+ // roads
+ for(const r of roads){ctx.fillStyle='#51575c';ctx.fillRect(r.x,r.y,r.w,r.h);ctx.strokeStyle='#d9c66d';ctx.lineWidth=4;ctx.setLineDash([28,24]);ctx.beginPath();if(r.w>r.h){ctx.moveTo(r.x,r.y+r.h/2);ctx.lineTo(r.x+r.w,r.y+r.h/2)}else{ctx.moveTo(r.x+r.w/2,r.y);ctx.lineTo(r.x+r.w/2,r.y+r.h)}ctx.stroke();ctx.setLineDash([])}
+ // buildings
+ for(const b of buildings){ctx.fillStyle=b[5];ctx.fillRect(b[1],b[2],b[3],b[4]);ctx.strokeStyle='#26333b';ctx.lineWidth=4;ctx.strokeRect(b[1],b[2],b[3],b[4]);ctx.fillStyle='#17232b';ctx.font='bold 20px system-ui';ctx.textAlign='center';ctx.fillText(b[0],b[1]+b[3]/2,b[2]+b[4]/2);for(let xx=b[1]+30;xx<b[1]+b[3]-15;xx+=55){ctx.fillStyle='#dff4ee';ctx.fillRect(xx,b[2]+25,25,20);}}
+ // trees
+ for(let i=0;i<70;i++){let x=(i*311)%world.w,y=(i*173)%world.h;if(roads.some(r=>x>r.x-15&&x<r.x+r.w+15&&y>r.y-15&&y<r.y+r.h+15))continue;ctx.fillStyle='#6a4930';ctx.fillRect(x-3,y,6,22);ctx.fillStyle='#32834a';ctx.beginPath();ctx.arc(x,y,22,0,Math.PI*2);ctx.fill()}
+ // mission marker
+ let m=missions[mi%missions.length];ctx.fillStyle='#ffd34d';ctx.beginPath();ctx.arc(m.x,m.y,25+Math.sin(performance.now()/180)*5,0,Math.PI*2);ctx.fill();ctx.fillStyle='#382600';ctx.font='bold 18px system-ui';ctx.textAlign='center';ctx.fillText('★',m.x,m.y+7);
+ // NPCs
+ for(const n of npcs){ctx.fillStyle='#202a33';ctx.beginPath();ctx.arc(n.x,n.y,n.r,0,Math.PI*2);ctx.fill();ctx.fillStyle='#f1b48a';ctx.beginPath();ctx.arc(n.x,n.y-9,6,0,Math.PI*2);ctx.fill()}
+ // player
+ ctx.save();ctx.translate(player.x,player.y);ctx.fillStyle=player.vehicle?'#e78d35':'#2d73d5';ctx.beginPath();ctx.roundRect(-18,-12,36,24,8);ctx.fill();if(!player.vehicle){ctx.fillStyle='#f1b48a';ctx.beginPath();ctx.arc(0,-18,8,0,Math.PI*2);ctx.fill()}else{ctx.fillStyle='#222';ctx.beginPath();ctx.arc(-13,13,6,0,Math.PI*2);ctx.arc(13,13,6,0,Math.PI*2);ctx.fill()}ctx.restore();
+ ctx.restore();
+ // mini map
+ mx.clearRect(0,0,mini.width,mini.height);let sx=mini.width/world.w,sy=mini.height/world.h;mx.fillStyle='#79b76d';mx.fillRect(0,0,mini.width,mini.height);mx.fillStyle='#555';for(const r of roads)mx.fillRect(r.x*sx,r.y*sy,r.w*sx,r.h*sy);for(const b of buildings){mx.fillStyle='#d9a25a';mx.fillRect(b[1]*sx,b[2]*sy,b[3]*sx,b[4]*sy)}let m2=missions[mi%missions.length];mx.fillStyle='#ffd34d';mx.beginPath();mx.arc(m2.x*sx,m2.y*sy,3,0,7);mx.fill();mx.fillStyle='#f33';mx.beginPath();mx.arc(player.x*sx,player.y*sy,4,0,7);mx.fill();
+}
+function loop(t){if(!last)last=t;let dt=Math.min(.04,(t-last)/1000);last=t;if(running){update(dt);draw()}requestAnimationFrame(loop)}
+requestAnimationFrame(loop);
 
-function createEntities() {
-  npcs = [];
-  for(let [id, data] of Object.entries(NPC_DATA)) {
-    npcs.push({...data, id, met:false, tx:Math.floor(data.x/TILE), ty:Math.floor(data.y/TILE)});
-  }
-  
-  items = [
-    { x: 14*TILE, y: 16*TILE, id:'flower_basket', name:'Flower Basket', icon:'🧺', desc:'A basket of jasmine flowers' },
-    { x: 35*TILE, y: 15*TILE, id:'old_coin', name:'Chola Coin', icon:'🪙', desc:'An ancient coin from the Chola period' },
-    { x: 11*TILE, y: 4*TILE, id:'pearl', name:'Sea Pearl', icon:'🦪', desc:'A pearl found on Marina Beach' },
-  ];
-}
+document.getElementById('play').onclick=()=>{load();running=true;document.getElementById('menu').classList.add('hidden');document.getElementById('hud').classList.remove('hidden');updateHud();toast('Welcome to Tamil City!');}
+document.getElementById('how').onclick=()=>document.getElementById('help').classList.toggle('hidden');
+document.getElementById('pause').onclick=()=>{paused=!paused;toast(paused?'Game Paused':'Game Resumed')}
+addEventListener('keydown',e=>{keys[e.key]=true;if(e.key==='e'||e.key==='E')interact();if(e.key==='v'||e.key==='V')toggleVehicle();if(e.key==='p'||e.key==='P')paused=!paused});
+addEventListener('keyup',e=>keys[e.key]=false);
+document.getElementById('act').onclick=interact;document.getElementById('vehicle').onclick=toggleVehicle;
+document.getElementById('jump').onclick=()=>{player.energy=Math.max(0,player.energy-3);toast('Jump!')};
 
-window.addEventListener('keydown', e => { keys[e.key.toLowerCase()]=true; if(e.key.toLowerCase()==='e'||e.key==='Enter') doAction(); });
-window.addEventListener('keyup', e => keys[e.key.toLowerCase()]=false);
-function setDir(d){touchDir=d;} function clearDir(){touchDir=null;}
-if('ontouchstart' in window) document.getElementById('mobile-controls').style.display = 'block';
-
-function update() {
-  if(!game.running) return;
-  game.time += 0.03;
-  if(game.time >= 24*60) game.time = 0;
-  
-  if(inDialog) return;
-  let dx=0, dy=0;
-  if(keys['w']||keys['arrowup']||touchDir==='up'){dy=-SPEED;player.dir='up';}
-  if(keys['s']||keys['arrowdown']||touchDir==='down'){dy=SPEED;player.dir='down';}
-  if(keys['a']||keys['arrowleft']||touchDir==='left'){dx=-SPEED;player.dir='left';}
-  if(keys['d']||keys['arrowright']||touchDir==='right'){dx=SPEED;player.dir='right';}
-  
-  player.moving = (dx!==0||dy!==0);
-  if(player.moving) player.frame += 0.12;
-  
-  let nx=player.x+dx, ny=player.y+dy;
-  let tx=Math.floor((nx+TILE/2)/TILE), ty=Math.floor((ny+TILE/2)/TILE);
-  if(tx>=0&&tx<MW&&ty>=0&&ty<MH) {
-    let tile=map[ty][tx];
-    if(tile!==T.HOUSE&&tile!==T.TEMPLE&&tile!==T.WALL&&tile!==T.TREE&&tile!==T.WATER&&tile!==T.STATION&&tile!==T.MARKET){
-      player.x=nx; player.y=ny;
-    }
-  }
-  
-  cam.x = player.x - canvas.width/2 + TILE/2;
-  cam.y = player.y - canvas.height/2 + TILE/2;
-  cam.x = Math.max(0, Math.min(cam.x, MW*TILE - canvas.width));
-  cam.y = Math.max(0, Math.min(cam.y, MH*TILE - canvas.height));
-  
-  let px=Math.floor(player.x/TILE), py=Math.floor(player.y/TILE);
-  let loc='';
-  if(py<6) loc='🏖️ Marina Beach';
-  else if(px>8&&px<20&&py>10&&py<22) loc='🛕 Kapaleeshwarar Temple';
-  else if(px>32&&px<42&&py>8&&py<18) loc='🛍️ T. Nagar Market';
-  else if(px>38&&px<46&&py>38&&py<46) loc='🚉 Central Station';
-  else if(px>8&&px<18&&py>30&&py<38) loc='🌳 Nageswara Park';
-  else if(map[py][px]===T.TEASTALL) loc='☕ Tea Stall';
-  
-  if(loc!==currentLocation) {
-    currentLocation=loc;
-    let pill=document.getElementById('location-pill');
-    if(loc){ pill.textContent=loc; pill.style.opacity=1; setTimeout(()=>pill.style.opacity=0, 4000); }
-  }
-  
-  for(let i=items.length-1; i>=0; i--) {
-    let it=items[i];
-    if(Math.hypot(player.x-it.x, player.y-it.y) < TILE) {
-      addItem(it.id, it.icon, it.name);
-      showToast('Picked up: ' + it.name);
-      items.splice(i,1);
-      createParticles(it.x, it.y, '#ffd700');
-    }
-  }
-  
-  particles = particles.filter(p=>p.life>0);
-  particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.life-=0.02;p.vy+=0.08;});
-  
-  updateUI();
-}
-
-function addItem(id, icon, name) { inventory[id] = {icon, name}; }
-function hasItem(id) { return !!inventory[id]; }
-function addJournal(text) { journal.push({time: formatTime(), text}); }
-function showToast(text) {
-  let t=document.getElementById('toast');
-  t.textContent=text; t.style.display='block';
-  setTimeout(()=>t.style.display='none', 2500);
-}
-function createParticles(x,y,color) {
-  for(let i=0;i<10;i++) particles.push({x,y,vx:(Math.random()-0.5)*5,vy:(Math.random()-0.5)*5-2,life:1,color});
-}
-function formatTime() {
-  let h=Math.floor(game.time/60), m=Math.floor(game.time%60);
-  let period=h<12?'AM':'PM';
-  let displayH=h%12||12;
-  return displayH+':'+m.toString().padStart(2,'0')+' '+period;
-}
-
-function draw() {
-  ctx.fillStyle='#0d0d1a'; ctx.fillRect(0,0,canvas.width,canvas.height);
-  ctx.save(); ctx.translate(-cam.x,-cam.y);
-  
-  let sx=Math.floor(cam.x/TILE), sy=Math.floor(cam.y/TILE);
-  let ex=sx+Math.ceil(canvas.width/TILE)+1, ey=sy+Math.ceil(canvas.height/TILE)+1;
-  
-  for(let y=sy; y<=ey; y++) {
-    for(let x=sx; x<=ex; x++) {
-      if(y>=0&&y<MH&&x>=0&&x<MW) {
-        let tile=map[y][x], px=x*TILE, py=y*TILE;
-        ctx.fillStyle=TC[tile]||'#333'; ctx.fillRect(px,py,TILE,TILE);
-        ctx.strokeStyle='rgba(0,0,0,0.08)'; ctx.strokeRect(px,py,TILE,TILE);
-        
-        if(tile===T.TEMPLE) {
-          ctx.fillStyle='#ffd700'; ctx.fillRect(px+8,py+5,TILE-16,4);
-          ctx.fillStyle='#8b1a1a'; ctx.fillRect(px+15,py+10,4,TILE-15);
-        }
-        if(tile===T.TEASTALL) {
-          ctx.fillStyle='#5a3a1a'; ctx.fillRect(px+8,py+8,TILE-16,TILE-16);
-          ctx.fillStyle='#fff'; ctx.font='18px Arial'; ctx.fillText('☕',px+10,py+30);
-        }
-        if(tile===T.TREE) {
-          ctx.fillStyle='#1a4a1a'; ctx.beginPath(); ctx.arc(px+TILE/2,py+TILE/2,TILE/2.5,0,Math.PI*2); ctx.fill();
-          ctx.fillStyle='#5a3a1a'; ctx.fillRect(px+TILE/2-3,py+TILE/2,6,TILE/2);
-        }
-        if(tile===T.MARKET) {
-          ctx.fillStyle='#8a5a1a'; ctx.fillRect(px+5,py+22,TILE-10,18);
-          ctx.fillStyle='#ff6347'; ctx.fillRect(px+18,py+5,4,17);
-        }
-        if(tile===T.STATION) {
-          ctx.fillStyle='#3a3a4a'; ctx.fillRect(px+4,py+4,TILE-8,TILE-8);
-          ctx.fillStyle='#fff'; ctx.font='11px Arial'; ctx.fillText('🚂',px+12,py+28);
-        }
-        if(tile===T.WATER) {
-          ctx.fillStyle='rgba(255,255,255,0.08)'; ctx.fillRect(px+(game.time%12),py+12,8,2);
-        }
-      }
-    }
-  }
-  
-  items.forEach(it=>{ ctx.font='22px Arial'; ctx.fillText(it.icon,it.x+10,it.y+30); });
-  
-  npcs.forEach(npc=>{
-    if(npc.id==='venkat' && !storyFlags.met_venkat) return;
-    ctx.fillStyle='rgba(0,0,0,0.25)'; ctx.beginPath(); ctx.ellipse(npc.x+TILE/2,npc.y+TILE-4,14,4,0,0,Math.PI*2); ctx.fill();
-    ctx.fillStyle=npc.color; ctx.beginPath(); ctx.arc(npc.x+TILE/2,npc.y+TILE/2,14,0,Math.PI*2); ctx.fill();
-    ctx.font='22px Arial'; ctx.fillText(npc.sprite,npc.x+10,npc.y+30);
-    ctx.fillStyle='rgba(0,0,0,0.6)'; let ntext=npc.name; ctx.fillRect(npc.x-8,npc.y-20,ctx.measureText(ntext).width+16,18);
-    ctx.fillStyle='#e0aaff'; ctx.font='10px Arial'; ctx.fillText(ntext,npc.x,npc.y-7);
-    let dist=Math.hypot(player.x-npc.x,player.y-npc.y);
-    if(dist<TILE*1.6) { ctx.fillStyle='#7b2cbf'; ctx.font='bold 12px Arial'; ctx.fillText('E',npc.x+20,npc.y-28); }
-  });
-  
-  let px=player.x+TILE/2, py=player.y+TILE/2;
-  ctx.fillStyle='rgba(0,0,0,0.25)'; ctx.beginPath(); ctx.ellipse(px,py+18,12,4,0,0,Math.PI*2); ctx.fill();
-  ctx.fillStyle='#7b2cbf'; ctx.beginPath(); ctx.arc(px,py,13,0,Math.PI*2); ctx.fill();
-  ctx.fillStyle='#e0aaff'; ctx.beginPath(); ctx.arc(px+(player.dir==='left'?-5:player.dir==='right'?5:0),py+(player.dir==='up'?-5:player.dir==='down'?5:0),4,0,Math.PI*2); ctx.fill();
-  if(player.moving) {
-    ctx.strokeStyle='#7b2cbf'; ctx.lineWidth=3;
-    ctx.beginPath(); ctx.moveTo(px-5,py+12); ctx.lineTo(px-8+Math.sin(player.frame)*4,py+20);
-    ctx.moveTo(px+5,py+12); ctx.lineTo(px+8-Math.sin(player.frame)*4,py+20); ctx.stroke();
-  }
-  
-  particles.forEach(p=>{ ctx.fillStyle=p.color; ctx.globalAlpha=p.life; ctx.fillRect(p.x,p.y,4,4); ctx.globalAlpha=1; });
-  
-  ctx.restore();
-  
-  let hour=game.time/60, dark=0;
-  if(hour<5) dark=0.5; else if(hour<6) dark=0.5-(hour-5)*0.4; else if(hour>19) dark=(hour-19)*0.12; else if(hour>20) dark=0.5;
-  if(dark>0) {
-    ctx.fillStyle='rgba(5,5,20,'+dark+')'; ctx.fillRect(0,0,canvas.width,canvas.height);
-    let spx=player.x-cam.x+TILE/2, spy=player.y-cam.y+TILE/2;
-    let grad=ctx.createRadialGradient(spx,spy,10,spx,spy,90);
-    grad.addColorStop(0,'rgba(255,220,150,0.25)'); grad.addColorStop(1,'rgba(255,220,150,0)');
-    ctx.fillStyle=grad; ctx.fillRect(0,0,canvas.width,canvas.height);
-  }
-}
-
-function updateUI() {
-  document.getElementById('time-display').textContent = (Math.floor(game.time/60)<6||Math.floor(game.time/60)>18?'🌙':'☀️')+' '+formatTime();
-  document.getElementById('money').textContent = game.money;
-  document.getElementById('objective-pill').textContent = '🎯 '+objective;
-  let chapters = {prologue:'📖 Prologue', clue_hunt:'🔍 The Clues', market_lead:'🛍️ Black Market', station_clue:'🚉 Midnight Train', confrontation:'⚔️ Confrontation'};
-  document.getElementById('story-chapter').textContent = chapters[game.state] || '📖 Prologue';
-}
-
-function doAction() {
-  if(inDialog) { advanceDialog(); return; }
-  for(let npc of npcs) {
-    if(npc.id==='venkat' && !storyFlags.met_venkat) continue;
-    let dist=Math.hypot(player.x-npc.x,player.y-npc.y);
-    if(dist<TILE*1.6) { startDialog(npc); return; }
-  }
-}
-
-function startDialog(npc) {
-  inDialog = true; currentNPC = npc;
-  let set = npc.met ? 'repeat' : 'first';
-  if(!npc.dialogs[set]) set = 'first';
-  dialogQueue = JSON.parse(JSON.stringify(npc.dialogs[set]));
-  npc.met = true;
-  
-  if(npc.id==='gurukkal' && game.state==='prologue') setTimeout(()=>setGameState('clue_hunt'), 500);
-  if(npc.id==='kavitha' && game.state==='clue_hunt') setTimeout(()=>setGameState('market_lead'), 500);
-  if(npc.id==='fisherman' && game.state==='market_lead') setTimeout(()=>setGameState('station_clue'), 500);
-  if(npc.id==='venkat') storyFlags.met_venkat = true;
-  if(npc.id==='inspector' && relationships.inspector>=60 && storyFlags.police_help) setTimeout(()=>setGameState('confrontation'), 500);
-  
-  advanceDialog();
-}
-
-function advanceDialog() {
-  let box = document.getElementById('dialog-box');
-  let choicesDiv = document.getElementById('choice-container');
-  choicesDiv.innerHTML = '';
-  
-  if(dialogQueue.length===0) {
-    inDialog=false; box.style.display='none'; currentNPC=null; return;
-  }
-  
-  let line = dialogQueue.shift();
-  box.style.display='block';
-  document.getElementById('dialog-avatar').textContent = currentNPC.sprite;
-  document.getElementById('dialog-name').textContent = currentNPC.name;
-  document.getElementById('dialog-role').textContent = currentNPC.role;
-  
-  let textEl = document.getElementById('dialog-text');
-  let transEl = document.getElementById('dialog-translation');
-  textEl.textContent = '';
-  transEl.textContent = line.trans ? '"'+line.trans+'"' : '';
-  
-  if(typingInterval) clearInterval(typingInterval);
-  let i=0;
-  typingInterval = setInterval(()=>{
-    textEl.textContent += line.text[i];
-    i++;
-    if(i>=line.text.length) clearInterval(typingInterval);
-  }, 20);
-  
-  if(line.choices) {
-    line.choices.forEach(choice => {
-      let btn = document.createElement('button');
-      btn.textContent = choice.text;
-      btn.style.cssText = 'background:rgba(123,44,191,0.3);border:1px solid #7b2cbf;color:#e0aaff;padding:10px 15px;border-radius:8px;cursor:pointer;font-size:13px;text-align:left;';
-      btn.onmouseenter = function() { this.style.background='rgba(123,44,191,0.5)'; };
-      btn.onmouseleave = function() { this.style.background='rgba(123,44,191,0.3)'; };
-      btn.onclick = function() { choice.action(); advanceDialog(); };
-      choicesDiv.appendChild(btn);
-    });
-  }
-  
-  if(line.action) line.action();
-}
-
-function setGameState(state) {
-  if(STORY[state] && STORY[state].banner) {
-    game.state = state;
-    objective = STORY[state].objective;
-    showBanner(STORY[state].banner);
-    addJournal('New objective: ' + objective);
-  }
-}
-
-function showBanner(banner) {
-  let el = document.getElementById('story-banner');
-  document.getElementById('banner-icon').textContent = banner.icon;
-  document.getElementById('banner-title').textContent = banner.title;
-  document.getElementById('banner-text').textContent = banner.text;
-  el.style.display = 'block';
-  game.running = false;
-}
-
-function closeBanner() {
-  document.getElementById('story-banner').style.display = 'none';
-  game.running = true;
-}
-
-function toggleJournal() {
-  let panel = document.getElementById('journal-panel');
-  if(panel.style.display==='block') { panel.style.display='none'; return; }
-  panel.style.display='block';
-  document.getElementById('inv-panel').style.display='none';
-  
-  let entries = document.getElementById('journal-entries');
-  entries.innerHTML = journal.length===0 ? '<div style="color:#666;text-align:center;padding:15px;">No entries yet</div>' :
-    journal.map(j=>'<div style="margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #222;"><span style="color:#7b2cbf;font-size:11px;">'+j.time+'</span><div style="color:#ccc;margin-top:3px;">'+j.text+'</div></div>').join('');
-  
-  let bars = document.getElementById('relationship-bars');
-  bars.innerHTML = Object.entries(relationships).map(([name,val])=>{
-    let color = val>60?'#90EE90':val>30?'#ffd700':'#ff6b6b';
-    return '<div style="display:flex;align-items:center;gap:8px;"><span style="width:70px;font-size:11px;color:#aaa;">'+name+'</span><div style="flex:1;height:8px;background:#222;border-radius:4px;overflow:hidden;"><div style="width:'+val+'%;height:100%;background:'+color+';"></div></div><span style="width:25px;font-size:11px;color:'+color+';">'+val+'</span></div>';
-  }).join('');
-}
-
-function toggleInventory() {
-  let panel = document.getElementById('inv-panel');
-  if(panel.style.display==='block') { panel.style.display='none'; return; }
-  panel.style.display='block';
-  document.getElementById('journal-panel').style.display='none';
-  
-  let list = document.getElementById('inv-list');
-  let invItems = Object.entries(inventory);
-  list.innerHTML = invItems.length===0 ? '<div style="color:#666;text-align:center;padding:15px;">Empty</div>' :
-    invItems.map(([id,item])=>'<div style="display:flex;align-items:center;gap:10px;padding:8px;border-bottom:1px solid #222;"><span style="font-size:20px;">'+item.icon+'</span><div><div style="color:#a0eaff;font-weight:bold;">'+item.name+'</div></div></div>').join('');
-}
-
-function triggerEnding(type) {
-  game.running = false;
-  let screen = document.getElementById('ending-screen');
-  screen.style.display = 'flex';
-  
-  if(type==='justice') {
-    document.getElementById('ending-icon').textContent = '⚖️';
-    document.getElementById('ending-title').textContent = 'Justice Served';
-    document.getElementById('ending-desc').textContent = 'With Inspector Ramesh\'s help, you recovered the veena and arrested Mr. Venkat. The Arubathimoavar festival proceeded at dawn, the veena\'s sacred notes filling the temple air. Your grandmother would be proud.';
-  } else if(type==='mercy') {
-    document.getElementById('ending-icon').textContent = '🕊️';
-    document.getElementById('ending-title').textContent = 'The Merciful Path';
-    document.getElementById('ending-desc').textContent = 'You convinced Venkat to return the veena voluntarily, promising to help him find legal buyers for his other artifacts. The festival was saved, and a man found redemption.';
-  } else if(type==='alone') {
-    document.getElementById('ending-icon').textContent = '🎯';
-    document.getElementById('ending-title').textContent = 'Lone Wolf';
-    document.getElementById('ending-desc').textContent = 'You snuck into the storeroom alone and retrieved the veena without police help. Dangerous, but effective. The festival began on time.';
-  } else if(type==='too_late') {
-    document.getElementById('ending-icon').textContent = '🌅';
-    document.getElementById('ending-title').textContent = 'Dawn Breaks';
-    document.getElementById('ending-desc').textContent = 'Time ran out. The festival began without the veena, its absence a hollow ache in every devotee\'s heart. But you won\'t stop searching.';
-  }
-  
-  document.getElementById('ending-stats').innerHTML = '<div style="display:flex;gap:20px;justify-content:center;"><div>⏰ Time: '+formatTime()+'</div><div>💰 Money: ₹'+game.money+'</div><div>☯️ Karma: '+game.karma+'</div></div>';
-}
-
-function loop() {
-  update();
-  draw();
-  requestAnimationFrame(loop);
-}
-
-function startGame() {
-  document.getElementById('title-screen').style.display = 'none';
-  genMap();
-  createEntities();
-  game.running = true;
-  setTimeout(()=>{
-    showBanner(STORY.prologue.banner);
-    addJournal('Arrived at Mylapore. The sacred veena has been stolen from Kapaleeshwarar Temple.');
-  }, 500);
-  loop();
-}
+const joy=document.getElementById('joy'),knob=document.getElementById('knob');let joyId=null;
+function joyMove(e){let r=joy.getBoundingClientRect(),x=e.clientX-r.left-66,y=e.clientY-r.top-66,d=Math.min(45,Math.hypot(x,y)),a=Math.atan2(y,x);touch.x=Math.cos(a)*d/45;touch.y=Math.sin(a)*d/45;knob.style.transform=`translate(${touch.x*38}px,${touch.y*38}px)`}
+joy.addEventListener('pointerdown',e=>{joyId=e.pointerId;joy.setPointerCapture(joyId);joyMove(e)});
+joy.addEventListener('pointermove',e=>{if(e.pointerId===joyId)joyMove(e)});
+joy.addEventListener('pointerup',()=>{joyId=null;touch.x=touch.y=0;knob.style.transform='translate(0,0)'});
+joy.addEventListener('pointercancel',()=>{joyId=null;touch.x=touch.y=0;knob.style.transform='translate(0,0)'});
 </script>
-
 </body>
 </html>
