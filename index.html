@@ -1,1313 +1,2541 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ta">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="theme-color" content="#07131d">
-<meta name="description" content="Tamil Bus Rush - a responsive single-file browser driving game.">
-<title>Tamil Bus Rush</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>தமிழ் நகரம் · Tamil Nagaram — Full City RPG</title>
 <style>
+/* =========================================================================
+   ROOT TOKENS
+   ========================================================================= */
 :root{
-  --bg:#06111a;
-  --panel:#0d1d2a;
-  --panel2:#102536;
-  --text:#f4f7fb;
-  --muted:#9bb0c2;
-  --gold:#ffc928;
-  --green:#31d45b;
-  --red:#ff4d4d;
-  --blue:#31a8ff;
-  --shadow:0 14px 40px rgba(0,0,0,.38);
+  --ground:#d9c79a;
+  --ground-dark:#c3b077;
+  --road:#5b564f;
+  --road-line:#f4d35e;
+  --sand:#e8d3a0;
+  --sea:#2b7f9e;
+  --sea-deep:#1c5f7a;
+  --temple-red:#a8322d;
+  --temple-gold:#e0a938;
+  --temple-teal:#1f6f6b;
+  --temple-blue:#2c5f8a;
+  --temple-green:#3f7d4a;
+  --ui-bg:rgba(24,16,10,0.86);
+  --ui-bg-light:rgba(40,28,16,0.92);
+  --ui-text:#fdf1de;
+  --ui-text-dim:#c9b795;
+  --ui-accent:#e0a938;
+  --ui-accent2:#c0392b;
+  --ui-good:#5fae5a;
+  --ui-warn:#e0a938;
+  --ui-bad:#c0392b;
+  --panel-radius:14px;
+  --border-soft:rgba(224,169,56,0.55);
+  font-family:'Segoe UI',Tahoma,Verdana,sans-serif;
 }
-*{box-sizing:border-box}
-html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--text)}
-button{font:inherit}
-#app{width:100%;height:100%;display:flex;align-items:center;justify-content:center}
-#gameWrap{
-  position:relative;
-  width:min(1500px,100vw);
-  height:min(900px,100vh);
-  background:#08131c;
-  overflow:hidden;
+*{box-sizing:border-box;}
+html,body{
+  margin:0;padding:0;height:100%;overflow:hidden;background:#0b1030;
+  touch-action:none;-webkit-user-select:none;user-select:none;
+  -webkit-tap-highlight-color:transparent;
 }
-canvas{display:block;width:100%;height:100%;background:#6db8e8}
-.screen{
-  position:absolute;inset:0;
-  display:flex;align-items:center;justify-content:center;
-  background:linear-gradient(135deg,rgba(3,10,16,.94),rgba(8,25,38,.90));
-  z-index:20;
-}
-.hidden{display:none!important}
-.panel{
-  width:min(720px,92vw);
-  max-height:92vh;
-  overflow:auto;
-  padding:28px;
-  border:1px solid rgba(255,255,255,.13);
-  border-radius:24px;
-  background:rgba(8,20,30,.95);
-  box-shadow:var(--shadow);
-  backdrop-filter:blur(12px);
-}
-.logo{
-  text-align:center;
-  font-weight:1000;
-  line-height:.86;
-  letter-spacing:-3px;
-  margin:0 0 12px;
-  font-size:clamp(48px,9vw,100px);
-  color:#fff;
-  text-shadow:0 7px 0 #173047,0 12px 25px rgba(0,0,0,.6);
-}
-.logo span{display:block;color:var(--gold)}
-.subtitle{text-align:center;color:var(--muted);margin:0 0 24px}
-.menuGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
-.menuBtn{
-  min-height:58px;border:0;border-radius:14px;cursor:pointer;
-  color:#fff;font-weight:800;font-size:17px;
-  background:linear-gradient(135deg,#1479d1,#0b4d92);
-  box-shadow:0 7px 0 rgba(0,0,0,.28);
-}
-.menuBtn:hover{filter:brightness(1.1);transform:translateY(-1px)}
-.menuBtn.primary{background:linear-gradient(135deg,#25c957,#128b3b)}
-.menuBtn.gold{background:linear-gradient(135deg,#ffc928,#e18c00);color:#16100a}
-.menuBtn.purple{background:linear-gradient(135deg,#9a5cff,#5b2fb4)}
-.infoRow{display:flex;justify-content:space-between;gap:12px;padding:14px 0;border-bottom:1px solid rgba(255,255,255,.08)}
-.stat{font-size:22px;font-weight:900;color:var(--gold)}
-.small{font-size:13px;color:var(--muted)}
-.tip{
-  margin-top:18px;padding:14px 16px;border-radius:14px;
-  background:#0d2637;border:1px solid rgba(49,168,255,.25);color:#cdeaff
-}
+canvas{display:block;position:fixed;top:0;left:0;}
+button{font-family:inherit;}
+::-webkit-scrollbar{width:6px;}
+::-webkit-scrollbar-thumb{background:var(--ui-accent);border-radius:3px;}
+
+/* =========================================================================
+   HUD (top-left status)
+   ========================================================================= */
 #hud{
-  position:absolute;left:0;right:0;top:0;z-index:5;
-  display:flex;align-items:flex-start;justify-content:space-between;
-  padding:12px;pointer-events:none;
+  position:fixed;top:10px;left:10px;z-index:5;background:var(--ui-bg);color:var(--ui-text);
+  padding:10px 14px;border-radius:var(--panel-radius);border:1px solid var(--border-soft);
+  font-size:13px;line-height:1.55;min-width:190px;box-shadow:0 4px 16px rgba(0,0,0,.45);
 }
-.hudGroup{display:flex;gap:8px;flex-wrap:wrap}
-.hudBox{
-  min-width:90px;padding:8px 11px;border-radius:12px;
-  background:rgba(5,16,25,.76);border:1px solid rgba(255,255,255,.12);
-  backdrop-filter:blur(6px);text-align:center;
+#hudTitle{font-size:15px;font-weight:800;letter-spacing:.4px;color:var(--ui-accent);margin-bottom:4px;
+  display:flex;align-items:center;justify-content:space-between;}
+#hudClock{font-size:12px;color:var(--ui-text-dim);font-weight:600;}
+#hudBars{margin-top:6px;display:flex;flex-direction:column;gap:4px;}
+.bar-row{display:flex;align-items:center;gap:6px;font-size:11px;}
+.bar-track{flex:1;height:8px;border-radius:4px;background:rgba(255,255,255,.12);overflow:hidden;}
+.bar-fill{height:100%;border-radius:4px;transition:width .25s;}
+.bar-fill.energy{background:linear-gradient(90deg,#5fae5a,#8fd67f);}
+.bar-fill.money{background:linear-gradient(90deg,#e0a938,#f4d35e);}
+#hudRes{margin-top:6px;font-size:12px;display:flex;flex-wrap:wrap;gap:6px 10px;}
+#hudRes span{white-space:nowrap;}
+#hudRes b{color:var(--ui-accent);}
+
+/* =========================================================================
+   MINIMAP
+   ========================================================================= */
+#minimapWrap{position:fixed;top:10px;right:10px;z-index:5;}
+#minimap{border-radius:12px;border:2px solid var(--ui-accent);box-shadow:0 4px 14px rgba(0,0,0,.5);background:#1a1208;}
+#minimapLabel{text-align:center;font-size:10px;color:var(--ui-text-dim);margin-top:3px;background:var(--ui-bg);
+  padding:2px 6px;border-radius:8px;}
+
+/* =========================================================================
+   TOASTS / NOTIFICATIONS
+   ========================================================================= */
+#toastStack{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:9;display:flex;
+  flex-direction:column;gap:6px;align-items:center;pointer-events:none;}
+.toast{background:var(--ui-bg);color:var(--ui-text);padding:8px 18px;border-radius:20px;
+  border:1px solid var(--ui-accent);font-size:13px;opacity:0;transform:translateY(-8px);
+  transition:opacity .35s, transform .35s;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.4);}
+.toast.show{opacity:1;transform:translateY(0);}
+.toast.quest{border-color:var(--ui-good);}
+.toast.money{border-color:#f4d35e;}
+.toast.warn{border-color:var(--ui-bad);}
+
+/* =========================================================================
+   QUEST TRACKER
+   ========================================================================= */
+#questTracker{position:fixed;top:150px;left:10px;z-index:5;background:var(--ui-bg);color:var(--ui-text);
+  padding:8px 12px;border-radius:var(--panel-radius);border:1px solid var(--border-soft);
+  font-size:12px;max-width:210px;box-shadow:0 4px 14px rgba(0,0,0,.4);display:none;}
+#questTracker.show{display:block;}
+#questTracker h4{margin:0 0 4px;color:var(--ui-accent);font-size:12px;letter-spacing:.3px;}
+#questTracker .qline{display:flex;justify-content:space-between;gap:8px;padding:2px 0;color:var(--ui-text-dim);}
+#questTracker .qline.done{color:var(--ui-good);text-decoration:line-through;}
+
+/* =========================================================================
+   BOTTOM ACTION BAR (mobile + desktop icons)
+   ========================================================================= */
+#actionBar{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:6;display:flex;gap:10px;}
+.iconBtn{width:50px;height:50px;border-radius:50%;border:2px solid var(--ui-accent);background:var(--ui-bg);
+  color:var(--ui-text);font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;
+  box-shadow:0 4px 14px rgba(0,0,0,.5);position:relative;}
+.iconBtn:active{transform:scale(.94);}
+.iconBtn .badge{position:absolute;top:-4px;right:-4px;background:var(--ui-bad);color:#fff;font-size:9px;
+  border-radius:8px;padding:1px 5px;font-weight:700;}
+
+/* =========================================================================
+   JOYSTICK (touch)
+   ========================================================================= */
+#joystickZone{position:fixed;left:0;bottom:0;width:48%;height:55%;z-index:4;}
+#joystickBase{position:fixed;width:110px;height:110px;border-radius:50%;
+  background:rgba(253,241,222,.12);border:2px solid rgba(224,169,56,.7);display:none;z-index:5;}
+#joystickKnob{position:absolute;width:48px;height:48px;border-radius:50%;background:rgba(224,169,56,.85);
+  border:2px solid #fff3d6;left:31px;top:31px;box-shadow:0 2px 8px rgba(0,0,0,.4);}
+#interactZone{position:fixed;right:0;bottom:0;width:40%;height:55%;z-index:4;}
+#interactBtn{position:fixed;display:none;z-index:6;width:64px;height:64px;border-radius:50%;
+  background:rgba(224,169,56,.85);border:3px solid #fff3d6;color:#2a1505;font-weight:800;font-size:13px;
+  align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,.5);right:20px;bottom:90px;}
+#interactBtn.show{display:flex;}
+
+@media(hover:hover) and (pointer:fine){
+  #joystickZone,#interactZone{display:none;}
 }
-.hudLabel{font-size:10px;color:var(--muted);font-weight:800;text-transform:uppercase}
-.hudValue{font-size:19px;font-weight:950}
-#pauseBtn{
-  pointer-events:auto;width:48px;height:48px;border-radius:13px;
-  border:1px solid rgba(255,255,255,.25);background:rgba(4,13,20,.8);
-  color:#fff;font-size:22px;cursor:pointer;
-}
-#mission{
-  position:absolute;left:50%;top:74px;transform:translateX(-50%);
-  z-index:5;padding:7px 13px;border-radius:999px;
-  background:rgba(7,17,25,.78);border:1px solid rgba(255,201,40,.28);
-  color:#ffe48a;font-size:12px;font-weight:800;pointer-events:none;
-}
-#touchControls{
-  position:absolute;left:0;right:0;bottom:14px;z-index:8;
-  display:flex;justify-content:space-between;align-items:end;
-  padding:0 16px;pointer-events:none;
-}
-.touchCluster{display:flex;gap:10px;pointer-events:auto}
-.touchBtn{
-  width:66px;height:66px;border-radius:50%;
-  border:1px solid rgba(255,255,255,.25);
-  background:rgba(5,14,21,.76);color:#fff;font-size:28px;
-  box-shadow:0 8px 18px rgba(0,0,0,.3);
-  touch-action:none;user-select:none;
-}
-.touchBtn:active{transform:scale(.94);background:rgba(25,64,84,.9)}
-.touchBtn.wide{border-radius:18px;width:76px;height:76px;font-size:13px;font-weight:900}
-#toast{
-  position:absolute;left:50%;top:22%;transform:translate(-50%,-50%);
-  z-index:12;padding:12px 18px;border-radius:12px;background:rgba(4,13,20,.9);
-  border:1px solid rgba(255,255,255,.18);font-weight:900;opacity:0;
-  transition:opacity .2s,transform .2s;pointer-events:none;
-}
-#toast.show{opacity:1;transform:translate(-50%,-60%)}
-.modalTitle{font-size:28px;margin:0 0 8px}
-.closeBtn{margin-top:18px;width:100%;height:48px;border:0;border-radius:12px;background:#24394a;color:#fff;font-weight:800;cursor:pointer}
-.list{display:grid;gap:10px;margin-top:18px}
-.card{padding:14px;border-radius:14px;background:#102536;border:1px solid rgba(255,255,255,.08)}
-.badge{display:inline-block;padding:4px 8px;border-radius:99px;background:#17384d;color:#8dd4ff;font-size:11px;font-weight:900}
-.progress{height:9px;background:#1c2c38;border-radius:99px;overflow:hidden;margin-top:8px}
-.progress>i{display:block;height:100%;background:var(--green);width:0}
-.footer{text-align:center;margin-top:18px;color:#647d90;font-size:12px}
-@media(max-width:700px){
-  #gameWrap{width:100vw;height:100vh}
-  .panel{padding:20px;border-radius:18px}
-  .menuGrid{grid-template-columns:1fr}
-  .hudBox{min-width:72px;padding:6px 8px}
-  .hudValue{font-size:16px}
-  #mission{top:67px;max-width:70vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  #touchControls{bottom:9px;padding:0 9px}
-  .touchBtn{width:58px;height:58px}
-  .touchBtn.wide{width:68px;height:68px}
-}
-@media(max-height:560px){
-  #touchControls{bottom:5px}
-  .touchBtn{width:50px;height:50px}
-  .touchBtn.wide{width:58px;height:58px}
-  .hudBox{padding:4px 7px}
-}
+#keysHint{display:none;position:fixed;bottom:78px;left:50%;transform:translateX(-50%);z-index:5;
+  color:var(--ui-text-dim);background:var(--ui-bg);padding:6px 14px;border-radius:10px;font-size:12px;
+  border:1px solid var(--border-soft);white-space:nowrap;}
+@media(hover:hover) and (pointer:fine){ #keysHint{display:block;} }
+
+/* =========================================================================
+   GENERIC MODAL PANEL (dialogue / shop / inventory / quest log / pause / settings / achievements)
+   ========================================================================= */
+.modal{position:fixed;inset:0;z-index:15;display:none;align-items:flex-end;justify-content:center;
+  background:rgba(0,0,0,.35);}
+.modal.open{display:flex;}
+.modal.center{align-items:center;}
+.panel{background:var(--ui-bg-light);color:var(--ui-text);width:min(560px,94vw);max-height:82vh;
+  overflow-y:auto;border-radius:18px 18px 0 0;border:1px solid var(--border-soft);padding:18px 20px 22px;
+  box-shadow:0 -8px 30px rgba(0,0,0,.5);}
+.modal.center .panel{border-radius:18px;}
+.panel h2{margin:0 0 4px;color:var(--ui-accent);font-size:19px;display:flex;align-items:center;gap:8px;}
+.panel .sub{font-size:12px;color:var(--ui-text-dim);margin-bottom:12px;}
+.closeRow{display:flex;justify-content:flex-end;margin-top:14px;}
+.closeRow button, .primaryBtn{background:linear-gradient(135deg,var(--ui-accent),#c0392b);border:none;
+  color:#2a1505;font-weight:700;padding:10px 22px;border-radius:24px;cursor:pointer;font-size:14px;}
+.secondaryBtn{background:rgba(255,255,255,.08);border:1px solid var(--border-soft);color:var(--ui-text);
+  font-weight:600;padding:9px 18px;border-radius:20px;cursor:pointer;font-size:13px;}
+
+/* ---- dialogue ---- */
+#dialogueModal .panel{padding-top:0;}
+#dialoguePortrait{width:56px;height:56px;border-radius:50%;border:2px solid var(--ui-accent);
+  display:flex;align-items:center;justify-content:center;font-size:26px;background:rgba(255,255,255,.06);
+  position:relative;top:-14px;}
+#dialogueHead{display:flex;align-items:center;gap:12px;padding-top:14px;}
+#dialogueName{font-weight:800;color:var(--ui-accent);font-size:16px;}
+#dialogueRole{font-size:11px;color:var(--ui-text-dim);}
+#dialogueText{margin:12px 0;font-size:14px;line-height:1.6;min-height:44px;}
+#dialogueOptions{display:flex;flex-direction:column;gap:8px;}
+.dOpt{background:rgba(255,255,255,.06);border:1px solid var(--border-soft);color:var(--ui-text);
+  padding:10px 14px;border-radius:10px;text-align:left;cursor:pointer;font-size:13.5px;}
+.dOpt:active{background:rgba(224,169,56,.25);}
+
+/* ---- inventory & shop ---- */
+.gridItems{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:10px;margin-top:8px;}
+.itemCard{background:rgba(255,255,255,.05);border:1px solid var(--border-soft);border-radius:12px;
+  padding:8px 6px;text-align:center;cursor:pointer;}
+.itemCard .ic{font-size:26px;}
+.itemCard .nm{font-size:10.5px;margin-top:3px;color:var(--ui-text-dim);}
+.itemCard .ct{font-size:11px;color:var(--ui-accent);font-weight:700;}
+.itemCard .pr{font-size:10.5px;color:#f4d35e;margin-top:2px;}
+.itemCard.disabled{opacity:.4;cursor:default;}
+#shopTabs{display:flex;gap:8px;margin-bottom:10px;}
+.tabBtn{background:rgba(255,255,255,.06);border:1px solid var(--border-soft);color:var(--ui-text-dim);
+  padding:6px 14px;border-radius:16px;font-size:12px;cursor:pointer;}
+.tabBtn.active{background:var(--ui-accent);color:#2a1505;font-weight:700;}
+
+/* ---- quest log ---- */
+.questEntry{background:rgba(255,255,255,.05);border:1px solid var(--border-soft);border-radius:12px;
+  padding:10px 12px;margin-bottom:10px;}
+.questEntry h4{margin:0 0 4px;color:var(--ui-accent);font-size:14px;display:flex;justify-content:space-between;}
+.questEntry p{margin:0 0 6px;font-size:12px;color:var(--ui-text-dim);}
+.questEntry .step{font-size:12px;padding:2px 0;color:var(--ui-text);}
+.questEntry .step.done{color:var(--ui-good);text-decoration:line-through;}
+.questEntry .reward{font-size:11px;color:#f4d35e;margin-top:4px;}
+.questEntry.completed{opacity:.55;}
+
+/* ---- achievements ---- */
+.achEntry{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.05);
+  border:1px solid var(--border-soft);border-radius:12px;padding:8px 12px;margin-bottom:8px;}
+.achEntry .aic{font-size:24px;width:34px;text-align:center;}
+.achEntry .atext h5{margin:0;font-size:13px;color:var(--ui-text);}
+.achEntry .atext p{margin:2px 0 0;font-size:11px;color:var(--ui-text-dim);}
+.achEntry.locked{opacity:.35;}
+
+/* ---- settings ---- */
+.settRow{display:flex;justify-content:space-between;align-items:center;padding:10px 0;
+  border-bottom:1px solid rgba(255,255,255,.08);font-size:13px;}
+.toggle{width:44px;height:24px;border-radius:12px;background:rgba(255,255,255,.15);position:relative;
+  cursor:pointer;border:1px solid var(--border-soft);}
+.toggle .knob{position:absolute;width:18px;height:18px;border-radius:50%;background:var(--ui-accent);
+  top:2px;left:2px;transition:left .2s;}
+.toggle.on .knob{left:22px;background:#5fae5a;}
+.settRow input[type=range]{width:120px;}
+
+/* ---- minigame overlay ---- */
+#minigameModal .panel{width:min(520px,94vw);}
+#minigameCanvasWrap{position:relative;width:100%;aspect-ratio:4/3;background:#10231f;border-radius:12px;
+  overflow:hidden;margin-top:10px;border:1px solid var(--border-soft);}
+#minigameCanvas{width:100%;height:100%;display:block;}
+#minigameHud{display:flex;justify-content:space-between;font-size:12px;margin-top:8px;color:var(--ui-text-dim);}
+#minigameHud b{color:var(--ui-accent);}
+
+/* =========================================================================
+   START OVERLAY
+   ========================================================================= */
+#startOverlay{position:fixed;inset:0;z-index:30;background:radial-gradient(ellipse at center,#3a2412,#0b0704 82%);
+  color:var(--ui-text);display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:20px;overflow-y:auto;}
+#startOverlay h1{font-size:clamp(28px,6vw,54px);margin:6px 0;color:var(--ui-accent);letter-spacing:1px;
+  text-shadow:0 3px 14px rgba(0,0,0,.6);}
+#startOverlay .sub{font-size:clamp(13px,2.2vw,17px);opacity:.85;margin-bottom:16px;max-width:560px;}
+#startOverlay .feat{font-size:12.5px;opacity:.7;max-width:560px;margin-bottom:20px;line-height:1.8;
+  display:grid;grid-template-columns:1fr 1fr;gap:2px 18px;text-align:left;}
+#startBtnRow{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;}
+#startBtn,#continueBtn{font-size:16px;font-weight:700;padding:13px 30px;border-radius:28px;border:none;
+  cursor:pointer;box-shadow:0 6px 20px rgba(224,169,56,.4);}
+#startBtn{background:linear-gradient(135deg,var(--ui-accent),#c0392b);color:#2a1505;}
+#continueBtn{background:rgba(255,255,255,.1);color:var(--ui-text);border:1px solid var(--ui-accent);}
+.gopuram-deco{font-size:40px;margin-bottom:4px;}
+
+/* =========================================================================
+   PAUSE BUTTON
+   ========================================================================= */
+#pauseBtn{position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:5;background:var(--ui-bg);
+  border:1px solid var(--border-soft);color:var(--ui-text);width:38px;height:38px;border-radius:50%;
+  font-size:15px;cursor:pointer;}
+
+/* =========================================================================
+   WEATHER / SCREEN FX
+   ========================================================================= */
+#fxCanvas{position:fixed;top:0;left:0;pointer-events:none;z-index:8;}
 </style>
 </head>
 <body>
-<div id="app">
-  <div id="gameWrap">
-    <canvas id="game"></canvas>
 
-    <div id="hud" class="hidden">
-      <div class="hudGroup">
-        <div class="hudBox"><div class="hudLabel">Coins</div><div class="hudValue" id="coins">0</div></div>
-        <div class="hudBox"><div class="hudLabel">Distance</div><div class="hudValue" id="distance">0.00 km</div></div>
-        <div class="hudBox"><div class="hudLabel">Speed</div><div class="hudValue" id="speed">0 km/h</div></div>
+<canvas id="game"></canvas>
+<canvas id="fxCanvas"></canvas>
+
+<div id="hud">
+  <div id="hudTitle"><span>🛺 தமிழ் நகரம்</span><span id="hudClock">6:00 AM</span></div>
+  <div id="hudBars">
+    <div class="bar-row">⚡<div class="bar-track"><div class="bar-fill energy" id="energyBar" style="width:100%"></div></div></div>
+  </div>
+  <div id="hudRes">
+    <span>💰 <b id="hudMoney">50</b></span>
+    <span>🌼 <b id="hudJasmine">0</b></span>
+    <span>☕ <b id="hudCoffee">0</b></span>
+    <span>🥥 <b id="hudCoconut">0</b></span>
+    <span>⭐ <b id="hudRep">0</b></span>
+  </div>
+</div>
+
+<div id="minimapWrap">
+  <canvas id="minimap" width="150" height="150"></canvas>
+  <div id="minimapLabel">நகரம்</div>
+</div>
+
+<button id="pauseBtn">⏸</button>
+
+<div id="toastStack"></div>
+
+<div id="questTracker">
+  <h4>தற்போதைய பணி</h4>
+  <div id="questTrackerBody"></div>
+</div>
+
+<div id="keysHint">WASD/Arrows move · Shift sprint · E interact · I inventory · Q quests · M map · Esc pause</div>
+
+<div id="actionBar">
+  <button class="iconBtn" id="btnInventory" title="Inventory">🎒</button>
+  <button class="iconBtn" id="btnQuests" title="Quests">📜</button>
+  <button class="iconBtn" id="btnAchievements" title="Achievements">🏆</button>
+  <button class="iconBtn" id="btnVehicle" title="Toggle vehicle">🚶</button>
+  <button class="iconBtn" id="btnDayNight" title="Day/Night">🌙</button>
+</div>
+
+<div id="joystickZone"></div>
+<div id="joystickBase"><div id="joystickKnob"></div></div>
+<div id="interactZone"></div>
+<button id="interactBtn">செய்</button>
+
+<!-- ============================ MODALS ============================ -->
+
+<div class="modal" id="dialogueModal">
+  <div class="panel">
+    <div id="dialogueHead">
+      <div id="dialoguePortrait">🧑</div>
+      <div>
+        <div id="dialogueName">பெயர்</div>
+        <div id="dialogueRole">role</div>
       </div>
-      <button id="pauseBtn" aria-label="Pause">Ⅱ</button>
     </div>
+    <div id="dialogueText">...</div>
+    <div id="dialogueOptions"></div>
+  </div>
+</div>
 
-    <div id="mission" class="hidden">Pick up passengers and reach the next stop</div>
-    <div id="toast"></div>
-
-    <div id="touchControls" class="hidden">
-      <div class="touchCluster">
-        <button class="touchBtn" id="leftBtn">◀</button>
-        <button class="touchBtn" id="rightBtn">▶</button>
-      </div>
-      <div class="touchCluster">
-        <button class="touchBtn wide" id="brakeBtn">BRAKE</button>
-        <button class="touchBtn wide" id="gasBtn">GAS</button>
-      </div>
+<div class="modal" id="shopModal">
+  <div class="panel">
+    <h2>🛍️ <span id="shopName">கடை</span></h2>
+    <div class="sub" id="shopSub">பொருட்களை வாங்கவும் / விற்கவும்</div>
+    <div id="shopTabs">
+      <button class="tabBtn active" data-tab="buy">வாங்க</button>
+      <button class="tabBtn" data-tab="sell">விற்க</button>
     </div>
+    <div class="gridItems" id="shopGrid"></div>
+    <div class="closeRow"><button id="shopCloseBtn">மூடு</button></div>
+  </div>
+</div>
 
-    <section id="menu" class="screen">
-      <div class="panel">
-        <h1 class="logo">TAMIL<span>BUS RUSH</span></h1>
-        <p class="subtitle">Drive • Pick Passengers • Earn Coins • Reach Madurai</p>
-        <div class="menuGrid">
-          <button class="menuBtn primary" id="startBtn">▶ START GAME</button>
-          <button class="menuBtn" id="garageBtn">🚌 GARAGE</button>
-          <button class="menuBtn gold" id="achBtn">🏆 ACHIEVEMENTS</button>
-          <button class="menuBtn purple" id="settingsBtn">⚙ SETTINGS</button>
-        </div>
-        <div class="infoRow"><span>High Score</span><span class="stat" id="menuHigh">0</span></div>
-        <div class="infoRow"><span>Best Distance</span><span class="stat" id="menuDistance">0.00 km</span></div>
-        <div class="tip"><b>Tip:</b> Stay in your lane, collect coins, pick up passengers and avoid traffic. Use arrow keys or touch controls.</div>
-        <div class="footer">Single-file HTML • No external libraries • Works on mobile, tablet and desktop</div>
-      </div>
-    </section>
+<div class="modal" id="inventoryModal">
+  <div class="panel">
+    <h2>🎒 பொருட்கள்</h2>
+    <div class="sub">நீங்கள் சேகரித்தவை மற்றும் வாங்கியவை</div>
+    <div class="gridItems" id="inventoryGrid"></div>
+    <div class="closeRow"><button id="invCloseBtn">மூடு</button></div>
+  </div>
+</div>
 
-    <section id="pauseScreen" class="screen hidden">
-      <div class="panel">
-        <h2 class="modalTitle">Game Paused</h2>
-        <p class="subtitle">Take a break. Your progress is safe.</p>
-        <button class="menuBtn primary" id="resumeBtn">▶ RESUME</button>
-        <button class="closeBtn" id="quitBtn">QUIT TO MENU</button>
-      </div>
-    </section>
+<div class="modal" id="questModal">
+  <div class="panel">
+    <h2>📜 பணிகள்</h2>
+    <div class="sub">உங்கள் செயலில் உள்ள மற்றும் முடிந்த பணிகள்</div>
+    <div id="questListBody"></div>
+    <div class="closeRow"><button id="questCloseBtn">மூடு</button></div>
+  </div>
+</div>
 
-    <section id="gameOver" class="screen hidden">
-      <div class="panel">
-        <h2 class="modalTitle">Route Complete</h2>
-        <p class="subtitle" id="gameOverText">Good driving!</p>
-        <div class="infoRow"><span>Score</span><span class="stat" id="finalScore">0</span></div>
-        <div class="infoRow"><span>Distance</span><span class="stat" id="finalDistance">0.00 km</span></div>
-        <div class="infoRow"><span>Passengers</span><span class="stat" id="finalPassengers">0</span></div>
-        <div class="menuGrid" style="margin-top:18px">
-          <button class="menuBtn primary" id="againBtn">↻ PLAY AGAIN</button>
-          <button class="menuBtn" id="menuBtn">⌂ MENU</button>
-        </div>
-      </div>
-    </section>
+<div class="modal" id="achModal">
+  <div class="panel">
+    <h2>🏆 சாதனைகள்</h2>
+    <div class="sub" id="achSub">0 / 0 திறக்கப்பட்டது</div>
+    <div id="achListBody"></div>
+    <div class="closeRow"><button id="achCloseBtn">மூடு</button></div>
+  </div>
+</div>
 
-    <section id="garage" class="screen hidden">
-      <div class="panel">
-        <h2 class="modalTitle">🚌 Garage</h2>
-        <p class="subtitle">Spend coins to improve your bus.</p>
-        <div class="list" id="garageList"></div>
-        <button class="closeBtn" id="garageClose">CLOSE</button>
-      </div>
-    </section>
+<div class="modal center" id="pauseModal">
+  <div class="panel" style="width:min(380px,90vw);text-align:center;">
+    <h2 style="justify-content:center;">⏸ இடைநிறுத்தம்</h2>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:16px;">
+      <button class="primaryBtn" id="resumeBtn">தொடர</button>
+      <button class="secondaryBtn" id="openSettingsBtn">அமைப்புகள்</button>
+      <button class="secondaryBtn" id="saveBtn">சேமி</button>
+      <button class="secondaryBtn" id="restartBtn">மீண்டும் தொடங்கு</button>
+    </div>
+  </div>
+</div>
 
-    <section id="achievements" class="screen hidden">
-      <div class="panel">
-        <h2 class="modalTitle">🏆 Achievements</h2>
-        <div class="list" id="achievementList"></div>
-        <button class="closeBtn" id="achClose">CLOSE</button>
-      </div>
-    </section>
+<div class="modal center" id="settingsModal">
+  <div class="panel" style="width:min(420px,92vw);">
+    <h2>⚙️ அமைப்புகள்</h2>
+    <div class="settRow"><span>ஒலி</span><div class="toggle on" id="toggleSound"><div class="knob"></div></div></div>
+    <div class="settRow"><span>Music Volume</span><input type="range" id="volSlider" min="0" max="100" value="60"></div>
+    <div class="settRow"><span>இரவு/பகல் தானாக</span><div class="toggle on" id="toggleAutoTime"><div class="knob"></div></div></div>
+    <div class="settRow"><span>கேமரா அதிர்வு</span><div class="toggle on" id="toggleShake"><div class="knob"></div></div></div>
+    <div class="closeRow"><button id="settingsCloseBtn">மூடு</button></div>
+  </div>
+</div>
 
-    <section id="settings" class="screen hidden">
-      <div class="panel">
-        <h2 class="modalTitle">⚙ Settings</h2>
-        <div class="infoRow"><span>Sound</span><button class="menuBtn" id="soundBtn" style="min-height:44px">ON</button></div>
-        <div class="infoRow"><span>Touch Controls</span><button class="menuBtn" id="touchBtn" style="min-height:44px">AUTO</button></div>
-        <div class="infoRow"><span>Reset Progress</span><button class="menuBtn gold" id="resetBtn" style="min-height:44px">RESET</button></div>
-        <button class="closeBtn" id="settingsClose">CLOSE</button>
-      </div>
-    </section>
+<div class="modal center" id="minigameModal">
+  <div class="panel">
+    <h2 id="mgTitle">🎮 மினி கேம்</h2>
+    <div class="sub" id="mgSub"></div>
+    <div id="minigameCanvasWrap"><canvas id="minigameCanvas" width="480" height="360"></canvas></div>
+    <div id="minigameHud"><span id="mgScore">Score: 0</span><span id="mgTimer">Time: 0</span></div>
+    <div class="closeRow"><button class="secondaryBtn" id="mgQuitBtn">வெளியேறு</button></div>
+  </div>
+</div>
+
+<div id="startOverlay">
+  <div class="gopuram-deco">🛺🕌🌴</div>
+  <h1>தமிழ் நகரம்</h1>
+  <div class="sub">Tamil Nagaram — a full open-world city life game. Explore, earn, trade, complete quests, ride, and play mini-games across a living Tamil city.</div>
+  <div class="feat">
+    <div>🕌 Temple, market, beach, harbor &amp; more</div>
+    <div>🧑‍🤝‍🧑 8 NPCs with schedules &amp; dialogue</div>
+    <div>📜 Branching quest lines</div>
+    <div>🛍️ Shops, trading &amp; economy</div>
+    <div>🎮 3 mini-games</div>
+    <div>🏆 Achievements &amp; save system</div>
+    <div>🌗 Full day/night cycle</div>
+    <div>🚶🛺 Walk or drive an auto</div>
+  </div>
+  <div id="startBtnRow">
+    <button id="startBtn">புதிய விளையாட்டு · New Game</button>
+    <button id="continueBtn" style="display:none;">தொடர் · Continue</button>
   </div>
 </div>
 
 <script>
+/* ==========================================================================
+   TAMIL NAGARAM — FULL CITY RPG
+   Single-file open world game. Sections:
+   1. Utils & constants
+   2. Audio engine (WebAudio synth, no external assets)
+   3. Global game state
+   4. Save/Load (localStorage)
+   ========================================================================== */
 "use strict";
 
-/* =========================================================
-   TAMIL BUS RUSH
-   Single-file responsive canvas game.
-   ========================================================= */
-
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d", { alpha:false });
-
-const UI = {
-  menu: document.getElementById("menu"),
-  hud: document.getElementById("hud"),
-  mission: document.getElementById("mission"),
-  pause: document.getElementById("pauseScreen"),
-  over: document.getElementById("gameOver"),
-  garage: document.getElementById("garage"),
-  achievements: document.getElementById("achievements"),
-  settings: document.getElementById("settings"),
-  touch: document.getElementById("touchControls"),
-  coins: document.getElementById("coins"),
-  distance: document.getElementById("distance"),
-  speed: document.getElementById("speed"),
-  toast: document.getElementById("toast")
+/* ---------------------------------------------------------------------- 1. UTILS ---------------------------------------------------------------------- */
+const Util = {
+  rand(a,b){ return a + Math.random()*(b-a); },
+  randInt(a,b){ return Math.floor(this.rand(a,b+1)); },
+  choice(arr){ return arr[Math.floor(Math.random()*arr.length)]; },
+  clamp(v,a,b){ return Math.max(a, Math.min(b, v)); },
+  lerp(a,b,t){ return a + (b-a)*t; },
+  dist(x1,y1,x2,y2){ return Math.hypot(x2-x1, y2-y1); },
+  angleLerp(a,b,t){
+    let da = b - a;
+    while(da > Math.PI) da -= Math.PI*2;
+    while(da < -Math.PI) da += Math.PI*2;
+    return a + da*t;
+  },
+  circleRect(cx,cy,cr,rx,ry,rw,rh){
+    const closestX = Util.clamp(cx, rx, rx+rw);
+    const closestY = Util.clamp(cy, ry, ry+rh);
+    const dx = cx-closestX, dy = cy-closestY;
+    return (dx*dx+dy*dy) < cr*cr;
+  },
+  fmtTime(minutes){
+    let h = Math.floor(minutes/60) % 24;
+    const m = Math.floor(minutes%60);
+    const ampm = h>=12 ? 'PM' : 'AM';
+    let h12 = h % 12; if(h12===0) h12 = 12;
+    return h12 + ':' + String(m).padStart(2,'0') + ' ' + ampm;
+  },
+  uid(){ return Math.random().toString(36).slice(2,10); },
+  pad2(n){ return String(n).padStart(2,'0'); }
 };
 
-const keys = {
-  left:false,
-  right:false,
-  gas:false,
-  brake:false
+/* ---------------------------------------------------------------------- 2. AUDIO ENGINE ---------------------------------------------------------------------- */
+const Audio2 = {
+  ctx:null, master:null, enabled:true, volume:0.6,
+  init(){
+    if(this.ctx) return;
+    try{
+      this.ctx = new (window.AudioContext||window.webkitAudioContext)();
+      this.master = this.ctx.createGain();
+      this.master.gain.value = this.volume;
+      this.master.connect(this.ctx.destination);
+    }catch(e){ this.enabled=false; }
+  },
+  setVolume(v){ this.volume = v; if(this.master) this.master.gain.value = v; },
+  beep(freq, dur, type, vol, glideTo){
+    if(!this.enabled || !this.ctx) return;
+    const t0 = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = type || 'sine';
+    osc.frequency.setValueAtTime(freq, t0);
+    if(glideTo) osc.frequency.exponentialRampToValueAtTime(Math.max(1,glideTo), t0+dur);
+    gain.gain.setValueAtTime(0, t0);
+    gain.gain.linearRampToValueAtTime(vol||0.3, t0+0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, t0+dur);
+    osc.connect(gain); gain.connect(this.master);
+    osc.start(t0); osc.stop(t0+dur+0.02);
+  },
+  coin(){ this.beep(880,0.12,'square',0.25,1400); this.beep(1320,0.1,'square',0.15,1760); },
+  pickup(){ this.beep(520,0.1,'triangle',0.3,780); },
+  questStart(){ this.beep(440,0.15,'sine',0.25,660); this.beep(660,0.18,'sine',0.2,880); },
+  questDone(){ this.beep(523,0.12,'square',0.25); this.beep(659,0.12,'square',0.25); this.beep(784,0.2,'square',0.3); },
+  error(){ this.beep(160,0.18,'sawtooth',0.25,90); },
+  click(){ this.beep(300,0.05,'square',0.12); },
+  step(){ this.beep(90+Math.random()*20,0.06,'triangle',0.08); },
+  engine(pitch){ this.beep(60+pitch*40,0.08,'sawtooth',0.05); },
+  achievement(){ this.beep(660,0.1,'sine',0.25,880); this.beep(880,0.12,'sine',0.25,1100); this.beep(1100,0.22,'sine',0.3,1320); },
+  splash(){ this.beep(200,0.15,'sine',0.2,80); },
+  notify(){ this.beep(700,0.08,'sine',0.18,900); }
 };
 
-const state = {
-  running:false,
+/* ---------------------------------------------------------------------- 3. GLOBAL STATE ---------------------------------------------------------------------- */
+const State = {
+  version: 1,
+  started:false,
   paused:false,
-  last:0,
-  time:0,
-  score:0,
-  coins:0,
-  distance:0,
-  speed:0,
-  maxSpeed:140,
-  health:100,
-  fuel:100,
-  passengers:0,
-  passengerGoal:10,
-  routeKm:12,
-  roadOffset:0,
-  spawnTimer:0,
-  coinTimer:0,
-  stopTimer:0,
-  weather:0,
-  night:0,
-  shake:0,
-  lane:1,
-  playerX:0,
-  playerTargetX:0,
-  invincible:0,
-  missionIndex:0,
-  traffic:[],
-  coinsOnRoad:[],
-  stops:[],
-  particles:[],
-  busLevel:0,
-  handling:1,
-  sound:true,
-  touchMode:"auto"
+  timeMinutes: 6*60,      // in-game clock, minutes since midnight
+  dayCount: 1,
+  autoTime: true,
+  timeScale: 1,           // in-game minutes per real second
+  isNight:false,
+  weather:'clear',        // clear | rain
+  weatherTimer: 0,
+  money: 50,
+  reputation: 0,
+  energy: 100,
+  inventory: {},          // itemId -> count
+  resources: { jasmine:0, coffee:0, coconut:0 },
+  flags: {},              // arbitrary story flags
+  quests: {},             // questId -> {status:'available'|'active'|'complete', step:0}
+  achievements: {},       // achId -> true
+  vehicle: false,         // false = walking, true = auto-rickshaw
+  cameraShake: true,
+  soundOn: true,
+  volume: 0.6,
+  lastSaveAt: 0
 };
 
-const SAVE_KEY = "tamilBusRushSaveV1";
+/* ---------------------------------------------------------------------- 4. SAVE / LOAD ---------------------------------------------------------------------- */
+const SAVE_KEY = 'tamilNagaramSave_v1';
+const SaveSystem = {
+  save(){
+    try{
+      const data = {
+        version: State.version, timeMinutes: State.timeMinutes, dayCount: State.dayCount,
+        money: State.money, reputation: State.reputation, energy: State.energy,
+        inventory: State.inventory, resources: State.resources, flags: State.flags,
+        quests: State.quests, achievements: State.achievements,
+        playerX: Player.x, playerY: Player.y, vehicle: State.vehicle,
+        soundOn: State.soundOn, volume: State.volume, savedAt: Date.now()
+      };
+      localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+      return true;
+    }catch(e){ console.warn('save failed', e); return false; }
+  },
+  load(){
+    try{
+      const raw = localStorage.getItem(SAVE_KEY);
+      if(!raw) return false;
+      const data = JSON.parse(raw);
+      State.timeMinutes = data.timeMinutes ?? State.timeMinutes;
+      State.dayCount = data.dayCount ?? 1;
+      State.money = data.money ?? 50;
+      State.reputation = data.reputation ?? 0;
+      State.energy = data.energy ?? 100;
+      State.inventory = data.inventory || {};
+      State.resources = data.resources || {jasmine:0,coffee:0,coconut:0};
+      State.flags = data.flags || {};
+      State.quests = data.quests || {};
+      State.achievements = data.achievements || {};
+      State.vehicle = !!data.vehicle;
+      State.soundOn = data.soundOn !== undefined ? data.soundOn : true;
+      State.volume = data.volume !== undefined ? data.volume : 0.6;
+      if(data.playerX) Player.x = data.playerX;
+      if(data.playerY) Player.y = data.playerY;
+      return true;
+    }catch(e){ console.warn('load failed', e); return false; }
+  },
+  hasSave(){ return !!localStorage.getItem(SAVE_KEY); },
+  clear(){ localStorage.removeItem(SAVE_KEY); }
+};
 
-function loadSave(){
-  try{
-    const raw = localStorage.getItem(SAVE_KEY);
-    if(!raw) return;
-    const s = JSON.parse(raw);
-    if(Number.isFinite(s.highScore)) state.highScore=s.highScore;
-    if(Number.isFinite(s.bestDistance)) state.bestDistance=s.bestDistance;
-    if(Number.isFinite(s.coins)) state.coins=s.coins;
-    if(Number.isFinite(s.busLevel)) state.busLevel=Math.max(0,Math.min(3,s.busLevel));
-    if(typeof s.sound==="boolean") state.sound=s.sound;
-    if(typeof s.touchMode==="string") state.touchMode=s.touchMode;
-    state.maxSpeed=140 + state.busLevel*12;
-    state.handling=1 + state.busLevel*.16;
-  }catch(e){
-    console.warn("Save load failed",e);
+/* ==========================================================================
+   5. WORLD DATA — districts, roads, buildings, decor
+   ========================================================================== */
+const WORLD_W = 3600, WORLD_H = 2800;
+
+const roads = [
+  {x:0, y:1300, w:WORLD_W, h:150},           // main horizontal
+  {x:1750, y:0, w:150, h:WORLD_H},           // main vertical
+  {x:0, y:500, w:WORLD_W, h:90},             // north secondary
+  {x:0, y:2050, w:WORLD_W, h:90},            // south secondary
+  {x:450, y:0, w:90, h:WORLD_H},             // west secondary
+  {x:2900, y:0, w:90, h:WORLD_H},            // east secondary
+  {x:0, y:1750, w:WORLD_W, h:70},            // harbor access road
+];
+
+const buildings = [];   // solid, drawn structures
+const decor = [];       // trees/lamps/benches — mostly non solid
+const zones = [];       // labeled areas for on-screen district names
+
+function addHouse(x,y,w,h,color,roof){
+  buildings.push({type:'house',x,y,w,h,color,roof,solid:true});
+}
+function addStall(x,y,color,id){
+  buildings.push({type:'stall',x,y,w:70,h:55,color,solid:true,id});
+}
+function addTree(x,y,palm){ decor.push({type:'tree',x,y,palm}); }
+function addLamp(x,y){ decor.push({type:'lamp',x,y}); }
+function addBench(x,y){ decor.push({type:'bench',x,y}); }
+
+/* ---- Temple complex (city centre, around main crossroad) ---- */
+const temple = {x:1500, y:850, w:450, h:380};
+buildings.push({type:'templeWall',x:temple.x,y:temple.y,w:temple.w,h:20,solid:true});
+buildings.push({type:'templeWall',x:temple.x,y:temple.y+temple.h-20,w:temple.w,h:20,solid:true});
+buildings.push({type:'templeWall',x:temple.x,y:temple.y,w:20,h:temple.h,solid:true});
+buildings.push({type:'templeWall',x:temple.x+temple.w-20,y:temple.y,w:20,h:temple.h,solid:true});
+buildings.push({type:'gopuram',x:temple.x+temple.w/2-75,y:temple.y-150,w:150,h:160,solid:true,id:'temple'});
+zones.push({name:'ஸ்ரீ கோயில் · Temple', x:temple.x, y:temple.y-190, w:temple.w, h:60});
+
+/* ---- Chettinad residential cluster (north-west) ---- */
+const houseColors = ['#c0553a','#3f7d9e','#c79a3a','#7a8c4b','#a85a8c','#3a8f7d','#b06a35','#5a8f8f'];
+let hi=0;
+for(let row=0; row<3; row++){
+  for(let col=0; col<4; col++){
+    addHouse(180+col*230, 100+row*140, 140, 92, houseColors[hi%houseColors.length], houseColors[(hi+3)%houseColors.length]);
+    hi++;
   }
-  updateMenuStats();
 }
+zones.push({name:'செட்டிநாடு தெரு · Chettinad Street', x:150, y:40, w:900, h:50});
 
-state.highScore=0;
-state.bestDistance=0;
-loadSave();
-
-function save(){
-  const data={
-    highScore:state.highScore,
-    bestDistance:state.bestDistance,
-    coins:state.coins,
-    busLevel:state.busLevel,
-    sound:state.sound,
-    touchMode:state.touchMode
-  };
-  localStorage.setItem(SAVE_KEY,JSON.stringify(data));
+/* ---- Market street (east side) ---- */
+const marketColors = ['#c0392b','#e0a938','#3f7d4a','#2c5f8a','#a85a8c','#3a8f7d'];
+for(let i=0;i<8;i++){
+  addStall(3060, 220 + i*150, marketColors[i%marketColors.length], 'mkt'+i);
+  addStall(2740, 220 + i*150, marketColors[(i+2)%marketColors.length], 'mkt'+(i+8));
 }
+zones.push({name:'சந்தை தெரு · Market Street', x:2650, y:150, w:520, h:50});
 
-function updateMenuStats(){
-  document.getElementById("menuHigh").textContent=Math.floor(state.highScore);
-  document.getElementById("menuDistance").textContent=state.bestDistance.toFixed(2)+" km";
-}
+/* ---- Bus stand (south west) ---- */
+buildings.push({type:'busstand',x:450,y:2130,w:340,h:150,solid:true,id:'busstand'});
+zones.push({name:'பேருந்து நிலையம் · Bus Stand', x:420, y:2280, w:400, h:40});
 
-function resize(){
-  const rect=canvas.getBoundingClientRect();
-  const dpr=Math.min(window.devicePixelRatio||1,2);
-  canvas.width=Math.floor(rect.width*dpr);
-  canvas.height=Math.floor(rect.height*dpr);
-  ctx.setTransform(dpr,0,0,dpr,0,0);
-}
-window.addEventListener("resize",resize);
-resize();
+/* ---- Harbor / fishing pier (south east) ---- */
+buildings.push({type:'harbor',x:2900,y:1780,w:420,h:180,solid:true,id:'harbor'});
+zones.push({name:'மீன்பிடி துறைமுகம் · Harbor', x:2880, y:1950, w:420, h:40});
 
-function W(){return canvas.clientWidth}
-function H(){return canvas.clientHeight}
-function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
-function lerp(a,b,t){return a+(b-a)*t}
-function rand(a,b){return Math.random()*(b-a)+a}
-function randi(a,b){return Math.floor(rand(a,b+1))}
-function pick(a){return a[Math.floor(Math.random()*a.length)]}
+/* ---- Tea kadais scattered through the city ---- */
+const teaStalls = [
+  {x:1250,y:1480, id:'tea1'},{x:2150,y:1480, id:'tea2'},{x:870,y:2130, id:'tea3'},
+  {x:2600,y:2130, id:'tea4'},{x:1700,y:650, id:'tea5'}
+];
+teaStalls.forEach(t=>buildings.push({type:'tea',x:t.x,y:t.y,w:80,h:60,solid:true,id:t.id}));
 
-function showScreen(el){
-  [UI.menu,UI.pause,UI.over,UI.garage,UI.achievements,UI.settings].forEach(x=>x.classList.add("hidden"));
-  el.classList.remove("hidden");
-}
-function hideScreens(){
-  [UI.menu,UI.pause,UI.over,UI.garage,UI.achievements,UI.settings].forEach(x=>x.classList.add("hidden"));
-}
-function toast(text){
-  UI.toast.textContent=text;
-  UI.toast.classList.add("show");
-  clearTimeout(toast.timer);
-  toast.timer=setTimeout(()=>UI.toast.classList.remove("show"),1400);
-}
+/* ---- School & clinic (north east small civic cluster) ---- */
+buildings.push({type:'civic',x:2350,y:120,w:220,h:130,color:'#7ba0c2',label:'பள்ளி', solid:true,id:'school'});
+buildings.push({type:'civic',x:2650,y:1250,w:180,h:110,color:'#d97a7a',label:'மருந்தகம்', solid:true,id:'clinic'});
 
-let audioCtx=null;
-function beep(freq=440,duration=.08,type="sine",volume=.035){
-  if(!state.sound) return;
-  try{
-    audioCtx ||= new (window.AudioContext||window.webkitAudioContext)();
-    const o=audioCtx.createOscillator();
-    const g=audioCtx.createGain();
-    o.type=type;
-    o.frequency.value=freq;
-    g.gain.value=volume;
-    o.connect(g);g.connect(audioCtx.destination);
-    o.start();
-    g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+duration);
-    o.stop(audioCtx.currentTime+duration);
-  }catch(e){}
-}
+/* ---- Beach (south edge) ---- */
+const beach = {x:0,y:2380,w:WORLD_W,h:420};
+for(let i=0;i<16;i++) addTree(60+i*230, 2480+((i%3)*30), true);
 
-function startGame(){
-  hideScreens();
-  UI.hud.classList.remove("hidden");
-  UI.mission.classList.remove("hidden");
-  if(state.touchMode==="auto"){
-    UI.touch.classList.toggle("hidden",window.innerWidth>900 && !("ontouchstart" in window));
-  }else{
-    UI.touch.classList.toggle("hidden",state.touchMode==="off");
+/* ---- General street decor ---- */
+for(let i=0;i<24;i++) addTree(500+i*140, 1480, false);
+for(let i=0;i<10;i++) addTree(250+i*90, 2270, false);
+for(let i=0;i<14;i++) addTree(2550+ (i%2)*430, 300+i*140, false);
+for(let i=0;i<10;i++) addLamp(200+i*360, 1290);
+for(let i=0;i<8;i++) addLamp(1740, 100+i*330);
+for(let i=0;i<6;i++) addBench(1350+i*60, 1420);
+
+/* ==========================================================================
+   6. NPC DEFINITIONS — schedules & home/work waypoints
+   ========================================================================== */
+// Each NPC has waypoints keyed by an hour-range; simple state machine walks
+// between them across the day, producing a lived-in city.
+const npcDefs = [
+  {
+    id:'priest', name:'குருக்கள் ராமன்', role:'Temple Priest', icon:'🧑‍🦳', color:'#e0a938',
+    home:{x:temple.x+80,y:temple.y+80}, work:{x:temple.x+temple.w/2,y:temple.y+temple.h/2},
+    schedule:[[5,20,'work'],[20,29,'home']]
+  },
+  {
+    id:'amma', name:'கமலா அம்மா', role:'Flower Seller', icon:'👵', color:'#c0553a',
+    home:{x:250,y:180}, work:{x:temple.x+40,y:temple.y+temple.h-40},
+    schedule:[[6,19,'work'],[19,30,'home']]
+  },
+  {
+    id:'kadaikaran', name:'முருகன்', role:'Tea Stall Owner', icon:'👨‍🍳', color:'#3f7d4a',
+    home:{x:900,y:250}, work:{x:1250,y:1470},
+    schedule:[[5,21,'work'],[21,29,'home']]
+  },
+  {
+    id:'fisherman', name:'செல்வம்', role:'Fisherman', icon:'🎣', color:'#2c5f8a',
+    home:{x:2950,y:1830}, work:{x:beach.x+900,y:beach.y+300},
+    schedule:[[5,10,'work'],[10,17,'home'],[17,20,'work'],[20,29,'home']]
+  },
+  {
+    id:'merchant', name:'லட்சுமி', role:'Market Trader', icon:'👩‍💼', color:'#a85a8c',
+    home:{x:2800,y:250}, work:{x:2790,y:400},
+    schedule:[[7,20,'work'],[20,31,'home']]
+  },
+  {
+    id:'driver', name:'கருப்பன்', role:'Bus Driver', icon:'🧑‍✈️', color:'#c79a3a',
+    home:{x:620,y:2250}, work:{x:600,y:2180},
+    schedule:[[6,22,'work'],[22,30,'home']]
+  },
+  {
+    id:'teacher', name:'சரோஜா டீச்சர்', role:'School Teacher', icon:'👩‍🏫', color:'#7ba0c2',
+    home:{x:2200,y:300}, work:{x:2460,y:180},
+    schedule:[[8,15,'work'],[15,32,'home']]
+  },
+  {
+    id:'doctor', name:'டாக்டர் ரவி', role:'Clinic Doctor', icon:'🧑‍⚕️', color:'#d97a7a',
+    home:{x:2500,y:1400}, work:{x:2740,y:1300},
+    schedule:[[9,18,'work'],[18,33,'home']]
   }
+];
 
-  state.running=true;
-  state.paused=false;
-  state.last=performance.now();
-  state.time=0;
-  state.score=0;
-  state.distance=0;
-  state.speed=0;
-  state.health=100;
-  state.fuel=100;
-  state.passengers=0;
-  state.missionIndex=0;
-  state.roadOffset=0;
-  state.spawnTimer=0;
-  state.coinTimer=0;
-  state.stopTimer=rand(4,7);
-  state.weather=Math.random()<.18?1:0;
-  state.night=Math.random()<.15?1:0;
-  state.shake=0;
-  state.playerX=0;
-  state.playerTargetX=0;
-  state.invincible=1.5;
-  state.traffic=[];
-  state.coinsOnRoad=[];
-  state.stops=[];
-  state.particles=[];
-  updateHUD();
-  toast("Route started!");
-  beep(220,.16,"square",.045);
-  requestAnimationFrame(loop);
-}
+/* ==========================================================================
+   7. ITEMS, SHOPS, QUESTS, ACHIEVEMENTS — data tables
+   ========================================================================== */
+const ItemDefs = {
+  jasmine:   {name:'மல்லிகை பூ', icon:'🌼', sell:5,  buy:0,  desc:'Fresh temple flowers.'},
+  coffee:    {name:'ஃபில்டர் காபி', icon:'☕', sell:8,  buy:0, desc:'Steaming filter coffee.'},
+  coconut:   {name:'தேங்காய்', icon:'🥥', sell:10, buy:0, desc:'Fresh coconut from the beach.'},
+  fish:      {name:'மீன்', icon:'🐟', sell:15, buy:0, desc:'Caught fresh at the harbor.'},
+  banana:    {name:'வாழைப்பழம்', icon:'🍌', sell:4,  buy:6,  desc:'Sweet ripe bananas.'},
+  mango:     {name:'மாம்பழம்', icon:'🥭', sell:6,  buy:9,  desc:'Juicy Alphonso mango.'},
+  dosa:      {name:'தோசை', icon:'🫓', sell:0,  buy:12, desc:'Crispy South Indian dosa.', food:true, energy:25},
+  idli:      {name:'இட்லி', icon:'⚪', sell:0,  buy:8,  desc:'Steamed rice cakes.', food:true, energy:15},
+  umbrella:  {name:'குடை', icon:'☂️', sell:0,  buy:20, desc:'Keeps you dry in the rain.'},
+  garland:   {name:'மாலை', icon:'📿', sell:0,  buy:15, desc:'A flower garland for temple offering.'},
+  saree:     {name:'புடவை', icon:'👘', sell:0,  buy:60, desc:'A handwoven Kanchipuram saree.'},
+  lamp:      {name:'விளக்கு', icon:'🪔', sell:0,  buy:18, desc:'A brass oil lamp.'},
+  busTicket: {name:'பேருந்து டிக்கெட்', icon:'🎫', sell:0,  buy:5,  desc:'A ride across town.'},
+  netKit:    {name:'மீன்வலை', icon:'🕸️', sell:0,  buy:25, desc:'A fishing net for the harbor.'},
+  bell:      {name:'மணி', icon:'🔔', sell:0,  buy:30, desc:'A temple bell, rings sweetly.'}
+};
 
-function endGame(reason){
-  if(!state.running) return;
-  state.running=false;
-  UI.hud.classList.add("hidden");
-  UI.mission.classList.add("hidden");
-  UI.touch.classList.add("hidden");
+const shops = {
+  flowerStall: { name:'பூக்கடை · Flower Stall', at:'amma', buy:['garland','lamp'], sell:['jasmine'] },
+  teaStall:    { name:'தேநீர் கடை · Tea Stall', at:'kadaikaran', buy:['dosa','idli','busTicket'], sell:['coffee'] },
+  marketShop:  { name:'சந்தை · Market', at:'merchant', buy:['banana','mango','umbrella','saree','netKit'], sell:['jasmine','coffee','coconut','fish'] },
+  harborShop:  { name:'துறைமுகம் · Harbor Dock', at:'fisherman', buy:['netKit'], sell:['fish','coconut'] }
+};
 
-  const score=Math.floor(state.score);
-  if(score>state.highScore){
-    state.highScore=score;
-    toast("NEW HIGH SCORE!");
+/* ---- Quest definitions: id, title, giver npc, steps, rewards ---- */
+const questDefs = [
+  {
+    id:'q_welcome', title:'நகரத்திற்கு வரவேற்பு', giver:'priest',
+    desc:'குருக்களிடம் பேசி, கோயிலைச் சுற்றி மல்லிகை பூக்களை சேகரிக்கவும்.',
+    steps:[
+      {id:'talk', text:'குருக்களிடம் பேசுங்கள்', type:'talk', target:'priest'},
+      {id:'collect', text:'5 மல்லிகை பூக்களை சேகரிக்கவும்', type:'collect', target:'jasmine', count:5},
+      {id:'return', text:'குருக்களிடம் திரும்பிச் செல்லுங்கள்', type:'talk', target:'priest'}
+    ],
+    reward:{money:30, rep:5}
+  },
+  {
+    id:'q_coffeeRun', title:'காலை காபி ரவுண்ட்', giver:'kadaikaran',
+    desc:'முருகனுக்கு உதவி, 3 வாடிக்கையாளர்களுக்கு காபி விநியோகிக்கவும்.',
+    steps:[
+      {id:'talk', text:'முருகனிடம் பேசுங்கள்', type:'talk', target:'kadaikaran'},
+      {id:'collect', text:'3 ஃபில்டர் காபி சேகரிக்கவும்', type:'collect', target:'coffee', count:3},
+      {id:'deliver', text:'பள்ளி ஆசிரியரிடம் காபி கொடுங்கள்', type:'talk', target:'teacher'}
+    ],
+    reward:{money:25, rep:4, item:'idli'}
+  },
+  {
+    id:'q_fishing', title:'மீனவரின் வலை', giver:'fisherman',
+    desc:'செல்வத்திற்காக மீன்பிடி மினி-கேமில் 10 மீன்கள் பிடிக்கவும்.',
+    steps:[
+      {id:'talk', text:'செல்வத்திடம் பேசுங்கள்', type:'talk', target:'fisherman'},
+      {id:'minigame', text:'மீன்பிடி விளையாட்டில் 10 மீன் பிடிக்கவும்', type:'minigame', target:'fishing', count:10},
+      {id:'return', text:'செல்வத்திடம் திரும்பிச் செல்லுங்கள்', type:'talk', target:'fisherman'}
+    ],
+    reward:{money:40, rep:6, item:'fish'}
+  },
+  {
+    id:'q_market', title:'சந்தை வர்த்தகம்', giver:'merchant',
+    desc:'லட்சுமிக்காக 20 தேங்காய்கள் மற்றும் மீன்களை விற்று லாபம் ஈட்டவும்.',
+    steps:[
+      {id:'talk', text:'லட்சுமியிடம் பேசுங்கள்', type:'talk', target:'merchant'},
+      {id:'earn', text:'விற்பனையிலிருந்து ₹60 சம்பாதிக்கவும்', type:'earn', count:60},
+      {id:'return', text:'லட்சுமியிடம் திரும்பிச் செல்லுங்கள்', type:'talk', target:'merchant'}
+    ],
+    reward:{money:20, rep:8}
+  },
+  {
+    id:'q_busRoute', title:'பேருந்து சவாரி', giver:'driver',
+    desc:'கருப்பனுக்காக பேருந்து டிக்கெட் வாங்கி நகரம் முழுவதும் சவாரி செய்யவும்.',
+    steps:[
+      {id:'talk', text:'கருப்பனிடம் பேசுங்கள்', type:'talk', target:'driver'},
+      {id:'buy', text:'பேருந்து டிக்கெட் வாங்கவும்', type:'own', target:'busTicket', count:1},
+      {id:'return', text:'கருப்பனிடம் திரும்பிச் செல்லுங்கள்', type:'talk', target:'driver'}
+    ],
+    reward:{money:15, rep:3}
+  },
+  {
+    id:'q_clinicSupplies', title:'மருந்தக பொருட்கள்', giver:'doctor',
+    desc:'டாக்டர் ரவிக்கு 4 தேங்காய் (இயற்கை மருந்துக்கு) கொண்டு வாருங்கள்.',
+    steps:[
+      {id:'talk', text:'டாக்டர் ரவியிடம் பேசுங்கள்', type:'talk', target:'doctor'},
+      {id:'collect', text:'4 தேங்காய் சேகரிக்கவும்', type:'collect', target:'coconut', count:4},
+      {id:'return', text:'டாக்டர் ரவியிடம் திரும்பிச் செல்லுங்கள்', type:'talk', target:'doctor'}
+    ],
+    reward:{money:35, rep:7}
+  },
+  {
+    id:'q_schoolBell', title:'பள்ளி மணி', giver:'teacher',
+    desc:'சரோஜா டீச்சருக்காக ஒரு மணியை சந்தையிலிருந்து வாங்கிக் கொடுங்கள்.',
+    steps:[
+      {id:'talk', text:'சரோஜா டீச்சரிடம் பேசுங்கள்', type:'talk', target:'teacher'},
+      {id:'buy', text:'சந்தையில் ஒரு மணி வாங்கவும்', type:'own', target:'bell', count:1},
+      {id:'return', text:'சரோஜா டீச்சரிடம் திரும்பிச் செல்லுங்கள்', type:'talk', target:'teacher'}
+    ],
+    reward:{money:22, rep:5}
+  },
+  {
+    id:'q_templeOffering', title:'கோயில் காணிக்கை', giver:'priest',
+    desc:'ஒரு மாலை மற்றும் விளக்கு வாங்கி கோயிலில் காணிக்கை செலுத்துங்கள்.',
+    requires:'q_welcome',
+    steps:[
+      {id:'buy1', text:'ஒரு மாலை வாங்கவும்', type:'own', target:'garland', count:1},
+      {id:'buy2', text:'ஒரு விளக்கு வாங்கவும்', type:'own', target:'lamp', count:1},
+      {id:'return', text:'குருக்களிடம் திரும்பிச் செல்லுங்கள்', type:'talk', target:'priest'}
+    ],
+    reward:{money:0, rep:15, item:'bell'}
   }
-  state.bestDistance=Math.max(state.bestDistance,state.distance);
-  save();
-  updateMenuStats();
+];
 
-  document.getElementById("finalScore").textContent=score;
-  document.getElementById("finalDistance").textContent=state.distance.toFixed(2)+" km";
-  document.getElementById("finalPassengers").textContent=state.passengers;
-  document.getElementById("gameOverText").textContent=reason||"Route complete!";
-  showScreen(UI.over);
-}
+/* ---- Achievement definitions ---- */
+const achDefs = [
+  {id:'a_firstStep', name:'முதல் அடி', desc:'நடையைத் தொடங்குங்கள்', icon:'👣', check:s=>true},
+  {id:'a_richie', name:'செல்வந்தன்', desc:'₹200 சேமிக்கவும்', icon:'💰', check:s=>s.money>=200},
+  {id:'a_flowerPower', name:'பூக்காரன்', desc:'20 மல்லிகை சேகரிக்கவும்', icon:'🌼', check:s=>s.resources.jasmine>=20},
+  {id:'a_caffeine', name:'காபி ரசிகன்', desc:'15 காபி சேகரிக்கவும்', icon:'☕', check:s=>s.resources.coffee>=15},
+  {id:'a_coconutKing', name:'தேங்காய் அரசன்', desc:'12 தேங்காய் சேகரிக்கவும்', icon:'🥥', check:s=>s.resources.coconut>=12},
+  {id:'a_questMaster', name:'பணி வீரன்', desc:'எல்லா பணிகளையும் முடிக்கவும்', icon:'📜', check:s=>questDefs.every(q=>s.quests[q.id]&&s.quests[q.id].status==='complete')},
+  {id:'a_famous', name:'புகழ்பெற்றவர்', desc:'50 நற்பெயர் அடையவும்', icon:'⭐', check:s=>s.reputation>=50},
+  {id:'a_driver', name:'ஓட்டுநர்', desc:'ஆட்டோவை ஓட்டவும்', icon:'🛺', check:s=>s.flags.drove},
+  {id:'a_fisherman2', name:'மீனவன்', desc:'மீன்பிடி விளையாட்டில் வெற்றி', icon:'🎣', check:s=>s.flags.fishingWon},
+  {id:'a_nightOwl', name:'இரவு பறவை', desc:'இரவில் நகரத்தை ஆராயுங்கள்', icon:'🌙', check:s=>s.flags.sawNight},
+  {id:'a_survivor', name:'உயிர் பிழைத்தவர்', desc:'மழையில் நடக்கவும்', icon:'☔', check:s=>s.flags.gotWet},
+  {id:'a_traveler', name:'பயணி', desc:'5 நாட்கள் விளையாடுங்கள்', icon:'🗺️', check:s=>s.dayCount>=5},
+];
 
-function pauseGame(){
-  if(!state.running)return;
-  state.paused=true;
-  showScreen(UI.pause);
-}
-function resumeGame(){
-  if(!state.running)return;
-  state.paused=false;
-  UI.pause.classList.add("hidden");
-  state.last=performance.now();
-  requestAnimationFrame(loop);
-}
-function quitGame(){
-  state.running=false;
-  UI.hud.classList.add("hidden");
-  UI.mission.classList.add("hidden");
-  UI.touch.classList.add("hidden");
-  showScreen(UI.menu);
-  updateMenuStats();
+/* ==========================================================================
+   8. DIALOGUE TREES — branching conversations per NPC
+   Each tree is a set of nodes keyed by id. A node has text + options.
+   Options may have an action() and a next node id ('end' closes dialogue).
+   Dialogue is dynamically re-evaluated so quest state changes what's offered.
+   ========================================================================== */
+function greetingFor(npcId){
+  const q = questDefs.find(q=>q.giver===npcId);
+  return q;
 }
 
-function updateHUD(){
-  UI.coins.textContent=Math.floor(state.coins);
-  UI.distance.textContent=state.distance.toFixed(2)+" km";
-  UI.speed.textContent=Math.round(state.speed)+" km/h";
-  UI.mission.textContent=
-    `Passengers ${state.passengers}/${state.passengerGoal} • Reach ${state.routeKm} km`;
+const DialogueTrees = {
+  priest: {
+    root(){
+      const qs = QuestSystem.getStatus('q_welcome');
+      if(qs==='none') return 'offer_welcome';
+      if(qs==='active') return QuestSystem.stepDone('q_welcome','talk') ? (QuestSystem.stepDone('q_welcome','collect')?'return_welcome':'reminder_welcome') : 'start_welcome';
+      const qs2 = QuestSystem.getStatus('q_templeOffering');
+      if(qs2==='none' && State.quests.q_welcome && State.quests.q_welcome.status==='complete') return 'offer_offering';
+      if(qs2==='active') return State.inventory.garland>=1 && State.inventory.lamp>=1 ? 'return_offering' : 'reminder_offering';
+      return 'idle';
+    },
+    nodes:{
+      offer_welcome:{ text:'வணக்கம் அன்பரே! இது நமது ஊரின் பழமையான கோயில். கோயிலைச் சுற்றி விழுந்திருக்கும் மல்லிகை பூக்களை பொறுக்கி தருகிறீர்களா?',
+        options:[
+          {label:'நிச்சயமாக, செய்கிறேன்!', action:()=>QuestSystem.start('q_welcome'), next:'end'},
+          {label:'பின்னர் பேசுவோம்.', next:'end'}
+        ]},
+      start_welcome:{ text:'நல்லது! ஐந்து மல்லிகை பூக்களை சேகரித்து என்னிடம் கொண்டு வாருங்கள்.', options:[{label:'சரி', next:'end'}]},
+      reminder_welcome:{ text:'இன்னும் மல்லிகை பூக்கள் தேவை. கோயிலைச் சுற்றிலும் தேடுங்கள்.', options:[{label:'சரி', next:'end'}]},
+      return_welcome:{ text:'அற்புதம்! இந்த பூக்கள் மிகவும் வாசனையாக உள்ளன. இதோ உங்கள் வெகுமதி.',
+        options:[{label:'நன்றி!', action:()=>QuestSystem.complete('q_welcome'), next:'end'}]},
+      offer_offering:{ text:'நீங்கள் ஒரு உண்மையான பக்தர். ஒரு மாலையும் விளக்கும் வாங்கி காணிக்கை செலுத்த விரும்புகிறீர்களா?',
+        options:[
+          {label:'ஆம், செய்கிறேன்.', action:()=>QuestSystem.start('q_templeOffering'), next:'end'},
+          {label:'இன்னும் இல்லை.', next:'end'}
+        ]},
+      reminder_offering:{ text:'கோயில் காணிக்கைக்கு ஒரு மாலையும் விளக்கும் தேவை. சந்தையில் கிடைக்கும்.', options:[{label:'சரி', next:'end'}]},
+      return_offering:{ text:'உங்கள் காணிக்கையை ஏற்கிறேன். கடவுள் உங்களை ஆசீர்வதிப்பாராக!',
+        options:[{label:'நன்றி குருக்களே', action:()=>QuestSystem.complete('q_templeOffering'), next:'end'}]},
+      idle:{ text:'இந்த கோயில் நூற்றாண்டுகள் பழமையானது. அமைதியாக இங்கு நேரத்தை செலவிடுங்கள்.', options:[{label:'சரி', next:'end'}]}
+    }
+  },
+  amma:{
+    root(){ return State.flags.metAmma ? 'chat' : 'first'; },
+    nodes:{
+      first:{ text:'வணக்கம் தம்பி/தங்கையே, நான் கமலா. இந்த பூக்கடையில் மாலைகள் விற்கிறேன்.',
+        options:[{label:'வணக்கம் அம்மா!', action:()=>State.flags.metAmma=true, next:'end'}]},
+      chat:{ text:Util.choice(['இன்று மல்லிகை பூக்கள் புதியதாக வந்திருக்கின்றன.','கோயிலுக்கு செல்பவர்களுக்கு மாலைகள் தேவை.','என் கடையில் எப்போதும் வரவேற்பு உண்டு.']),
+        options:[
+          {label:'கடையைப் பார்க்க விரும்புகிறேன்', action:()=>ShopSystem.open('flowerStall'), next:'end'},
+          {label:'வணக்கம்', next:'end'}
+        ]}
+    }
+  },
+  kadaikaran:{
+    root(){
+      const qs = QuestSystem.getStatus('q_coffeeRun');
+      if(qs==='none') return 'offer';
+      if(qs==='active') return QuestSystem.stepDone('q_coffeeRun','collect') ? 'ready' : 'progress';
+      return 'chat';
+    },
+    nodes:{
+      offer:{ text:'ஏய், நான் முருகன். எனக்கு உதவி வேண்டும் — மூன்று காபிகள் தயாரித்து பள்ளி ஆசிரியருக்கு கொடுக்க முடியுமா?',
+        options:[
+          {label:'நிச்சயமாக!', action:()=>QuestSystem.start('q_coffeeRun'), next:'end'},
+          {label:'இல்லை, பின்னால்.', next:'end'}
+        ]},
+      progress:{ text:'மூன்று ஃபில்டர் காபிகள் சேகரிக்கவும். என் கடையைச் சுற்றி பாருங்கள்.', options:[{label:'சரி', next:'end'}]},
+      ready:{ text:'நல்லது! இப்போது இதை பள்ளி ஆசிரியர் சரோஜாவிடம் கொடுங்கள்.', options:[{label:'சரி', next:'end'}]},
+      chat:{ text:'இந்த தேநீர் கடையில் எப்போதும் புதிய காபி கிடைக்கும். சாப்பிட விரும்புகிறீர்களா?',
+        options:[
+          {label:'கடையைப் பார்க்க விரும்புகிறேன்', action:()=>ShopSystem.open('teaStall'), next:'end'},
+          {label:'இல்லை, நன்றி', next:'end'}
+        ]}
+    }
+  },
+  fisherman:{
+    root(){
+      const qs = QuestSystem.getStatus('q_fishing');
+      if(qs==='none') return 'offer';
+      if(qs==='active') return QuestSystem.stepDone('q_fishing','minigame') ? 'ready' : 'progress';
+      return 'chat';
+    },
+    nodes:{
+      offer:{ text:'நான் செல்வம், மீனவன். என் வலையில் 10 மீன்கள் பிடிக்க உதவுவீர்களா?',
+        options:[
+          {label:'சவால் ஏற்கிறேன்!', action:()=>QuestSystem.start('q_fishing'), next:'end'},
+          {label:'இப்போது இல்லை.', next:'end'}
+        ]},
+      progress:{ text:'கடலோரம் சென்று மீன்பிடி விளையாட்டை தொடங்குங்கள்.',
+        options:[
+          {label:'மீன்பிடி தொடங்கு', action:()=>Minigames.start('fishing'), next:'end'},
+          {label:'பின்னால்', next:'end'}
+        ]},
+      ready:{ text:'அசத்தலான வேட்டை! இதோ உங்கள் பங்கு.', options:[{label:'நன்றி!', action:()=>QuestSystem.complete('q_fishing'), next:'end'}]},
+      chat:{ text:'கடல் இன்று அமைதியாக உள்ளது. மீன் வேண்டுமா, தேங்காய் வேண்டுமா?',
+        options:[
+          {label:'கடையைப் பார்க்க விரும்புகிறேன்', action:()=>ShopSystem.open('harborShop'), next:'end'},
+          {label:'மீன்பிடி விளையாடு', action:()=>Minigames.start('fishing'), next:'end'},
+          {label:'வணக்கம்', next:'end'}
+        ]}
+    }
+  },
+  merchant:{
+    root(){
+      const qs = QuestSystem.getStatus('q_market');
+      if(qs==='none') return 'offer';
+      if(qs==='active') return QuestSystem.stepDone('q_market','earn') ? 'ready' : 'progress';
+      return 'chat';
+    },
+    nodes:{
+      offer:{ text:'வணக்கம், நான் லட்சுமி. என் சந்தையில் பொருட்களை விற்று ₹60 சம்பாதிக்க முடியுமா?',
+        options:[
+          {label:'செய்கிறேன்!', action:()=>QuestSystem.start('q_market'), next:'end'},
+          {label:'பின்னால்', next:'end'}
+        ]},
+      progress:{ text:'என் கடையில் உங்கள் பொருட்களை விற்று ₹60 சம்பாதியுங்கள்.',
+        options:[{label:'கடையைப் பார்க்க', action:()=>ShopSystem.open('marketShop'), next:'end'},{label:'சரி', next:'end'}]},
+      ready:{ text:'சிறப்பான வர்த்தகம்! இதோ போனஸ்.', options:[{label:'நன்றி!', action:()=>QuestSystem.complete('q_market'), next:'end'}]},
+      chat:{ text:'இன்று சந்தையில் நல்ல மாம்பழங்கள் இருக்கின்றன!',
+        options:[
+          {label:'கடையைப் பார்க்க விரும்புகிறேன்', action:()=>ShopSystem.open('marketShop'), next:'end'},
+          {label:'வணக்கம்', next:'end'}
+        ]}
+    }
+  },
+  driver:{
+    root(){
+      const qs = QuestSystem.getStatus('q_busRoute');
+      if(qs==='none') return 'offer';
+      if(qs==='active') return QuestSystem.stepDone('q_busRoute','buy') ? 'ready' : 'progress';
+      return 'chat';
+    },
+    nodes:{
+      offer:{ text:'நான் கருப்பன், பேருந்து ஓட்டுநர். ஒரு டிக்கெட் வாங்கி என் பேருந்தில் சவாரி செய்ய விரும்புகிறீர்களா?',
+        options:[{label:'செய்கிறேன்!', action:()=>QuestSystem.start('q_busRoute'), next:'end'},{label:'இல்லை', next:'end'}]},
+      progress:{ text:'தேநீர் கடையில் டிக்கெட் வாங்கலாம்.', options:[{label:'சரி', next:'end'}]},
+      ready:{ text:'நல்லது! அடுத்த முறை என் பேருந்தில் ஏறுங்கள்.', options:[{label:'நன்றி!', action:()=>QuestSystem.complete('q_busRoute'), next:'end'}]},
+      chat:{ text:'பேருந்து நிலையம் எப்போதும் பரபரப்பாக இருக்கும்!', options:[{label:'வணக்கம்', next:'end'}]}
+    }
+  },
+  teacher:{
+    root(){
+      const qs = QuestSystem.getStatus('q_coffeeRun');
+      if(qs==='active' && QuestSystem.stepDone('q_coffeeRun','collect') && !QuestSystem.stepDone('q_coffeeRun','deliver'))
+        return 'receiveCoffee';
+      const qb = QuestSystem.getStatus('q_schoolBell');
+      if(qb==='none') return 'offer';
+      if(qb==='active') return QuestSystem.stepDone('q_schoolBell','buy') ? 'ready' : 'progress';
+      return 'chat';
+    },
+    nodes:{
+      receiveCoffee:{ text:'ஆஹா, முருகனிடமிருந்து காபி! மிக்க நன்றி, இது சூடாக உள்ளது.',
+        options:[{label:'மகிழ்ச்சி!', action:()=>QuestSystem.completeStep('q_coffeeRun','deliver'), next:'end'}]},
+      offer:{ text:'வணக்கம், நான் சரோஜா, ஆசிரியை. பள்ளிக்கு ஒரு மணி தேவை. சந்தையில் வாங்கி தர முடியுமா?',
+        options:[{label:'செய்கிறேன்!', action:()=>QuestSystem.start('q_schoolBell'), next:'end'},{label:'இல்லை', next:'end'}]},
+      progress:{ text:'சந்தையில் ஒரு மணி வாங்கலாம்.', options:[{label:'சரி', next:'end'}]},
+      ready:{ text:'அருமையான மணி! பிள்ளைகள் மகிழ்வார்கள்.', options:[{label:'நன்றி!', action:()=>QuestSystem.complete('q_schoolBell'), next:'end'}]},
+      chat:{ text:'கல்வி நமது எதிர்காலம். பள்ளிக்கு வருகை தாருங்கள்!', options:[{label:'வணக்கம்', next:'end'}]}
+    }
+  },
+  doctor:{
+    root(){
+      const qs = QuestSystem.getStatus('q_clinicSupplies');
+      if(qs==='none') return 'offer';
+      if(qs==='active') return QuestSystem.stepDone('q_clinicSupplies','collect') ? 'ready' : 'progress';
+      return 'chat';
+    },
+    nodes:{
+      offer:{ text:'நான் டாக்டர் ரவி. இயற்கை மருந்துக்கு 4 தேங்காய் தேவை. கொண்டு வர முடியுமா?',
+        options:[{label:'செய்கிறேன்!', action:()=>QuestSystem.start('q_clinicSupplies'), next:'end'},{label:'இல்லை', next:'end'}]},
+      progress:{ text:'கடற்கரையில் தேங்காய் மரங்களைத் தேடுங்கள்.', options:[{label:'சரி', next:'end'}]},
+      ready:{ text:'அற்புதம்! இது பலருக்கு உதவும்.', options:[{label:'நன்றி!', action:()=>QuestSystem.complete('q_clinicSupplies'), next:'end'}]},
+      chat:{ text:'உங்கள் ஆரோக்கியத்தை கவனித்துக் கொள்ளுங்கள். ஓய்வு எடுக்க மறக்காதீர்கள்.', options:[{label:'வணக்கம்', next:'end'}]}
+    }
+  }
+};
+
+/* ==========================================================================
+   9. PLAYER, NPC INSTANCES, COLLECTIBLES
+   ========================================================================== */
+const Player = {
+  x: 1780, y: 1650, angle: 0, speed: 0, maxSpeed: 220, sprintMult: 1.6,
+  walkMaxSpeed: 220, vehicleMaxSpeed: 420,
+  radius: 16, animT: 0, moving:false
+};
+
+const npcs = npcDefs.map(def=>({
+  ...def,
+  x: def.home.x, y: def.home.y, targetX: def.home.x, targetY: def.home.y,
+  state:'idle', speed: 60, animT: Math.random()*10
+}));
+
+function npcTargetFor(def, hour){
+  for(const [start,end,place] of def.schedule){
+    if(hour>=start && hour<end) return def[place];
+    // handle wrap past midnight (end > 24 already accounted via +24 range in hour calc)
+  }
+  return def.home;
 }
 
-function laneX(lane){
-  const roadW=W()*.48;
-  const left=W()/2-roadW/2;
-  const laneW=roadW/3;
-  return left+laneW*(lane+.5);
+const collectibles = [];
+function spawnCollectibles(){
+  collectibles.length = 0;
+  for(let i=0;i<16;i++){
+    collectibles.push({type:'jasmine', x:Util.rand(temple.x+40,temple.x+temple.w-40),
+      y:Util.rand(temple.y+40,temple.y+temple.h-40), taken:false, bob:Math.random()*Math.PI*2});
+  }
+  teaStalls.forEach(t=>{
+    for(let i=0;i<3;i++){
+      collectibles.push({type:'coffee', x:t.x+Util.rand(-60,100), y:t.y+Util.rand(-40,80), taken:false, bob:Math.random()*Math.PI*2});
+    }
+  });
+  for(let i=0;i<12;i++){
+    collectibles.push({type:'coconut', x:200+i*280, y:Util.rand(2500,2680), taken:false, bob:Math.random()*Math.PI*2});
+  }
+}
+spawnCollectibles();
+
+const RESPAWN_TIME = 90; // seconds of in-game-day-independent real time before a taken collectible reappears
+collectibles.forEach(c=>c.respawnAt=0);
+
+/* ==========================================================================
+   10. INPUT — keyboard + touch joystick + interact button + UI shortcuts
+   ========================================================================== */
+const Keys = {};
+window.addEventListener('keydown', e=>{
+  Keys[e.key.toLowerCase()] = true;
+  if(!State.started) return;
+  const k = e.key.toLowerCase();
+  if(k==='e') InteractSystem.tryInteract();
+  if(k==='i') UI.toggleModal('inventoryModal', ()=>UI.renderInventory());
+  if(k==='q') UI.toggleModal('questModal', ()=>UI.renderQuests());
+  if(k==='escape') UI.togglePause();
+  if(k==='m'){ /* map already visible; pulse it */ UI.pulseMinimap(); }
+});
+window.addEventListener('keyup', e=>{ Keys[e.key.toLowerCase()] = false; });
+
+const Joystick = {
+  active:false, vec:{x:0,y:0}, touchId:null, origin:{x:0,y:0},
+  base: null, knob: null, zone: null,
+  init(){
+    this.base = document.getElementById('joystickBase');
+    this.knob = document.getElementById('joystickKnob');
+    this.zone = document.getElementById('joystickZone');
+    this.zone.addEventListener('touchstart', e=>{
+      const t = e.changedTouches[0];
+      this.start(t.identifier, t.clientX, t.clientY);
+      e.preventDefault();
+    }, {passive:false});
+    window.addEventListener('touchmove', e=>{
+      for(const t of e.changedTouches) if(t.identifier===this.touchId) this.move(t.clientX,t.clientY);
+    }, {passive:false});
+    window.addEventListener('touchend', e=>{
+      for(const t of e.changedTouches) if(t.identifier===this.touchId) this.end();
+    });
+    window.addEventListener('touchcancel', e=>{
+      for(const t of e.changedTouches) if(t.identifier===this.touchId) this.end();
+    });
+  },
+  start(id,px,py){
+    this.active=true; this.touchId=id; this.origin={x:px,y:py};
+    this.base.style.display='block';
+    this.base.style.left=(px-55)+'px'; this.base.style.top=(py-55)+'px';
+    this.knob.style.left='31px'; this.knob.style.top='31px';
+  },
+  move(px,py){
+    if(!this.active) return;
+    let dx=px-this.origin.x, dy=py-this.origin.y;
+    const max=45; const dist=Math.min(max, Math.hypot(dx,dy));
+    const ang=Math.atan2(dy,dx);
+    this.knob.style.left=(31+Math.cos(ang)*dist)+'px';
+    this.knob.style.top=(31+Math.sin(ang)*dist)+'px';
+    this.vec.x = dist<8?0:Math.cos(ang)*(dist/max);
+    this.vec.y = dist<8?0:Math.sin(ang)*(dist/max);
+  },
+  end(){ this.active=false; this.touchId=null; this.vec={x:0,y:0}; this.base.style.display='none'; }
+};
+
+const InteractSystem = {
+  currentTarget:null,
+  findNearby(){
+    let best=null, bestD=90;
+    for(const n of npcs){
+      const d = Util.dist(Player.x,Player.y,n.x,n.y);
+      if(d<bestD){ bestD=d; best={type:'npc', ref:n, label:'பேசு'}; }
+    }
+    for(const b of buildings){
+      if(!b.id) continue;
+      const cx=b.x+b.w/2, cy=b.y+b.h/2;
+      const d = Util.dist(Player.x,Player.y,cx,cy);
+      if(d<95 && d<bestD){
+        let label = 'பார்';
+        if(b.id==='harbor') label='மீன்பிடி';
+        else if(b.id.startsWith('tea')) label='சமை';
+        else if(b.id==='busstand') label='ஏறு';
+        bestD=d; best={type:'building', ref:b, label};
+      }
+    }
+    return best;
+  },
+  update(){
+    this.currentTarget = this.findNearby();
+    const btn = document.getElementById('interactBtn');
+    if(this.currentTarget){ btn.classList.add('show'); btn.textContent = this.currentTarget.label; }
+    else btn.classList.remove('show');
+  },
+  tryInteract(){
+    if(!this.currentTarget) return;
+    Audio2.click();
+    if(this.currentTarget.type==='npc'){ DialogueSystem.open(this.currentTarget.ref.id); return; }
+    const b = this.currentTarget.ref;
+    if(b.id==='harbor'){ Minigames.start('fishing'); return; }
+    if(b.id && b.id.startsWith('tea')){ Minigames.start('cooking'); return; }
+    if(b.id==='busstand'){
+      if(InventorySystem.remove('busTicket',1)){
+        Player.x = Util.rand(400,WORLD_W-400); Player.y = Util.rand(400,WORLD_H-1000);
+        State.timeMinutes += 30;
+        UI.toast('பேருந்தில் சவாரி செய்தீர்கள்!', 'money');
+        QuestSystem.evaluateProgress();
+      } else {
+        UI.toast('பேருந்து டிக்கெட் தேவை (தேநீர் கடையில் வாங்கவும்)', 'warn');
+      }
+      return;
+    }
+  }
+};
+document.getElementById('interactBtn').addEventListener('touchstart', e=>{ e.preventDefault(); InteractSystem.tryInteract(); });
+document.getElementById('interactBtn').addEventListener('click', ()=>InteractSystem.tryInteract());
+
+/* ==========================================================================
+   11. QUEST SYSTEM
+   ========================================================================== */
+const QuestSystem = {
+  getStatus(id){
+    const q = State.quests[id];
+    if(!q) return 'none';
+    return q.status;
+  },
+  canStart(id){
+    const def = questDefs.find(q=>q.id===id);
+    if(!def) return false;
+    if(this.getStatus(id)!=='none') return false;
+    if(def.requires && this.getStatus(def.requires)!=='complete') return false;
+    return true;
+  },
+  start(id){
+    if(!this.canStart(id)) return;
+    const def = questDefs.find(q=>q.id===id);
+    State.quests[id] = {status:'active', steps:{}};
+    def.steps.forEach(s=>{ State.quests[id].steps[s.id] = {done:false, progress:0}; });
+    // auto-complete the initial 'talk' step for the giver since we just talked to them
+    const first = def.steps[0];
+    if(first.type==='talk') State.quests[id].steps[first.id].done = true;
+    Audio2.questStart();
+    UI.toast('புதிய பணி: ' + def.title, 'quest');
+    UI.renderQuestTracker();
+  },
+  stepDone(qid, stepId){
+    const q = State.quests[qid];
+    return q && q.steps[stepId] && q.steps[stepId].done;
+  },
+  completeStep(qid, stepId){
+    const q = State.quests[qid];
+    if(q && q.steps[stepId]) q.steps[stepId].done = true;
+    UI.renderQuestTracker();
+  },
+  activeQuests(){
+    return questDefs.filter(d=>this.getStatus(d.id)==='active');
+  },
+  // called every frame / on relevant events to auto-progress collect/earn/own step types
+  evaluateProgress(){
+    for(const def of this.activeQuests()){
+      const q = State.quests[def.id];
+      for(const step of def.steps){
+        const s = q.steps[step.id];
+        if(s.done) continue;
+        if(step.type==='collect'){
+          if(State.resources[step.target] >= (s.startVal||0) + step.count) s.done = true;
+        } else if(step.type==='own'){
+          if((State.inventory[step.target]||0) >= step.count) s.done = true;
+        } else if(step.type==='earn'){
+          if(State.money >= (s.startVal||0) + step.count) s.done = true;
+        } else if(step.type==='minigame'){
+          if((State.flags['mg_'+step.target+'_score']||0) >= step.count) s.done = true;
+        }
+      }
+    }
+  },
+  complete(id){
+    const def = questDefs.find(q=>q.id===id);
+    const q = State.quests[id];
+    if(!q || q.status!=='active') return;
+    const allDone = def.steps.every(s=>q.steps[s.id].done);
+    if(!allDone) return;
+    q.status = 'complete';
+    if(def.reward.money) EconomySystem.addMoney(def.reward.money);
+    if(def.reward.rep) State.reputation += def.reward.rep;
+    if(def.reward.item) InventorySystem.add(def.reward.item, 1);
+    Audio2.questDone();
+    UI.toast('பணி முடிந்தது: ' + def.title + ' ✓', 'quest');
+    UI.renderQuestTracker();
+    AchievementSystem.checkAll();
+  },
+  // captures baseline values when a collect/earn step becomes the active target,
+  // so counts measure progress made *after* the quest started
+  primeBaselines(id){
+    const def = questDefs.find(q=>q.id===id);
+    const q = State.quests[id];
+    def.steps.forEach(step=>{
+      if(step.type==='collect') q.steps[step.id].startVal = State.resources[step.target]||0;
+      if(step.type==='earn') q.steps[step.id].startVal = State.money;
+    });
+  }
+};
+// wrap start() to also prime baselines
+const _questStart = QuestSystem.start.bind(QuestSystem);
+QuestSystem.start = function(id){ _questStart(id); if(State.quests[id]) QuestSystem.primeBaselines(id); };
+
+/* ==========================================================================
+   12. INVENTORY & ECONOMY
+   ========================================================================== */
+const InventorySystem = {
+  add(id, n){
+    State.inventory[id] = (State.inventory[id]||0) + n;
+    Audio2.pickup();
+  },
+  remove(id, n){
+    if((State.inventory[id]||0) < n) return false;
+    State.inventory[id] -= n;
+    return true;
+  },
+  count(id){ return State.inventory[id]||0; }
+};
+
+const EconomySystem = {
+  addMoney(n){
+    State.money += n;
+    UI.toast((n>=0?'+':'') + '₹'+n, 'money');
+    AchievementSystem.checkAll();
+  },
+  spendMoney(n){
+    if(State.money < n){ Audio2.error(); UI.toast('போதுமான பணம் இல்லை!', 'warn'); return false; }
+    State.money -= n;
+    return true;
+  }
+};
+
+/* ==========================================================================
+   13. SHOP SYSTEM
+   ========================================================================== */
+const ShopSystem = {
+  currentShop:null, currentTab:'buy',
+  open(shopId){
+    this.currentShop = shopId;
+    this.currentTab = 'buy';
+    const shop = shops[shopId];
+    document.getElementById('shopName').textContent = shop.name;
+    document.querySelectorAll('#shopTabs .tabBtn').forEach(b=>b.classList.toggle('active', b.dataset.tab==='buy'));
+    UI.closeModal('dialogueModal');
+    UI.openModal('shopModal');
+    this.render();
+  },
+  render(){
+    const shop = shops[this.currentShop];
+    const grid = document.getElementById('shopGrid');
+    grid.innerHTML = '';
+    const ids = this.currentTab==='buy' ? shop.buy : shop.sell;
+    ids.forEach(itemId=>{
+      const def = ItemDefs[itemId];
+      const card = document.createElement('div');
+      card.className = 'itemCard';
+      if(this.currentTab==='buy'){
+        card.innerHTML = `<div class="ic">${def.icon}</div><div class="nm">${def.name}</div><div class="pr">₹${def.buy}</div>`;
+        card.onclick = ()=>{
+          if(EconomySystem.spendMoney(def.buy)){
+            InventorySystem.add(itemId,1);
+            UI.toast('வாங்கியது: '+def.name, 'money');
+            QuestSystem.evaluateProgress();
+            this.render(); UI.updateHud();
+          }
+        };
+      } else {
+        const owned = InventorySystem.count(itemId);
+        card.innerHTML = `<div class="ic">${def.icon}</div><div class="nm">${def.name}</div><div class="ct">x${owned}</div><div class="pr">₹${def.sell}</div>`;
+        if(owned<=0) card.classList.add('disabled');
+        card.onclick = ()=>{
+          if(owned<=0) return;
+          InventorySystem.remove(itemId,1);
+          if(State.resources[itemId]!==undefined) {/* resource sold, keep resource counter as lifetime stat */}
+          EconomySystem.addMoney(def.sell);
+          QuestSystem.evaluateProgress();
+          this.render(); UI.updateHud();
+        };
+      }
+      grid.appendChild(card);
+    });
+  }
+};
+
+/* ==========================================================================
+   14. DIALOGUE SYSTEM
+   ========================================================================== */
+const DialogueSystem = {
+  npc:null, node:null,
+  open(npcId){
+    const npc = npcs.find(n=>n.id===npcId);
+    const tree = DialogueTrees[npcId];
+    if(!npc || !tree) return;
+    this.npc = npc;
+    const startNode = typeof tree.root==='function' ? tree.root() : tree.root;
+    this.node = startNode;
+    document.getElementById('dialoguePortrait').textContent = npc.icon;
+    document.getElementById('dialogueName').textContent = npc.name;
+    document.getElementById('dialogueRole').textContent = npc.role;
+    this.render();
+    UI.openModal('dialogueModal');
+  },
+  render(){
+    const tree = DialogueTrees[this.npc.id];
+    const node = tree.nodes[this.node];
+    document.getElementById('dialogueText').textContent = node.text;
+    const opts = document.getElementById('dialogueOptions');
+    opts.innerHTML = '';
+    node.options.forEach(opt=>{
+      const btn = document.createElement('button');
+      btn.className = 'dOpt';
+      btn.textContent = opt.label;
+      btn.onclick = ()=>{
+        Audio2.click();
+        if(opt.action) opt.action();
+        QuestSystem.evaluateProgress();
+        UI.updateHud();
+        if(opt.next==='end'){ UI.closeModal('dialogueModal'); }
+        else {
+          this.node = opt.next;
+          // re-evaluate root in case state changed mid-conversation
+          this.render();
+        }
+      };
+      opts.appendChild(btn);
+    });
+  }
+};
+
+/* ==========================================================================
+   15. ACHIEVEMENT SYSTEM
+   ========================================================================== */
+const AchievementSystem = {
+  checkAll(){
+    achDefs.forEach(a=>{
+      if(!State.achievements[a.id] && a.check(State)){
+        State.achievements[a.id] = true;
+        Audio2.achievement();
+        UI.toast('🏆 சாதனை திறக்கப்பட்டது: ' + a.name, 'quest');
+      }
+    });
+  },
+  unlockedCount(){ return Object.keys(State.achievements).length; }
+};
+
+/* ==========================================================================
+   16. UI SYSTEM — modals, toasts, HUD, panels
+   ========================================================================== */
+const UI = {
+  openModal(id){ document.getElementById(id).classList.add('open'); },
+  closeModal(id){ document.getElementById(id).classList.remove('open'); },
+  toggleModal(id, onOpenRender){
+    const el = document.getElementById(id);
+    if(el.classList.contains('open')){ el.classList.remove('open'); }
+    else { el.classList.add('open'); if(onOpenRender) onOpenRender(); }
+  },
+  toast(msg, kind){
+    const stack = document.getElementById('toastStack');
+    const el = document.createElement('div');
+    el.className = 'toast' + (kind?(' '+kind):'');
+    el.textContent = msg;
+    stack.appendChild(el);
+    requestAnimationFrame(()=>el.classList.add('show'));
+    Audio2.notify();
+    setTimeout(()=>{
+      el.classList.remove('show');
+      setTimeout(()=>el.remove(), 400);
+    }, 2200);
+  },
+  pulseMinimap(){
+    const mm = document.getElementById('minimapWrap');
+    mm.animate([{transform:'scale(1)'},{transform:'scale(1.08)'},{transform:'scale(1)'}], {duration:300});
+  },
+  updateHud(){
+    document.getElementById('hudClock').textContent = Util.fmtTime(State.timeMinutes) + ' · நாள் ' + State.dayCount;
+    document.getElementById('energyBar').style.width = Util.clamp(State.energy,0,100) + '%';
+    document.getElementById('hudMoney').textContent = State.money;
+    document.getElementById('hudJasmine').textContent = State.resources.jasmine;
+    document.getElementById('hudCoffee').textContent = State.resources.coffee;
+    document.getElementById('hudCoconut').textContent = State.resources.coconut;
+    document.getElementById('hudRep').textContent = State.reputation;
+  },
+  renderQuestTracker(){
+    const active = QuestSystem.activeQuests();
+    const tracker = document.getElementById('questTracker');
+    const body = document.getElementById('questTrackerBody');
+    if(active.length===0){ tracker.classList.remove('show'); return; }
+    tracker.classList.add('show');
+    const def = active[0];
+    const q = State.quests[def.id];
+    body.innerHTML = `<div style="color:var(--ui-accent);font-weight:700;margin-bottom:3px;">${def.title}</div>` +
+      def.steps.map(s=>{
+        const done = q.steps[s.id].done;
+        return `<div class="qline ${done?'done':''}"><span>${s.text}</span><span>${done?'✓':''}</span></div>`;
+      }).join('');
+  },
+  renderInventory(){
+    const grid = document.getElementById('inventoryGrid');
+    grid.innerHTML = '';
+    const entries = Object.entries(State.inventory).filter(([k,v])=>v>0);
+    if(entries.length===0){ grid.innerHTML = '<div style="opacity:.6;font-size:12px;">பொருட்கள் இல்லை.</div>'; return; }
+    entries.forEach(([id,count])=>{
+      const def = ItemDefs[id];
+      if(!def) return;
+      const card = document.createElement('div');
+      card.className='itemCard';
+      card.innerHTML = `<div class="ic">${def.icon}</div><div class="nm">${def.name}</div><div class="ct">x${count}</div>`;
+      if(def.food){
+        card.onclick = ()=>{
+          if(InventorySystem.remove(id,1)){
+            State.energy = Util.clamp(State.energy + def.energy, 0, 100);
+            UI.toast('சாப்பிட்டீர்கள்: '+def.name+' (+'+def.energy+' ஆற்றல்)', 'money');
+            UI.updateHud(); UI.renderInventory();
+          }
+        };
+      }
+      grid.appendChild(card);
+    });
+  },
+  renderQuests(){
+    const body = document.getElementById('questListBody');
+    body.innerHTML = '';
+    const relevant = questDefs.filter(d=>State.quests[d.id]);
+    if(relevant.length===0){
+      body.innerHTML = '<div style="opacity:.6;font-size:13px;">இன்னும் பணிகள் எடுக்கவில்லை. நகர மக்களிடம் பேசுங்கள்!</div>';
+      return;
+    }
+    relevant.forEach(def=>{
+      const q = State.quests[def.id];
+      const div = document.createElement('div');
+      div.className = 'questEntry' + (q.status==='complete' ? ' completed' : '');
+      div.innerHTML = `<h4>${def.title}<span style="font-size:11px;color:${q.status==='complete'?'var(--ui-good)':'var(--ui-accent)'}">${q.status==='complete'?'முடிந்தது':'செயலில்'}</span></h4>
+        <p>${def.desc}</p>
+        ${def.steps.map(s=>`<div class="step ${q.steps[s.id].done?'done':''}">• ${s.text}</div>`).join('')}
+        <div class="reward">வெகுமதி: ₹${def.reward.money||0} · ⭐${def.reward.rep||0}${def.reward.item?(' · '+ItemDefs[def.reward.item].icon+ItemDefs[def.reward.item].name):''}</div>`;
+      body.appendChild(div);
+    });
+  },
+  renderAchievements(){
+    const body = document.getElementById('achListBody');
+    body.innerHTML = '';
+    achDefs.forEach(a=>{
+      const unlocked = !!State.achievements[a.id];
+      const div = document.createElement('div');
+      div.className = 'achEntry' + (unlocked?'':' locked');
+      div.innerHTML = `<div class="aic">${unlocked?a.icon:'🔒'}</div><div class="atext"><h5>${a.name}</h5><p>${a.desc}</p></div>`;
+      body.appendChild(div);
+    });
+    document.getElementById('achSub').textContent = AchievementSystem.unlockedCount() + ' / ' + achDefs.length + ' திறக்கப்பட்டது';
+  },
+  togglePause(){
+    if(!State.started) return;
+    State.paused = !State.paused;
+    if(State.paused) UI.openModal('pauseModal'); else UI.closeModal('pauseModal');
+  }
+};
+
+/* ==========================================================================
+   17. MINIGAMES — fishing (reaction timing), cooking (flip timing),
+       traffic dodge (arcade avoidance). Each runs on its own canvas
+       inside #minigameModal with an isolated loop while active.
+   ========================================================================== */
+const Minigames = {
+  active:null, raf:null, mctx:null, mcanvas:null,
+  score:0, timeLeft:0, keyHandler:null,
+
+  start(id){
+    this.active = id;
+    this.score = 0;
+    this.mcanvas = document.getElementById('minigameCanvas');
+    this.mctx = this.mcanvas.getContext('2d');
+    document.getElementById('mgTitle').textContent =
+      id==='fishing' ? '🎣 மீன்பிடி' : id==='cooking' ? '🫓 தோசை சுடுதல்' : '🛺 போக்குவரத்து ஓட்டம்';
+    document.getElementById('mgSub').textContent =
+      id==='fishing' ? 'குறி மையத்தில் இருக்கும்போது தட்டவும்!' :
+      id==='cooking' ? 'சரியான நேரத்தில் தோசையை புரட்டவும்!' :
+      'வாகனங்களை தவிர்த்து முன்னேறுங்கள்!';
+    if(id==='fishing') this.initFishing();
+    if(id==='cooking') this.initCooking();
+    if(id==='traffic') this.initTraffic();
+    UI.closeModal('dialogueModal');
+    UI.openModal('minigameModal');
+    State.paused = true; // freeze world while minigame is up
+    this.keyHandler = e=>{
+      if(e.key===' ' || e.key==='Enter'){ e.preventDefault(); this.tap(); }
+    };
+    window.addEventListener('keydown', this.keyHandler);
+    this.mcanvas.onclick = ()=>this.tap();
+    this.mcanvas.ontouchstart = e=>{ e.preventDefault(); this.tap(); };
+    this.loop();
+  },
+  stop(finish){
+    cancelAnimationFrame(this.raf);
+    window.removeEventListener('keydown', this.keyHandler);
+    UI.closeModal('minigameModal');
+    State.paused = false;
+    if(finish && this.active==='fishing'){
+      State.flags.mg_fishing_score = Math.max(State.flags.mg_fishing_score||0, this.score);
+      if(this.score>=10) State.flags.fishingWon = true;
+      InventorySystem.add('fish', this.score);
+      QuestSystem.evaluateProgress();
+      UI.toast('மீன்பிடி முடிந்தது! ' + this.score + ' மீன்கள் பிடித்தீர்கள்', 'money');
+      AchievementSystem.checkAll();
+    } else if(finish && this.active==='cooking'){
+      EconomySystem.addMoney(this.score*3);
+      UI.toast('சமையல் முடிந்தது! ₹' + (this.score*3) + ' சம்பாதித்தீர்கள்', 'money');
+    } else if(finish && this.active==='traffic'){
+      EconomySystem.addMoney(this.score*2);
+      State.reputation += Math.floor(this.score/3);
+      UI.toast('ஓட்டம் முடிந்தது! ₹' + (this.score*2) + ' சம்பாதித்தீர்கள்', 'money');
+    }
+    this.active = null;
+    UI.updateHud();
+  },
+  tap(){
+    if(this.active==='fishing') this.fishTap();
+    if(this.active==='cooking') this.cookTap();
+    if(this.active==='traffic') this.trafficJump();
+  },
+
+  /* ---------------- FISHING ---------------- */
+  initFishing(){
+    this.fish = { markerAngle:0, speed:2.2, zoneStart:0.4, zoneEnd:0.6, dir:1, misses:0 };
+    this.timeLeft = 30;
+  },
+  fishTap(){
+    const f = this.fish;
+    if(f.markerAngle>=f.zoneStart && f.markerAngle<=f.zoneEnd){
+      this.score++;
+      Audio2.coin();
+      f.zoneStart = Util.rand(0.1,0.7); f.zoneEnd = f.zoneStart+Util.rand(0.08,0.16);
+      f.speed = Math.min(4.5, f.speed+0.15);
+    } else {
+      f.misses++;
+      Audio2.splash();
+    }
+  },
+  updateFishing(dt){
+    const f = this.fish;
+    f.markerAngle += f.dir*f.speed*dt*0.5;
+    if(f.markerAngle>1){ f.markerAngle=1; f.dir=-1; }
+    if(f.markerAngle<0){ f.markerAngle=0; f.dir=1; }
+    this.timeLeft -= dt;
+    if(this.timeLeft<=0) this.stop(true);
+  },
+  drawFishing(){
+    const ctx = this.mctx, w=this.mcanvas.width, h=this.mcanvas.height;
+    ctx.fillStyle = '#0e2e3d'; ctx.fillRect(0,0,w,h);
+    ctx.fillStyle = '#134a5e';
+    for(let i=0;i<5;i++){ ctx.fillRect(0, 40+i*60, w, 2); }
+    // bar
+    const bx=40, by=h/2-20, bw=w-80, bh=40;
+    ctx.fillStyle='rgba(255,255,255,.15)'; ctx.fillRect(bx,by,bw,bh);
+    ctx.fillStyle='rgba(95,174,90,.65)';
+    ctx.fillRect(bx+this.fish.zoneStart*bw, by, (this.fish.zoneEnd-this.fish.zoneStart)*bw, bh);
+    const mx = bx+this.fish.markerAngle*bw;
+    ctx.fillStyle='#f4d35e';
+    ctx.fillRect(mx-3, by-8, 6, bh+16);
+    ctx.fillStyle='#fdf1de'; ctx.font='16px sans-serif'; ctx.textAlign='center';
+    ctx.fillText('🎣 ' + Math.ceil(this.timeLeft) + 's', w/2, 40);
+  },
+
+  /* ---------------- COOKING ---------------- */
+  initCooking(){
+    this.cook = { progress:0, dir:1, speed:0.9, zoneStart:0.45, zoneEnd:0.6, flipped:false };
+    this.timeLeft = 25;
+  },
+  cookTap(){
+    const c = this.cook;
+    if(!c.flipped){
+      if(c.progress>=c.zoneStart && c.progress<=c.zoneEnd){
+        this.score++; Audio2.coin();
+      } else Audio2.error();
+      c.flipped = true;
+      setTimeout(()=>{ c.progress=0; c.flipped=false; c.zoneStart=Util.rand(0.3,0.6); c.zoneEnd=c.zoneStart+Util.rand(0.1,0.18); }, 400);
+    }
+  },
+  updateCooking(dt){
+    const c = this.cook;
+    if(!c.flipped) c.progress += dt*c.speed;
+    if(c.progress>1){ c.progress=1; if(!c.flipped){ Audio2.error(); c.flipped=true; setTimeout(()=>{c.progress=0;c.flipped=false;},400); } }
+    this.timeLeft -= dt;
+    if(this.timeLeft<=0) this.stop(true);
+  },
+  drawCooking(){
+    const ctx=this.mctx, w=this.mcanvas.width, h=this.mcanvas.height;
+    ctx.fillStyle='#241408'; ctx.fillRect(0,0,w,h);
+    ctx.fillStyle='#3a2412'; ctx.beginPath(); ctx.arc(w/2,h/2,110,0,Math.PI*2); ctx.fill();
+    const c = this.cook;
+    ctx.fillStyle = c.flipped ? '#e0a938' : `rgba(224,169,56,${0.5+c.progress*0.5})`;
+    ctx.beginPath(); ctx.ellipse(w/2,h/2,80,50,0,0,Math.PI*2); ctx.fill();
+    const bx=40, by=h-60, bw=w-80, bh=26;
+    ctx.fillStyle='rgba(255,255,255,.15)'; ctx.fillRect(bx,by,bw,bh);
+    ctx.fillStyle='rgba(95,174,90,.65)'; ctx.fillRect(bx+c.zoneStart*bw, by, (c.zoneEnd-c.zoneStart)*bw, bh);
+    ctx.fillStyle='#f4d35e'; ctx.fillRect(bx+c.progress*bw-3, by-6, 6, bh+12);
+    ctx.fillStyle='#fdf1de'; ctx.font='16px sans-serif'; ctx.textAlign='center';
+    ctx.fillText('🫓 ' + Math.ceil(this.timeLeft) + 's', w/2, 30);
+  },
+
+  /* ---------------- TRAFFIC DODGE ---------------- */
+  initTraffic(){
+    this.traffic = { laneY:[80,160,240,320], carLane:1, cars:[], spawnT:0, dist:0, speed:140 };
+    this.timeLeft = 40;
+  },
+  trafficJump(){
+    const t = this.traffic;
+    t.carLane = Util.clamp(t.carLane-1, 0, 3);
+  },
+  updateTraffic(dt){
+    const t = this.traffic;
+    t.dist += t.speed*dt;
+    t.spawnT -= dt;
+    if(t.spawnT<=0){
+      t.cars.push({x:this.mcanvas.width+40, lane:Util.randInt(0,3)});
+      t.spawnT = Util.rand(0.6,1.3);
+    }
+    t.cars.forEach(c=>c.x -= (t.speed+80)*dt);
+    t.cars = t.cars.filter(c=>c.x>-60);
+    // collision check
+    for(const c of t.cars){
+      if(c.lane===t.carLane && c.x<90 && c.x>40 && !c.hit){
+        c.hit = true;
+        Audio2.error();
+        t.speed = Math.max(80, t.speed-20);
+      } else if(c.lane===t.carLane && c.x<40 && !c.scored){
+        c.scored = true; this.score++; Audio2.coin();
+      }
+    }
+    this.timeLeft -= dt;
+    if(this.timeLeft<=0) this.stop(true);
+  },
+  drawTraffic(){
+    const ctx=this.mctx, w=this.mcanvas.width, h=this.mcanvas.height;
+    const t = this.traffic;
+    ctx.fillStyle='#3a3a3a'; ctx.fillRect(0,0,w,h);
+    ctx.strokeStyle='rgba(255,255,255,.3)'; ctx.setLineDash([14,10]);
+    t.laneY.forEach((y,i)=>{ if(i>0){ ctx.beginPath(); ctx.moveTo(0,y-40); ctx.lineTo(w,y-40); ctx.stroke(); } });
+    ctx.setLineDash([]);
+    // player auto
+    ctx.fillStyle='#f4c542';
+    ctx.fillRect(50, t.laneY[t.carLane]-16, 34, 22);
+    // cars
+    ctx.fillStyle='#c0392b';
+    t.cars.forEach(c=>{ ctx.fillRect(c.x, t.laneY[c.lane]-16, 34, 22); });
+    ctx.fillStyle='#fdf1de'; ctx.font='16px sans-serif'; ctx.textAlign='center';
+    ctx.fillText('🛺 ' + Math.ceil(this.timeLeft) + 's  |  Score ' + this.score, w/2, 24);
+  },
+
+  loop(){
+    const now = performance.now();
+    const dt = Math.min(0.05, (now-(this._last||now))/1000);
+    this._last = now;
+    if(this.active==='fishing'){ this.updateFishing(dt); this.drawFishing(); }
+    if(this.active==='cooking'){ this.updateCooking(dt); this.drawCooking(); }
+    if(this.active==='traffic'){ this.updateTraffic(dt); this.drawTraffic(); }
+    document.getElementById('mgScore').textContent = 'Score: ' + this.score;
+    document.getElementById('mgTimer').textContent = 'Time: ' + Math.max(0,Math.ceil(this.timeLeft));
+    if(this.active) this.raf = requestAnimationFrame(()=>this.loop());
+  }
+};
+
+/* ==========================================================================
+   18. WORLD SIMULATION — movement, collision, NPC AI, time, weather, energy
+   ========================================================================== */
+function circleBlockedByBuildings(nx, ny, r){
+  for(const b of buildings){
+    if(!b.solid) continue;
+    if(Util.circleRect(nx, ny, r, b.x,b.y,b.w,b.h)) return true;
+  }
+  return false;
+}
+function tryMovePlayer(nx, ny){
+  const r = Player.radius;
+  let fx = nx, fy = Player.y;
+  if(circleBlockedByBuildings(fx, Player.y, r)) fx = Player.x;
+  let fy2 = ny;
+  if(circleBlockedByBuildings(fx, fy2, r)) fy2 = Player.y;
+  Player.x = Util.clamp(fx, 20, WORLD_W-20);
+  Player.y = Util.clamp(fy2, 20, WORLD_H-20);
 }
 
-function playerScreenX(){
-  const roadW=W()*.48;
-  return W()/2+state.playerX*roadW*.42;
+let camShakeT = 0, camShakeMag = 0;
+function addShake(mag){ if(State.cameraShake){ camShakeMag = Math.max(camShakeMag, mag); camShakeT = 0.25; } }
+
+function updatePlayer(dt){
+  let vx=0, vy=0;
+  if(Keys['w']||Keys['arrowup']) vy -= 1;
+  if(Keys['s']||Keys['arrowdown']) vy += 1;
+  if(Keys['a']||Keys['arrowleft']) vx -= 1;
+  if(Keys['d']||Keys['arrowright']) vx += 1;
+  if(Joystick.vec.x||Joystick.vec.y){ vx += Joystick.vec.x; vy += Joystick.vec.y; }
+
+  const len = Math.hypot(vx,vy);
+  const sprint = Keys['shift'] ? Player.sprintMult : 1;
+  Player.maxSpeed = State.vehicle ? Player.vehicleMaxSpeed : Player.walkMaxSpeed;
+  Player.moving = len>0.05;
+
+  if(Player.moving){
+    vx/=len; vy/=len;
+    const targetAngle = Math.atan2(vy,vx);
+    Player.angle = Util.angleLerp(Player.angle, targetAngle, Math.min(1, dt*10));
+    const spd = Player.maxSpeed * Math.min(1,len) * sprint;
+    tryMovePlayer(Player.x + vx*spd*dt, Player.y + vy*spd*dt);
+    Player.speed = spd;
+    Player.animT += dt*(State.vehicle?10:6)*Math.min(1,len)*sprint;
+    // energy drain when walking (not driving) and sprinting
+    if(!State.vehicle) State.energy = Util.clamp(State.energy - dt*(sprint>1?1.4:0.5), 0, 100);
+  } else {
+    Player.speed *= 0.85;
+  }
 }
 
-function spawnTraffic(){
-  const lane=randi(0,2);
-  const type=pick(["car","car","bike","auto","truck","bus"]);
-  const colors=["#e74c3c","#f5c542","#36a9e1","#f06c9b","#8c66ff","#e9e9e9","#18b87b"];
-  state.traffic.push({
-    lane,
-    x:laneX(lane),
-    y:-120,
-    z:0,
-    type,
-    color:pick(colors),
-    speed:rand(35,85)+state.distance*2,
-    wobble:rand(0,6),
-    hit:false
+function updateNpcs(dt){
+  const hourFloat = State.timeMinutes/60;
+  npcs.forEach(n=>{
+    const target = npcTargetFor(n, hourFloat);
+    n.targetX = target.x; n.targetY = target.y;
+    const d = Util.dist(n.x,n.y,n.targetX,n.targetY);
+    if(d>6){
+      const ang = Math.atan2(n.targetY-n.y, n.targetX-n.x);
+      n.x += Math.cos(ang)*n.speed*dt;
+      n.y += Math.sin(ang)*n.speed*dt;
+      n.animT += dt*6;
+      n.walking = true;
+    } else { n.walking = false; }
   });
 }
 
-function spawnCoin(){
-  const lane=randi(0,2);
-  state.coinsOnRoad.push({
-    lane,
-    x:laneX(lane),
-    y:-40,
-    spin:rand(0,Math.PI*2)
-  });
-}
-
-function spawnStop(){
-  const lane=randi(0,2);
-  state.stops.push({
-    lane,
-    x:laneX(lane),
-    y:-80,
-    served:false
-  });
-}
-
-function spawnParticle(x,y,color){
-  state.particles.push({
-    x,y,
-    vx:rand(-80,80),
-    vy:rand(-130,-30),
-    life:rand(.3,.8),
-    max:.8,
-    color
-  });
-}
-
-function update(dt){
-  state.time+=dt;
-
-  if(state.paused)return;
-
-  const accel=keys.gas?75:35;
-  const braking=keys.brake?130:0;
-  state.speed += accel*dt;
-  state.speed -= braking*dt;
-  state.speed -= 18*dt;
-  state.speed=clamp(state.speed,0,state.maxSpeed);
-
-  if(state.speed>2){
-    state.distance += state.speed*dt/3600;
-    state.roadOffset += state.speed*dt*.38;
-    state.score += state.speed*dt*.85;
-    state.fuel -= dt*(.22+state.speed/state.maxSpeed*.28);
-  }
-
-  if(keys.left)state.playerTargetX-=dt*1.6*state.handling;
-  if(keys.right)state.playerTargetX+=dt*1.6*state.handling;
-  state.playerTargetX=clamp(state.playerTargetX,-1,1);
-  state.playerX=lerp(state.playerX,state.playerTargetX,1-Math.pow(.001,dt));
-
-  state.invincible=Math.max(0,state.invincible-dt);
-  state.shake=Math.max(0,state.shake-dt);
-
-  state.spawnTimer-=dt;
-  const spawnRate=clamp(1.2-state.distance*.035,.42,1.2);
-  if(state.spawnTimer<=0){
-    spawnTraffic();
-    state.spawnTimer=spawnRate;
-  }
-
-  state.coinTimer-=dt;
-  if(state.coinTimer<=0){
-    spawnCoin();
-    state.coinTimer=rand(.7,1.5);
-  }
-
-  state.stopTimer-=dt;
-  if(state.stopTimer<=0){
-    spawnStop();
-    state.stopTimer=rand(7,11);
-  }
-
-  updateTraffic(dt);
-  updateCoins(dt);
-  updateStops(dt);
-  updateParticles(dt);
-
-  if(state.fuel<=0){
-    state.fuel=0;
-    endGame("Out of fuel! Visit a fuel station next route.");
-  }
-  if(state.health<=0){
-    state.health=0;
-    endGame("The bus was too damaged to continue.");
-  }
-
-  if(state.distance>=state.routeKm){
-    state.score+=1000;
-    endGame("You reached your destination!");
-  }
-
-  updateHUD();
-}
-
-function updateTraffic(dt){
-  const roadTop=-150;
-  const roadBottom=H()+150;
-  const playerX=playerScreenX();
-  const playerY=H()*.78;
-
-  for(let i=state.traffic.length-1;i>=0;i--){
-    const t=state.traffic[i];
-    const rel=Math.max(35,state.speed*.7);
-    t.y += rel*dt + t.speed*.18*dt;
-    t.x=laneX(t.lane)+Math.sin(state.time*1.8+t.wobble)*2;
-
-    if(t.y>roadBottom){
-      state.traffic.splice(i,1);
-      continue;
-    }
-
-    const dx=Math.abs(t.x-playerX);
-    const dy=Math.abs(t.y-playerY);
-    const hitWidth=t.type==="truck"?58:46;
-
-    if(state.invincible<=0 && !t.hit && dx<hitWidth && dy<80){
-      t.hit=true;
-      state.health-=randi(8,17);
-      state.speed*=.45;
-      state.shake=.35;
-      for(let p=0;p<12;p++)spawnParticle(playerX,playerY,"#ffbd36");
-      beep(80,.18,"sawtooth",.06);
-      toast("Collision! Health -");
+function updateCollectibles(dt, nowSec){
+  for(const c of collectibles){
+    if(c.taken && nowSec>=c.respawnAt){ c.taken=false; }
+    if(c.taken) continue;
+    const d = Util.dist(c.x,c.y,Player.x,Player.y);
+    if(d<34){
+      c.taken = true;
+      c.respawnAt = nowSec + RESPAWN_TIME;
+      State.resources[c.type]++;
+      Audio2.pickup();
+      QuestSystem.evaluateProgress();
+      UI.updateHud();
+      UI.renderQuestTracker();
+      AchievementSystem.checkAll();
     }
   }
 }
 
-function updateCoins(dt){
-  const playerX=playerScreenX();
-  const playerY=H()*.78;
+function updateTimeAndWeather(dt){
+  if(State.autoTime){
+    State.timeMinutes += dt*State.timeScale*6; // 6 in-game min per real second at scale 1
+    if(State.timeMinutes>=1440){ State.timeMinutes-=1440; State.dayCount++; AchievementSystem.checkAll(); }
+  }
+  const hour = State.timeMinutes/60;
+  State.isNight = hour<5.5 || hour>=18.5;
+  if(State.isNight) State.flags.sawNight = true;
 
-  for(let i=state.coinsOnRoad.length-1;i>=0;i--){
-    const c=state.coinsOnRoad[i];
-    c.y += Math.max(30,state.speed*.75)*dt;
-    c.spin+=dt*8;
-
-    if(c.y>H()+60){
-      state.coinsOnRoad.splice(i,1);
-      continue;
-    }
-
-    if(Math.abs(c.x-playerX)<46 && Math.abs(c.y-playerY)<70){
-      state.coins+=1;
-      state.score+=100;
-      for(let p=0;p<6;p++)spawnParticle(c.x,c.y,"#ffd329");
-      beep(740,.06,"sine",.045);
-      state.coinsOnRoad.splice(i,1);
-    }
+  State.weatherTimer -= dt;
+  if(State.weatherTimer<=0){
+    State.weatherTimer = Util.rand(40,90);
+    if(Math.random()<0.25) State.weather = 'rain';
+    else State.weather = 'clear';
+  }
+  if(State.weather==='rain'){
+    State.flags.gotWet = true;
+    if(!State.vehicle) State.energy = Util.clamp(State.energy - dt*0.15, 0, 100);
   }
 }
 
-function updateStops(dt){
-  const playerX=playerScreenX();
-  const playerY=H()*.78;
+function updateEnergyRegen(dt){
+  const hour = State.timeMinutes/60;
+  if(hour>=22 || hour<5){ /* resting hours slowly regen if idle */ }
+  if(!Player.moving) State.energy = Util.clamp(State.energy + dt*0.3, 0, 100);
+}
 
-  for(let i=state.stops.length-1;i>=0;i--){
-    const s=state.stops[i];
-    s.y += Math.max(30,state.speed*.72)*dt;
+function updateAll(dt){
+  if(State.paused) return;
+  const nowSec = performance.now()/1000;
+  updateTimeAndWeather(dt);
+  updatePlayer(dt);
+  updateNpcs(dt);
+  updateCollectibles(dt, nowSec);
+  updateEnergyRegen(dt);
+  InteractSystem.update();
+  if(camShakeT>0) camShakeT -= dt; else camShakeMag = 0;
+  UI.updateHud();
+}
 
-    if(s.y>H()+80){
-      state.stops.splice(i,1);
-      continue;
+/* ==========================================================================
+   19. RENDERING
+   ========================================================================== */
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const fxCanvas = document.getElementById('fxCanvas');
+const fxCtx = fxCanvas.getContext('2d');
+const mmCanvas = document.getElementById('minimap');
+const mmCtx = mmCanvas.getContext('2d');
+
+function resizeCanvases(){
+  canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+  fxCanvas.width = window.innerWidth; fxCanvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeCanvases);
+resizeCanvases();
+
+const rainDrops = [];
+for(let i=0;i<160;i++) rainDrops.push({x:Math.random(), y:Math.random(), len:Util.rand(10,22), speed:Util.rand(600,900)});
+
+function css(varName){ return getComputedStyle(document.documentElement).getPropertyValue(varName); }
+
+function drawTree(x,y,palm){
+  if(palm){
+    ctx.strokeStyle='#7a5230'; ctx.lineWidth=8;
+    ctx.beginPath(); ctx.moveTo(x,y); ctx.quadraticCurveTo(x+8,y-40,x+4,y-80); ctx.stroke();
+    ctx.fillStyle='#3f7d4a';
+    for(let i=0;i<6;i++){
+      const ang=(i/6)*Math.PI*2;
+      ctx.beginPath(); ctx.ellipse(x+4+Math.cos(ang)*24, y-80+Math.sin(ang)*14, 26,10, ang,0,Math.PI*2); ctx.fill();
     }
-
-    if(!s.served && Math.abs(s.x-playerX)<55 && Math.abs(s.y-playerY)<90 && state.speed<25){
-      s.served=true;
-      const count=randi(1,3);
-      state.passengers+=count;
-      state.score+=count*150;
-      state.coins+=count;
-      state.fuel=Math.min(100,state.fuel+2);
-      for(let p=0;p<10;p++)spawnParticle(s.x,s.y,"#31d45b");
-      beep(520,.1,"triangle",.05);
-      toast(`Picked up ${count} passenger${count>1?"s":""}!`);
-    }
+  } else {
+    ctx.fillStyle='#6b4a2a'; ctx.fillRect(x-4,y-30,8,30);
+    ctx.fillStyle='#4a7d3f'; ctx.beginPath(); ctx.arc(x,y-45,26,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#5c9a4f'; ctx.beginPath(); ctx.arc(x-10,y-55,18,0,Math.PI*2); ctx.fill();
   }
 }
-
-function updateParticles(dt){
-  for(let i=state.particles.length-1;i>=0;i--){
-    const p=state.particles[i];
-    p.life-=dt;
-    p.x+=p.vx*dt;
-    p.y+=p.vy*dt;
-    p.vy+=190*dt;
-    if(p.life<=0)state.particles.splice(i,1);
+function drawLamp(x,y,night){
+  ctx.fillStyle='#3a3a3a'; ctx.fillRect(x-3,y-60,6,60);
+  if(night){
+    const g=ctx.createRadialGradient(x,y-62,2,x,y-62,60);
+    g.addColorStop(0,'rgba(255,224,140,0.9)'); g.addColorStop(1,'rgba(255,224,140,0)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y-62,60,0,Math.PI*2); ctx.fill();
   }
+  ctx.fillStyle = night?'#ffe08c':'#888';
+  ctx.beginPath(); ctx.arc(x,y-62,6,0,Math.PI*2); ctx.fill();
 }
-
-/* ---------- Rendering ---------- */
-
-function draw(){
-  const w=W(),h=H();
-  ctx.save();
-
-  if(state.shake>0){
-    ctx.translate(rand(-5,5)*state.shake*3,rand(-5,5)*state.shake*3);
-  }
-
-  drawSky(w,h);
-  drawRoad(w,h);
-  drawScenery(w,h);
-  drawRoadObjects(w,h);
-  drawTraffic();
-  drawCoins();
-  drawStops();
-  drawPlayer();
-  drawParticles();
-
-  if(state.weather)drawRain(w,h);
-  if(state.night)drawNight(w,h);
-
-  ctx.restore();
+function drawBench(x,y){
+  ctx.fillStyle='#7a5230'; ctx.fillRect(x-20,y-6,40,6); ctx.fillRect(x-18,y,4,10); ctx.fillRect(x+14,y,4,10);
 }
-
-function drawSky(w,h){
-  const g=ctx.createLinearGradient(0,0,0,h*.55);
-  g.addColorStop(0,state.night?"#071321":"#42aeea");
-  g.addColorStop(1,state.night?"#102a42":"#bfe8ff");
-  ctx.fillStyle=g;
-  ctx.fillRect(0,0,w,h);
-
-  if(!state.night){
-    ctx.fillStyle="rgba(255,230,110,.95)";
+function drawHouse(b){
+  ctx.fillStyle=b.color; ctx.fillRect(b.x,b.y,b.w,b.h);
+  ctx.fillStyle=b.roof;
+  ctx.beginPath(); ctx.moveTo(b.x-8,b.y); ctx.lineTo(b.x+b.w/2,b.y-30); ctx.lineTo(b.x+b.w+8,b.y); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,0.65)';
+  for(let i=0;i<4;i++) ctx.fillRect(b.x+10+i*(b.w-20)/3, b.y+b.h-26, 6, 26);
+  ctx.fillStyle='#5a3a20'; ctx.fillRect(b.x+b.w/2-10, b.y+b.h-30, 20, 30);
+}
+function drawStall(b){
+  ctx.fillStyle='#7a5a3a'; ctx.fillRect(b.x, b.y+20, b.w, b.h-20);
+  ctx.fillStyle=b.color;
+  ctx.beginPath(); ctx.moveTo(b.x-10,b.y+20); ctx.lineTo(b.x+b.w/2,b.y-14); ctx.lineTo(b.x+b.w+10,b.y+20); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='rgba(0,0,0,.15)'; ctx.fillRect(b.x+8,b.y+30,b.w-16,b.h-40);
+}
+function drawBusstand(b){
+  ctx.fillStyle='#c9c2b0'; ctx.fillRect(b.x,b.y,b.w,b.h);
+  ctx.fillStyle='#e0a938'; ctx.fillRect(b.x,b.y,b.w,14); ctx.fillRect(b.x,b.y+b.h-14,b.w,14);
+  ctx.fillStyle='#2c5f8a';
+  for(let i=0;i<5;i++) ctx.fillRect(b.x+14+i*62, b.y+20, 40, b.h-40);
+  ctx.fillStyle='#e0a938'; ctx.fillRect(b.x+20, b.y-40, 90, 40);
+  ctx.fillStyle='#2c5f8a'; ctx.fillRect(b.x+130, b.y-40, 90, 40);
+}
+function drawHarbor(b){
+  ctx.fillStyle='#8a7355'; ctx.fillRect(b.x,b.y,b.w,60);
+  ctx.fillStyle='#5b4a35';
+  for(let i=0;i<6;i++) ctx.fillRect(b.x+20+i*66, b.y+50, 10, 120);
+  ctx.fillStyle='#2c5f8a'; ctx.fillRect(b.x+40,b.y+10,70,34);
+  ctx.fillStyle='#e0a938'; ctx.fillRect(b.x+160,b.y+10,70,34);
+  ctx.fillStyle='#c0392b'; ctx.fillRect(b.x+280,b.y+10,70,34);
+}
+function drawCivic(b){
+  ctx.fillStyle=b.color; ctx.fillRect(b.x,b.y,b.w,b.h);
+  ctx.fillStyle='#fff'; ctx.fillRect(b.x,b.y,b.w,10);
+  ctx.fillStyle='rgba(255,255,255,.5)';
+  for(let i=0;i<5;i++) ctx.fillRect(b.x+10+i*(b.w-20)/4, b.y+16, 14, b.h-30);
+  ctx.fillStyle='#2a1505'; ctx.font='13px sans-serif'; ctx.textAlign='center';
+  ctx.fillText(b.label, b.x+b.w/2, b.y+b.h+16);
+}
+function drawTea(b){
+  ctx.fillStyle='#8a6a45'; ctx.fillRect(b.x,b.y+18,b.w,b.h-18);
+  ctx.fillStyle='#c0392b';
+  ctx.beginPath(); ctx.moveTo(b.x-10,b.y+18); ctx.lineTo(b.x+b.w/2,b.y-16); ctx.lineTo(b.x+b.w+10,b.y+18); ctx.closePath(); ctx.fill();
+  const t=performance.now()/300+b.x;
+  ctx.strokeStyle='rgba(255,255,255,.6)'; ctx.lineWidth=2;
+  for(let i=0;i<2;i++){
     ctx.beginPath();
-    ctx.arc(w*.83,h*.12,34,0,Math.PI*2);
-    ctx.fill();
-  }else{
-    ctx.fillStyle="#f3f1ce";
-    ctx.beginPath();
-    ctx.arc(w*.82,h*.12,27,0,Math.PI*2);
-    ctx.fill();
-  }
-
-  for(let i=0;i<9;i++){
-    const x=((i*173+state.roadOffset*.08)%(w+220))-110;
-    const y=70+(i%3)*45;
-    ctx.fillStyle=state.night?"rgba(255,255,255,.05)":"rgba(255,255,255,.5)";
-    ctx.beginPath();
-    ctx.arc(x,y,26,0,Math.PI*2);
-    ctx.arc(x+28,y+5,22,0,Math.PI*2);
-    ctx.arc(x-25,y+8,18,0,Math.PI*2);
-    ctx.fill();
-  }
-}
-
-function drawRoad(w,h){
-  const roadW=w*.48;
-  const left=w/2-roadW/2;
-  const right=w/2+roadW/2;
-
-  ctx.fillStyle=state.night?"#17352a":"#277f39";
-  ctx.fillRect(0,h*.35,w,h*.65);
-
-  ctx.fillStyle="#30353a";
-  ctx.fillRect(left,0,roadW,h);
-
-  ctx.fillStyle="#b8bdc0";
-  ctx.fillRect(left-7,0,7,h);
-  ctx.fillRect(right,0,7,h);
-
-  ctx.strokeStyle="#f6f1c5";
-  ctx.lineWidth=4;
-  ctx.setLineDash([36,34]);
-  ctx.lineDashOffset=state.roadOffset;
-  for(let i=1;i<3;i++){
-    const x=left+roadW*i/3;
-    ctx.beginPath();
-    ctx.moveTo(x,0);
-    ctx.lineTo(x,h);
+    const sx=b.x+20+i*30, sy=b.y+10;
+    ctx.moveTo(sx,sy);
+    ctx.quadraticCurveTo(sx+8*Math.sin(t+i), sy-14, sx, sy-26-(Math.sin(t*2)*3));
     ctx.stroke();
   }
+}
+function drawTempleWall(b){
+  ctx.fillStyle='#e8dcb8'; ctx.fillRect(b.x,b.y,b.w,b.h);
+  ctx.strokeStyle='#c9a45a'; ctx.lineWidth=2; ctx.strokeRect(b.x,b.y,b.w,b.h);
+}
+function drawGopuram(b, isNight){
+  const colors=['#a8322d','#e0a938','#2c5f8a','#3f7d4a','#c0392b'];
+  const tiers=6, baseW=b.w, x0=b.x, topY=b.y;
+  for(let i=0;i<tiers;i++){
+    const t=i/tiers, w=baseW*(1-t*0.75), h=b.h/tiers, y=topY+b.h-(i+1)*h, x=x0+(baseW-w)/2;
+    ctx.fillStyle=colors[i%colors.length]; ctx.fillRect(x,y,w,h);
+    ctx.fillStyle='rgba(255,255,255,.55)';
+    for(let k=0;k<Math.max(2,5-i);k++){ ctx.beginPath(); ctx.arc(x+(k+0.5)*w/Math.max(2,5-i), y+h/2, 3.5,0,Math.PI*2); ctx.fill(); }
+  }
+  ctx.fillStyle='#e0a938';
+  ctx.beginPath(); ctx.moveTo(x0+baseW/2-14,topY); ctx.lineTo(x0+baseW/2,topY-26); ctx.lineTo(x0+baseW/2+14,topY); ctx.closePath(); ctx.fill();
+  if(isNight){
+    const cx=x0+baseW/2, cy=topY+b.h/2;
+    const g=ctx.createRadialGradient(cx,cy,10,cx,cy,220);
+    g.addColorStop(0,'rgba(255,200,100,0.35)'); g.addColorStop(1,'rgba(255,200,100,0)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(cx,cy,220,0,Math.PI*2); ctx.fill();
+    const tw=performance.now()/250;
+    for(let i=0;i<tiers;i++){
+      const h=b.h/tiers, y=topY+b.h-(i+1)*h+h/2;
+      for(let k=0;k<3;k++){
+        const alpha=0.5+0.5*Math.sin(tw+i*2+k);
+        ctx.fillStyle=`rgba(255,230,150,${alpha})`;
+        ctx.beginPath(); ctx.arc(x0+baseW*0.2+k*baseW*0.3, y, 2.5,0,Math.PI*2); ctx.fill();
+      }
+    }
+  }
+}
+function drawCollectible(x,y,type){
+  ctx.save(); ctx.translate(x,y);
+  if(type==='jasmine'){
+    ctx.fillStyle='#fff6d9';
+    for(let i=0;i<5;i++){ const a=i/5*Math.PI*2; ctx.beginPath(); ctx.ellipse(Math.cos(a)*6,Math.sin(a)*6,5,3.2,a,0,Math.PI*2); ctx.fill(); }
+    ctx.fillStyle='#e0a938'; ctx.beginPath(); ctx.arc(0,0,3,0,Math.PI*2); ctx.fill();
+  } else if(type==='coffee'){
+    ctx.fillStyle='#c0392b';
+    ctx.beginPath(); ctx.moveTo(-7,-8); ctx.lineTo(7,-8); ctx.lineTo(5,8); ctx.lineTo(-5,8); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#f4d35e'; ctx.beginPath(); ctx.ellipse(0,-8,7,3,0,0,Math.PI*2); ctx.fill();
+  } else if(type==='coconut'){
+    ctx.fillStyle='#6b4a2a'; ctx.beginPath(); ctx.arc(0,0,9,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,.25)'; ctx.beginPath(); ctx.arc(-3,-3,3,0,Math.PI*2); ctx.fill();
+  }
+  ctx.restore();
+  ctx.strokeStyle='rgba(255,255,255,.35)'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.arc(x,y,13,0,Math.PI*2); ctx.stroke();
+}
+function drawNpc(n){
+  ctx.save(); ctx.translate(n.x, n.y);
+  const bob = n.walking ? Math.sin(n.animT)*2 : 0;
+  ctx.fillStyle='rgba(0,0,0,.22)'; ctx.beginPath(); ctx.ellipse(0,14,14,5,0,0,Math.PI*2); ctx.fill();
+  ctx.translate(0,bob);
+  ctx.fillStyle=n.color; ctx.beginPath(); ctx.ellipse(0,4,10,13,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#3a2818'; ctx.beginPath(); ctx.arc(0,-12,8,0,Math.PI*2); ctx.fill();
+  ctx.font='16px sans-serif'; ctx.textAlign='center'; ctx.fillText(n.icon, 0, -20);
+  ctx.restore();
+  // name tag when close to player
+  if(Util.dist(Player.x,Player.y,n.x,n.y)<110){
+    ctx.fillStyle='rgba(0,0,0,.55)';
+    const tw = ctx.measureText(n.name).width;
+    ctx.font='11px sans-serif';
+    ctx.fillRect(n.x-tw/2-6, n.y-46, tw+12, 16);
+    ctx.fillStyle='#fdf1de'; ctx.textAlign='center'; ctx.fillText(n.name, n.x, n.y-34);
+  }
+}
+function drawPlayer(){
+  ctx.save(); ctx.translate(Player.x, Player.y); ctx.rotate(Player.angle);
+  ctx.fillStyle='rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(0,4,22,10,0,0,Math.PI*2); ctx.fill();
+  if(State.vehicle){
+    ctx.fillStyle='#f4c542';
+    ctx.beginPath(); ctx.moveTo(-16,-12); ctx.lineTo(14,-12); ctx.quadraticCurveTo(24,-12,24,0);
+    ctx.quadraticCurveTo(24,12,14,12); ctx.lineTo(-16,12); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=1.5; ctx.stroke();
+    ctx.fillStyle='#1f6f6b'; ctx.fillRect(-14,-16,26,6);
+    ctx.fillStyle='rgba(200,230,255,.8)';
+    ctx.beginPath(); ctx.moveTo(10,-10); ctx.lineTo(18,-4); ctx.lineTo(18,4); ctx.lineTo(10,10); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#1a1a1a';
+    ctx.beginPath(); ctx.arc(-8,-13,4,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(-8,13,4,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(10,0,4,0,Math.PI*2); ctx.fill();
+  } else {
+    const bob = Player.moving ? Math.sin(Player.animT)*2 : 0;
+    ctx.rotate(-Player.angle); // keep body upright, use bob only
+    ctx.translate(0,bob);
+    ctx.fillStyle='#2c5f8a'; ctx.beginPath(); ctx.ellipse(0,2,11,14,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#e0b98a'; ctx.beginPath(); ctx.arc(0,-14,9,0,Math.PI*2); ctx.fill();
+    ctx.font='16px sans-serif'; ctx.textAlign='center'; ctx.fillText('🧑', 0, -22);
+  }
+  ctx.restore();
+}
+function drawZoneLabels(cam){
+  ctx.font='13px sans-serif'; ctx.textAlign='center';
+  zones.forEach(z=>{
+    const cx=z.x+z.w/2, cy=z.y+z.h/2;
+    if(cx>cam.x-100 && cx<cam.x+canvas.width+100 && cy>cam.y-60 && cy<cam.y+canvas.height+60){
+      ctx.fillStyle='rgba(0,0,0,.35)';
+      const tw=ctx.measureText(z.name).width;
+      ctx.fillRect(cx-tw/2-8, cy-9, tw+16, 20);
+      ctx.fillStyle='#fdf1de'; ctx.fillText(z.name, cx, cy+5);
+    }
+  });
+}
+
+function drawWorld(){
+  const cam = { x: Player.x - canvas.width/2, y: Player.y - canvas.height/2 };
+  cam.x = Util.clamp(cam.x, 0, WORLD_W-canvas.width);
+  cam.y = Util.clamp(cam.y, 0, WORLD_H-canvas.height);
+  if(camShakeMag>0){
+    cam.x += Util.rand(-camShakeMag,camShakeMag);
+    cam.y += Util.rand(-camShakeMag,camShakeMag);
+  }
+
+  const grad = ctx.createLinearGradient(0,0,0,canvas.height);
+  if(State.isNight){ grad.addColorStop(0,'#0b1030'); grad.addColorStop(1,'#241a4a'); }
+  else if(State.weather==='rain'){ grad.addColorStop(0,'#6b7f8c'); grad.addColorStop(1,'#a8b8bf'); }
+  else { grad.addColorStop(0,'#8ec9e8'); grad.addColorStop(1,'#fce8b5'); }
+  ctx.fillStyle = grad; ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  ctx.save(); ctx.translate(-cam.x,-cam.y);
+
+  ctx.fillStyle = css('--ground'); ctx.fillRect(0,0,WORLD_W,WORLD_H);
+  ctx.fillStyle='rgba(0,0,0,0.03)';
+  for(let i=0;i<40;i++){ ctx.beginPath(); ctx.ellipse((i*137)%WORLD_W,(i*911)%WORLD_H,60,40,0,0,Math.PI*2); ctx.fill(); }
+
+  ctx.fillStyle = css('--sand'); ctx.fillRect(beach.x,beach.y,beach.w,beach.h);
+  ctx.fillStyle = css('--sea'); ctx.fillRect(beach.x, beach.y+beach.h-110, beach.w, 110);
+  ctx.strokeStyle='rgba(255,255,255,.5)'; ctx.lineWidth=3;
+  for(let i=0;i<14;i++){
+    ctx.beginPath();
+    const wy = beach.y+beach.h-110+Math.sin(performance.now()/500+i)*4+i*7;
+    ctx.moveTo(beach.x, wy); ctx.lineTo(beach.x+beach.w, wy); ctx.stroke();
+  }
+
+  ctx.fillStyle = css('--road');
+  roads.forEach(r=>ctx.fillRect(r.x,r.y,r.w,r.h));
+  ctx.strokeStyle = css('--road-line'); ctx.setLineDash([26,20]); ctx.lineWidth=4;
+  roads.forEach(r=>{
+    ctx.beginPath();
+    if(r.w>r.h){ ctx.moveTo(r.x,r.y+r.h/2); ctx.lineTo(r.x+r.w,r.y+r.h/2); }
+    else { ctx.moveTo(r.x+r.w/2,r.y); ctx.lineTo(r.x+r.w/2,r.y+r.h); }
+    ctx.stroke();
+  });
   ctx.setLineDash([]);
 
-  ctx.fillStyle="#f7d42d";
-  ctx.fillRect(left+2,0,4,h);
-  ctx.fillRect(right-6,0,4,h);
-}
+  decor.forEach(d=>{ if(d.type==='tree') drawTree(d.x,d.y,d.palm); if(d.type==='bench') drawBench(d.x,d.y); });
 
-function drawScenery(w,h){
-  const roadW=w*.48;
-  const left=w/2-roadW/2;
-  const right=w/2+roadW/2;
-
-  for(let side=0;side<2;side++){
-    for(let i=0;i<9;i++){
-      const y=((i*125+state.roadOffset*.55)%(h+170))-100;
-      const x=side===0?left-rand(35,120):right+rand(35,120);
-      drawPalm(x,y,rand(.65,1.1));
+  buildings.forEach(b=>{
+    switch(b.type){
+      case 'house': drawHouse(b); break;
+      case 'stall': drawStall(b); break;
+      case 'busstand': drawBusstand(b); break;
+      case 'harbor': drawHarbor(b); break;
+      case 'civic': drawCivic(b); break;
+      case 'tea': drawTea(b); break;
+      case 'gopuram': drawGopuram(b, State.isNight); break;
+      case 'templeWall': drawTempleWall(b); break;
     }
-  }
-
-  for(let i=0;i<7;i++){
-    const y=((i*170+state.roadOffset*.3)%(h+220))-120;
-    const x=i%2?left-rand(100,190):right+rand(100,190);
-    drawHouse(x,y,rand(.65,1));
-  }
-}
-
-function drawPalm(x,y,s){
-  ctx.save();
-  ctx.translate(x,y);
-  ctx.scale(s,s);
-  ctx.strokeStyle="#75472a";
-  ctx.lineWidth=8;
-  ctx.beginPath();
-  ctx.moveTo(0,35);
-  ctx.quadraticCurveTo(-5,0,2,-30);
-  ctx.stroke();
-  ctx.fillStyle="#168b43";
-  for(let i=0;i<7;i++){
-    const a=i*Math.PI*2/7;
-    ctx.beginPath();
-    ctx.moveTo(0,-28);
-    ctx.quadraticCurveTo(Math.cos(a)*34,Math.sin(a)*34-38,Math.cos(a)*52,Math.sin(a)*52-42);
-    ctx.quadraticCurveTo(Math.cos(a)*24,Math.sin(a)*24-30,0,-28);
-    ctx.fill();
-  }
-  ctx.restore();
-}
-
-function drawHouse(x,y,s){
-  ctx.save();
-  ctx.translate(x,y);
-  ctx.scale(s,s);
-  ctx.fillStyle=pick(["#d88b63","#e7b04e","#72a9a2","#c36e74","#8c9bd0"]);
-  ctx.fillRect(-40,0,80,62);
-  ctx.fillStyle="#7c4430";
-  ctx.beginPath();
-  ctx.moveTo(-50,0);ctx.lineTo(0,-36);ctx.lineTo(50,0);ctx.closePath();ctx.fill();
-  ctx.fillStyle="#352b2a";
-  ctx.fillRect(-10,28,20,34);
-  ctx.fillStyle="#bfe7e8";
-  ctx.fillRect(-30,17,15,15);
-  ctx.fillRect(15,17,15,15);
-  ctx.restore();
-}
-
-function drawRoadObjects(w,h){
-  const roadW=w*.48;
-  const left=w/2-roadW/2;
-  const right=w/2+roadW/2;
-  const dash=70;
-  const off=state.roadOffset%(dash*2);
-
-  ctx.fillStyle="#555";
-  for(let y=-dash+off;y<h+dash;y+=dash*2){
-    ctx.fillRect(left-28,y,18,32);
-    ctx.fillRect(right+10,y,18,32);
-  }
-
-  for(let i=0;i<5;i++){
-    const y=((i*190+state.roadOffset*.8)%(h+220))-110;
-    const x=i%2?left-18:right+18;
-    ctx.fillStyle="#222";
-    ctx.fillRect(x-3,y-40,6,80);
-    ctx.fillStyle=i%2?"#ffe34a":"#31a8ff";
-    ctx.beginPath();
-    ctx.arc(x,y-43,7,0,Math.PI*2);
-    ctx.fill();
-  }
-}
-
-function drawTraffic(){
-  for(const t of state.traffic){
-    drawVehicle(t.x,t.y,t.type,t.color,1);
-  }
-}
-
-function drawVehicle(x,y,type,color,s=1){
-  ctx.save();
-  ctx.translate(x,y);
-  ctx.scale(s,s);
-
-  const w=type==="truck"?62:type==="bus"?56:type==="bike"?27:46;
-  const h=type==="truck"?96:type==="bus"?110:type==="bike"?60:82;
-
-  if(type==="bike"){
-    ctx.fillStyle="#151515";
-    ctx.beginPath();ctx.arc(-10,22,8,0,Math.PI*2);ctx.fill();
-    ctx.beginPath();ctx.arc(10,22,8,0,Math.PI*2);ctx.fill();
-    ctx.strokeStyle="#777";ctx.lineWidth=4;
-    ctx.beginPath();ctx.moveTo(-10,22);ctx.lineTo(0,-4);ctx.lineTo(10,22);ctx.moveTo(0,-4);ctx.lineTo(14,-12);ctx.stroke();
-    ctx.fillStyle=color;
-    ctx.beginPath();ctx.arc(0,-18,9,0,Math.PI*2);ctx.fill();
-    ctx.fillRect(-5,-9,10,23);
-  }else{
-    ctx.fillStyle="#10161a";
-    ctx.fillRect(-w/2-5,-h/2+12,10,22);
-    ctx.fillRect(w/2-5,-h/2+12,10,22);
-    ctx.fillRect(-w/2-5,h/2-34,10,22);
-    ctx.fillRect(w/2-5,h/2-34,10,22);
-    roundRect(-w/2,-h/2,w,h,9,color);
-    ctx.fillStyle="#9dd8e8";
-    roundRect(-w*.36,-h*.30,w*.72,h*.22,4,"#a8d9e3");
-    ctx.fillStyle="#111";
-    roundRect(-w*.34,-h*.02,w*.68,h*.22,3,"#1b252b");
-    ctx.fillStyle="#f8df56";
-    ctx.fillRect(-w*.31,h*.28,w*.18,6);
-    ctx.fillRect(w*.13,h*.28,w*.18,6);
-    if(type==="bus"){
-      ctx.fillStyle="#fff";
-      ctx.font="bold 9px sans-serif";
-      ctx.textAlign="center";
-      ctx.fillText("EXPRESS",0,-h*.39);
-    }
-  }
-  ctx.restore();
-}
-
-function roundRect(x,y,w,h,r,color){
-  ctx.fillStyle=color;
-  ctx.beginPath();
-  ctx.moveTo(x+r,y);
-  ctx.arcTo(x+w,y,x+w,y+h,r);
-  ctx.arcTo(x+w,y+h,x,y+h,r);
-  ctx.arcTo(x,y+h,x,y,r);
-  ctx.arcTo(x,y,x+w,y,r);
-  ctx.fill();
-}
-
-function drawCoins(){
-  for(const c of state.coinsOnRoad){
-    ctx.save();
-    ctx.translate(c.x,c.y);
-    const sx=Math.cos(c.spin)*.35+.65;
-    ctx.scale(sx,1);
-    ctx.fillStyle="#ffd329";
-    ctx.beginPath();ctx.arc(0,0,14,0,Math.PI*2);ctx.fill();
-    ctx.fillStyle="#9a6500";
-    ctx.font="bold 13px sans-serif";
-    ctx.textAlign="center";ctx.textBaseline="middle";
-    ctx.fillText("₹",0,1);
-    ctx.restore();
-  }
-}
-
-function drawStops(){
-  for(const s of state.stops){
-    if(s.served)continue;
-    ctx.save();
-    ctx.translate(s.x,s.y);
-    ctx.globalAlpha=.82+.18*Math.sin(state.time*5);
-    ctx.strokeStyle="#ffd329";
-    ctx.lineWidth=5;
-    ctx.beginPath();ctx.arc(0,0,28,0,Math.PI*2);ctx.stroke();
-    ctx.fillStyle="#ffd329";
-    ctx.font="bold 20px sans-serif";
-    ctx.textAlign="center";ctx.textBaseline="middle";
-    ctx.fillText("P",0,1);
-    ctx.restore();
-  }
-}
-
-function drawPlayer(){
-  const x=playerScreenX();
-  const y=H()*.78;
-  const scale=clamp(H()/800,.72,1.08);
-
-  ctx.save();
-  ctx.translate(x,y);
-  ctx.scale(scale,scale);
-
-  ctx.fillStyle="rgba(0,0,0,.35)";
-  ctx.beginPath();ctx.ellipse(0,55,52,15,0,0,Math.PI*2);ctx.fill();
-
-  ctx.fillStyle="#10151a";
-  ctx.fillRect(-48,-5,12,30);
-  ctx.fillRect(36,-5,12,30);
-  ctx.fillRect(-48,34,12,27);
-  ctx.fillRect(36,34,12,27);
-
-  roundRect(-44,-70,88,132,12,"#c9322b");
-  roundRect(-34,-55,68,35,7,"#83c8d4");
-  roundRect(-34,-10,68,42,6,"#8f2522");
-
-  ctx.fillStyle="#1e1716";
-  ctx.fillRect(-31,38,62,7);
-
-  ctx.fillStyle="#fff";
-  ctx.font="bold 10px sans-serif";
-  ctx.textAlign="center";
-  ctx.fillText("சென்னை • மதுரை",0,-38);
-  ctx.fillStyle="#ffd329";
-  ctx.font="bold 8px sans-serif";
-  ctx.fillText("EXPRESS",0,-27);
-
-  ctx.fillStyle="#ffe06b";
-  ctx.fillRect(-34,46,16,7);
-  ctx.fillRect(18,46,16,7);
-
-  ctx.fillStyle="#f3c21e";
-  ctx.fillRect(-18,61,36,8);
-  ctx.fillStyle="#111";
-  ctx.font="bold 7px sans-serif";
-  ctx.fillText("TN 01 AB 1234",0,67);
-
-  if(state.invincible>0){
-    ctx.strokeStyle="rgba(255,255,255,.55)";
-    ctx.lineWidth=3;
-    ctx.beginPath();ctx.arc(0,0,66+Math.sin(state.time*8)*4,0,Math.PI*2);ctx.stroke();
-  }
-
-  ctx.restore();
-}
-
-function drawParticles(){
-  for(const p of state.particles){
-    ctx.globalAlpha=clamp(p.life/p.max,0,1);
-    ctx.fillStyle=p.color;
-    ctx.beginPath();ctx.arc(p.x,p.y,rand(2,5),0,Math.PI*2);ctx.fill();
-  }
-  ctx.globalAlpha=1;
-}
-
-function drawRain(w,h){
-  ctx.strokeStyle="rgba(190,220,255,.3)";
-  ctx.lineWidth=1;
-  for(let i=0;i<100;i++){
-    const x=(i*83+state.time*130)%(w+100)-50;
-    const y=(i*47+state.time*300)%(h+80)-40;
-    ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-7,y+18);ctx.stroke();
-  }
-}
-
-function drawNight(w,h){
-  ctx.fillStyle="rgba(0,8,22,.46)";
-  ctx.fillRect(0,0,w,h);
-  const x=playerScreenX(),y=H()*.78;
-  const g=ctx.createRadialGradient(x,y-120,10,x,y-120,260);
-  g.addColorStop(0,"rgba(255,250,190,.14)");
-  g.addColorStop(1,"rgba(255,250,190,0)");
-  ctx.fillStyle=g;
-  ctx.fillRect(x-270,y-390,540,400);
-}
-
-/* ---------- Game loop ---------- */
-
-function loop(now){
-  if(!state.running)return;
-  if(state.paused)return;
-
-  const dt=Math.min(.033,(now-state.last)/1000||0);
-  state.last=now;
-  update(dt);
-  draw();
-
-  if(state.running)requestAnimationFrame(loop);
-}
-
-/* ---------- Input ---------- */
-
-window.addEventListener("keydown",e=>{
-  if(e.key==="ArrowLeft"||e.key.toLowerCase()==="a"){keys.left=true;e.preventDefault()}
-  if(e.key==="ArrowRight"||e.key.toLowerCase()==="d"){keys.right=true;e.preventDefault()}
-  if(e.key==="ArrowUp"||e.key.toLowerCase()==="w"){keys.gas=true;e.preventDefault()}
-  if(e.key==="ArrowDown"||e.key.toLowerCase()==="s"){keys.brake=true;e.preventDefault()}
-  if(e.key==="p"||e.key==="Escape"){
-    if(state.running){state.paused?resumeGame():pauseGame()}
-  }
-  if(e.key==="h")beep(120,.25,"sawtooth",.05);
-});
-window.addEventListener("keyup",e=>{
-  if(e.key==="ArrowLeft"||e.key.toLowerCase()==="a")keys.left=false;
-  if(e.key==="ArrowRight"||e.key.toLowerCase()==="d")keys.right=false;
-  if(e.key==="ArrowUp"||e.key.toLowerCase()==="w")keys.gas=false;
-  if(e.key==="ArrowDown"||e.key.toLowerCase()==="s")keys.brake=false;
-});
-
-function bindHold(id,key){
-  const el=document.getElementById(id);
-  const on=e=>{e.preventDefault();keys[key]=true};
-  const off=e=>{e.preventDefault();keys[key]=false};
-  el.addEventListener("pointerdown",on);
-  el.addEventListener("pointerup",off);
-  el.addEventListener("pointercancel",off);
-  el.addEventListener("pointerleave",off);
-}
-bindHold("leftBtn","left");
-bindHold("rightBtn","right");
-bindHold("gasBtn","gas");
-bindHold("brakeBtn","brake");
-
-/* ---------- Garage ---------- */
-
-const upgrades=[
-  {name:"Engine",desc:"Increase maximum speed.",cost:100},
-  {name:"Steering",desc:"Improve lane control.",cost:150},
-  {name:"Heavy Body",desc:"Better collision resistance.",cost:220}
-];
-
-function renderGarage(){
-  const list=document.getElementById("garageList");
-  list.innerHTML="";
-  upgrades.forEach((u,i)=>{
-    const level=Math.min(state.busLevel,3);
-    const card=document.createElement("div");
-    card.className="card";
-    const title=document.createElement("div");
-    title.innerHTML=`<b>${u.name}</b> <span class="badge">LEVEL ${level}/3</span>`;
-    const desc=document.createElement("div");
-    desc.className="small";
-    desc.textContent=u.desc;
-    const bar=document.createElement("div");
-    bar.className="progress";
-    const fill=document.createElement("i");
-    fill.style.width=(level/3*100)+"%";
-    bar.appendChild(fill);
-    const btn=document.createElement("button");
-    btn.className="menuBtn primary";
-    btn.style.marginTop="10px";
-    btn.style.minHeight="42px";
-    btn.textContent=level>=3?"MAXED":"Upgrade • "+(u.cost*(level+1))+" coins";
-    btn.disabled=level>=3;
-    btn.onclick=()=>{
-      const cost=u.cost*(state.busLevel+1);
-      if(state.coins<cost){toast("Not enough coins");return}
-      if(state.busLevel>=3){toast("Already maxed");return}
-      state.coins-=cost;
-      state.busLevel++;
-      state.maxSpeed=140+state.busLevel*12;
-      state.handling=1+state.busLevel*.16;
-      save();
-      renderGarage();
-      toast("Bus upgraded!");
-      beep(660,.12,"triangle",.05);
-    };
-    card.append(title,desc,bar,btn);
-    list.appendChild(card);
   });
-}
 
-/* ---------- Achievements ---------- */
+  const t = performance.now()/300;
+  collectibles.forEach(c=>{ if(c.taken) return; const bob=Math.sin(t+c.bob)*4; drawCollectible(c.x,c.y+bob,c.type); });
 
-const achievementDefs=[
-  ["First Route","Complete your first route.",()=>state.distance>=state.routeKm],
-  ["Collector","Collect 25 coins.",()=>state.coins>=25],
-  ["Passenger Pro","Carry 10 passengers in one route.",()=>state.passengers>=10],
-  ["Long Drive","Drive 10 km in total.",()=>state.bestDistance>=10],
-  ["Speed Demon","Reach 120 km/h.",()=>state.maxSpeed>=120],
-  ["Bus Master","Reach bus upgrade level 3.",()=>state.busLevel>=3]
-];
+  npcs.forEach(drawNpc);
 
-function renderAchievements(){
-  const list=document.getElementById("achievementList");
-  list.innerHTML="";
-  achievementDefs.forEach(a=>{
-    const done=a[2]();
-    const card=document.createElement("div");
-    card.className="card";
-    card.innerHTML=`<b>${done?"🏆":"🔒"} ${a[0]}</b><div class="small" style="margin-top:5px">${a[1]}</div>`;
-    list.appendChild(card);
-  });
-}
+  decor.forEach(d=>{ if(d.type==='lamp') drawLamp(d.x,d.y,State.isNight); });
 
-/* ---------- Buttons ---------- */
-
-document.getElementById("startBtn").onclick=()=>{
-  beep(440,.08);
-  startGame();
-};
-document.getElementById("againBtn").onclick=startGame;
-document.getElementById("menuBtn").onclick=()=>{
-  showScreen(UI.menu);
-  updateMenuStats();
-};
-document.getElementById("pauseBtn").onclick=()=>{
-  state.paused?resumeGame():pauseGame();
-};
-document.getElementById("resumeBtn").onclick=resumeGame;
-document.getElementById("quitBtn").onclick=quitGame;
-
-document.getElementById("garageBtn").onclick=()=>{
-  renderGarage();
-  showScreen(UI.garage);
-};
-document.getElementById("garageClose").onclick=()=>showScreen(UI.menu);
-
-document.getElementById("achBtn").onclick=()=>{
-  renderAchievements();
-  showScreen(UI.achievements);
-};
-document.getElementById("achClose").onclick=()=>showScreen(UI.menu);
-
-document.getElementById("settingsBtn").onclick=()=>{
-  updateSettingsUI();
-  showScreen(UI.settings);
-};
-document.getElementById("settingsClose").onclick=()=>showScreen(UI.menu);
-
-function updateSettingsUI(){
-  document.getElementById("soundBtn").textContent=state.sound?"ON":"OFF";
-  document.getElementById("touchBtn").textContent=state.touchMode.toUpperCase();
-}
-document.getElementById("soundBtn").onclick=()=>{
-  state.sound=!state.sound;
-  updateSettingsUI();
-  save();
-  beep(600,.07);
-};
-document.getElementById("touchBtn").onclick=()=>{
-  const modes=["auto","on","off"];
-  const next=modes[(modes.indexOf(state.touchMode)+1)%modes.length];
-  state.touchMode=next;
-  updateSettingsUI();
-  save();
-};
-document.getElementById("resetBtn").onclick=()=>{
-  if(confirm("Reset all game progress?")){
-    localStorage.removeItem(SAVE_KEY);
-    state.highScore=0;
-    state.bestDistance=0;
-    state.coins=0;
-    state.busLevel=0;
-    state.maxSpeed=140;
-    state.handling=1;
-    save();
-    updateMenuStats();
-    updateSettingsUI();
-    toast("Progress reset");
-  }
-};
-
-/* ---------- Visibility / safety ---------- */
-
-document.addEventListener("visibilitychange",()=>{
-  if(document.hidden && state.running && !state.paused)pauseGame();
-});
-
-window.addEventListener("blur",()=>{
-  if(state.running && !state.paused)pauseGame();
-});
-
-/* ---------- Initial scene ---------- */
-
-function drawAttract(){
-  if(state.running)return;
-  const w=W(),h=H();
-  ctx.clearRect(0,0,w,h);
-  drawSky(w,h);
-  drawRoad(w,h);
-  drawScenery(w,h);
-  drawRoadObjects(w,h);
-
-  const old=state.playerX;
-  state.playerX=Math.sin(performance.now()/1500)*.25;
+  drawZoneLabels(cam);
   drawPlayer();
-  state.playerX=old;
 
-  requestAnimationFrame(drawAttract);
+  ctx.restore();
+
+  if(State.isNight){ ctx.fillStyle='rgba(6,8,30,0.28)'; ctx.fillRect(0,0,canvas.width,canvas.height); }
+  if(State.weather==='rain'){ ctx.fillStyle='rgba(20,30,50,0.12)'; ctx.fillRect(0,0,canvas.width,canvas.height); }
+
+  drawMinimap(cam);
+  drawRainFx();
 }
-drawAttract();
 
-/* ---------- Small UI helpers ---------- */
+function drawRainFx(){
+  fxCtx.clearRect(0,0,fxCanvas.width,fxCanvas.height);
+  if(State.weather!=='rain' || State.paused) return;
+  fxCtx.strokeStyle='rgba(200,220,255,.5)'; fxCtx.lineWidth=1.5;
+  const dt = 1/60;
+  rainDrops.forEach(d=>{
+    d.y += (d.speed*dt)/fxCanvas.height;
+    if(d.y>1){ d.y=0; d.x=Math.random(); }
+    const px = d.x*fxCanvas.width, py = d.y*fxCanvas.height;
+    fxCtx.beginPath(); fxCtx.moveTo(px,py); fxCtx.lineTo(px-4,py+d.len); fxCtx.stroke();
+  });
+}
 
-document.querySelectorAll(".menuBtn").forEach(btn=>{
-  btn.addEventListener("pointerdown",()=>beep(320,.035,"sine",.018));
+function drawMinimap(cam){
+  mmCtx.clearRect(0,0,150,150);
+  const sx=150/WORLD_W, sy=150/WORLD_H;
+  mmCtx.fillStyle='rgba(217,199,154,.9)'; mmCtx.fillRect(0,0,150,150);
+  mmCtx.fillStyle='#5b564f';
+  roads.forEach(r=>mmCtx.fillRect(r.x*sx,r.y*sy,r.w*sx,r.h*sy));
+  mmCtx.fillStyle='#e0a938'; mmCtx.fillRect(temple.x*sx,temple.y*sy,temple.w*sx,temple.h*sy);
+  mmCtx.fillStyle='#e8d3a0'; mmCtx.fillRect(beach.x*sx,beach.y*sy,beach.w*sx,beach.h*sy);
+  mmCtx.fillStyle='#2b7f9e'; mmCtx.fillRect(beach.x*sx, (beach.y+beach.h-110)*sy, beach.w*sx, 110*sy);
+  mmCtx.fillStyle='#c0392b';
+  buildings.forEach(b=>{ if(b.type==='stall') mmCtx.fillRect(b.x*sx,b.y*sy,3,3); });
+  mmCtx.fillStyle='#8fd67f';
+  npcs.forEach(n=>{ mmCtx.beginPath(); mmCtx.arc(n.x*sx,n.y*sy,2,0,Math.PI*2); mmCtx.fill(); });
+  mmCtx.strokeStyle='#fff'; mmCtx.lineWidth=1.5;
+  mmCtx.strokeRect(cam.x*sx,cam.y*sy,canvas.width*sx,canvas.height*sy);
+  mmCtx.fillStyle='#fff';
+  mmCtx.beginPath(); mmCtx.arc(Player.x*sx,Player.y*sy,3,0,Math.PI*2); mmCtx.fill();
+}
+
+/* ==========================================================================
+   20. UI WIRING — buttons, modals, settings, pause, shop tabs
+   ========================================================================== */
+document.getElementById('btnInventory').addEventListener('click', ()=>{ Audio2.click(); UI.toggleModal('inventoryModal', UI.renderInventory); });
+document.getElementById('btnQuests').addEventListener('click', ()=>{ Audio2.click(); UI.toggleModal('questModal', UI.renderQuests); });
+document.getElementById('btnAchievements').addEventListener('click', ()=>{ Audio2.click(); UI.toggleModal('achModal', UI.renderAchievements); });
+document.getElementById('btnVehicle').addEventListener('click', ()=>{
+  Audio2.click();
+  State.vehicle = !State.vehicle;
+  State.flags.drove = State.flags.drove || State.vehicle;
+  document.getElementById('btnVehicle').textContent = State.vehicle ? '🛺' : '🚶';
+  UI.toast(State.vehicle ? 'ஆட்டோவில் ஏறினீர்கள்' : 'நடக்கத் தொடங்கினீர்கள்', 'money');
+  addShake(3);
+  AchievementSystem.checkAll();
+});
+document.getElementById('btnDayNight').addEventListener('click', ()=>{
+  Audio2.click();
+  State.autoTime = !State.autoTime;
+  document.getElementById('btnDayNight').textContent = State.autoTime ? '🌙' : '⏱️';
+  UI.toast(State.autoTime ? 'தானியங்கு நேரம் இயக்கப்பட்டது' : 'நேரம் நிறுத்தப்பட்டது', 'money');
+});
+document.getElementById('pauseBtn').addEventListener('click', ()=>{ Audio2.click(); UI.togglePause(); });
+document.getElementById('resumeBtn').addEventListener('click', ()=>{ Audio2.click(); UI.togglePause(); });
+document.getElementById('restartBtn').addEventListener('click', ()=>{
+  if(confirm('புதிதாக தொடங்க விரும்புகிறீர்களா? சேமிக்கப்படாத முன்னேற்றம் இழக்கப்படும்.')){
+    SaveSystem.clear();
+    location.reload();
+  }
+});
+document.getElementById('saveBtn').addEventListener('click', ()=>{
+  Audio2.click();
+  if(SaveSystem.save()) UI.toast('விளையாட்டு சேமிக்கப்பட்டது ✓', 'quest');
 });
 
-/* ---------- Prevent mobile scrolling / gestures ---------- */
+['shopModal','inventoryModal','questModal','achModal','settingsModal'].forEach(id=>{
+  document.getElementById(id).addEventListener('click', e=>{ if(e.target.id===id) UI.closeModal(id); });
+});
+document.getElementById('dialogueModal').addEventListener('click', e=>{ if(e.target.id==='dialogueModal') UI.closeModal('dialogueModal'); });
+document.getElementById('shopCloseBtn').addEventListener('click', ()=>UI.closeModal('shopModal'));
+document.getElementById('invCloseBtn').addEventListener('click', ()=>UI.closeModal('inventoryModal'));
+document.getElementById('questCloseBtn').addEventListener('click', ()=>UI.closeModal('questModal'));
+document.getElementById('achCloseBtn').addEventListener('click', ()=>UI.closeModal('achModal'));
+document.getElementById('settingsCloseBtn').addEventListener('click', ()=>UI.closeModal('settingsModal'));
+document.getElementById('openSettingsBtn').addEventListener('click', ()=>{ Audio2.click(); UI.openModal('settingsModal'); });
+document.getElementById('mgQuitBtn').addEventListener('click', ()=>Minigames.stop(false));
 
-document.addEventListener("touchmove",e=>{
-  if(state.running)e.preventDefault();
-},{passive:false});
+document.querySelectorAll('#shopTabs .tabBtn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    Audio2.click();
+    document.querySelectorAll('#shopTabs .tabBtn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    ShopSystem.currentTab = btn.dataset.tab;
+    ShopSystem.render();
+  });
+});
 
-/* ---------- Keyboard accessibility ---------- */
+function wireToggle(id, onChange){
+  const el = document.getElementById(id);
+  el.addEventListener('click', ()=>{
+    const on = el.classList.toggle('on');
+    onChange(on);
+    Audio2.click();
+  });
+}
+wireToggle('toggleSound', on=>{ State.soundOn=on; Audio2.enabled=on; });
+wireToggle('toggleAutoTime', on=>{ State.autoTime=on; });
+wireToggle('toggleShake', on=>{ State.cameraShake=on; });
+document.getElementById('volSlider').addEventListener('input', e=>{
+  State.volume = e.target.value/100;
+  Audio2.setVolume(State.volume);
+});
 
-document.getElementById("startBtn").focus();
+/* ==========================================================================
+   21. MAIN LOOP
+   ========================================================================== */
+let lastFrameT = performance.now();
+function frame(now){
+  const dt = Math.min(0.05, (now-lastFrameT)/1000);
+  lastFrameT = now;
+  if(State.started){
+    if(Minigames.active){
+      // world frozen; minigame runs its own loop, but we still draw the
+      // world once behind it (already drawn) — no-op here
+    } else {
+      updateAll(dt);
+      drawWorld();
+    }
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
 
-/* ---------- End of game code ---------- */
+/* ==========================================================================
+   22. STARTUP FLOW
+   ========================================================================== */
+function beginGame(fromSave){
+  document.getElementById('startOverlay').style.display = 'none';
+  Audio2.init();
+  State.started = true;
+  lastFrameT = performance.now();
+  document.getElementById('btnVehicle').textContent = State.vehicle ? '🛺' : '🚶';
+  document.getElementById('btnDayNight').textContent = State.autoTime ? '🌙' : '⏱️';
+  document.getElementById('toggleSound').classList.toggle('on', State.soundOn);
+  document.getElementById('toggleAutoTime').classList.toggle('on', State.autoTime);
+  document.getElementById('volSlider').value = Math.round(State.volume*100);
+  Audio2.setVolume(State.volume);
+  UI.updateHud();
+  UI.renderQuestTracker();
+  AchievementSystem.checkAll();
+  UI.toast(fromSave ? 'மீண்டும் வரவேற்கிறோம்!' : 'தமிழ் நகரத்திற்கு வரவேற்கிறோம்!', 'quest');
+  // periodic autosave
+  setInterval(()=>{ if(State.started) SaveSystem.save(); }, 30000);
+}
+
+document.getElementById('startBtn').addEventListener('click', ()=>beginGame(false));
+document.getElementById('continueBtn').addEventListener('click', ()=>{
+  SaveSystem.load();
+  beginGame(true);
+});
+
+if(SaveSystem.hasSave()){
+  document.getElementById('continueBtn').style.display = 'inline-block';
+}
+
+Joystick.init();
+
+/* ==========================================================================
+   23. EXPANSION PACK — additional districts, NPCs, items, quests, minigames
+   --------------------------------------------------------------------------
+   This section extends the base city with a second ring of buildings and
+   characters: a post office, tailor, sweet shop, cinema hall, a public park
+   with a kolam (rangoli) ground, and a panipuri cart. Each new NPC has its
+   own schedule and dialogue tree, each new location has its own draw
+   routine, and two more mini-games (Kolam Drawing + Panipuri Rush) round
+   out the set of playable activities. Ambient background traffic and a
+   day-summary popup are also added here so the city keeps feeling alive
+   as systems accumulate.
+   ========================================================================== */
+
+/* ---- 23.1 new buildings & zones ---- */
+buildings.push({type:'postoffice', x:900, y:60, w:150, h:100, solid:true, id:'postoffice'});
+zones.push({name:'அஞ்சல் நிலையம் · Post Office', x:880, y:0, w:200, h:36});
+
+buildings.push({type:'tailor', x:2440, y:1420, w:130, h:90, solid:true, id:'tailor'});
+buildings.push({type:'sweetshop', x:2610, y:1420, w:130, h:90, solid:true, id:'sweetshop'});
+zones.push({name:'கடைத்தெரு · Shops', x:2440, y:1370, w:300, h:34});
+
+buildings.push({type:'cinema', x:1100, y:2130, w:260, h:150, solid:true, id:'cinema'});
+zones.push({name:'திரையரங்கம் · Cinema', x:1080, y:2280, w:300, h:36});
+
+const park = {x:2050, y:1900, w:420, h:340};
+buildings.push({type:'parkGate', x:park.x, y:park.y, w:40, h:20, solid:false, id:'parkGate'});
+buildings.push({type:'kolamGround', x:park.x+140, y:park.y+140, w:140, h:100, solid:false, id:'kolamGround'});
+zones.push({name:'பூங்கா · Park', x:park.x, y:park.y-20, w:park.w, h:40});
+for(let i=0;i<10;i++) addTree(park.x+20+Util.rand(0,380), park.y+20+Util.rand(0,300), false);
+
+buildings.push({type:'cart', x:park.x+300, y:park.y+250, w:70, h:50, solid:true, id:'panipuricart'});
+
+/* ---- 23.2 new NPCs ---- */
+const npcDefs2 = [
+  {
+    id:'postman', name:'ராஜேந்திரன்', role:'Postman', icon:'📮', color:'#c9a45a',
+    home:{x:1000,y:250}, work:{x:970,y:110},
+    schedule:[[7,17,'work'],[17,31,'home']]
+  },
+  {
+    id:'tailor', name:'இளங்கோ', role:'Tailor', icon:'🧵', color:'#8a5aa8',
+    home:{x:2500,y:250}, work:{x:2500,y:1460},
+    schedule:[[8,20,'work'],[20,32,'home']]
+  },
+  {
+    id:'sweetshop', name:'வள்ளி', role:'Sweet Shop Owner', icon:'🍬', color:'#d9822b',
+    home:{x:2700,y:270}, work:{x:2670,y:1460},
+    schedule:[[7,21,'work'],[21,31,'home']]
+  },
+  {
+    id:'cinemaOwner', name:'பாண்டியன்', role:'Cinema Owner', icon:'🎬', color:'#3a3a5a',
+    home:{x:1300,y:2270}, work:{x:1230,y:2200},
+    schedule:[[10,23,'work'],[23,34,'home']]
+  },
+  {
+    id:'kolamArtist', name:'மீனா', role:'Kolam Artist', icon:'🎨', color:'#c05a8c',
+    home:{x:2150,y:2070}, work:{x:park.x+200,y:park.y+190},
+    schedule:[[6,11,'work'],[11,17,'home'],[17,19,'work'],[19,30,'home']]
+  },
+  {
+    id:'panipuriwala', name:'பாபு', role:'Panipuri Seller', icon:'🛒', color:'#e07a3a',
+    home:{x:2300,y:2100}, work:{x:park.x+330,y:park.y+270},
+    schedule:[[16,22,'work'],[22,40,'home']]
+  }
+];
+npcDefs2.forEach(d=>npcDefs.push(d));
+npcDefs2.forEach(def=>{
+  npcs.push({...def, x:def.home.x, y:def.home.y, targetX:def.home.x, targetY:def.home.y,
+    state:'idle', speed:60, animT:Math.random()*10});
+});
+
+/* ---- 23.3 new items ---- */
+Object.assign(ItemDefs, {
+  thread:      {name:'தையல் நூல்', icon:'🧵', sell:0, buy:14, desc:'Spool of tailoring thread.'},
+  sweet:       {name:'இனிப்பு', icon:'🍬', sell:0, buy:10, desc:'Fresh Mysore Pak.', food:true, energy:12},
+  movieTicket: {name:'திரைப்பட டிக்கெட்', icon:'🎟️', sell:0, buy:25, desc:'A seat for tonight\'s show.'},
+  kolamPowder: {name:'கோலம் மாவு', icon:'🎨', sell:0, buy:8, desc:'Coloured rice-flour powder.'},
+  panipuri:    {name:'பானி பூரி', icon:'🥟', sell:0, buy:6, desc:'Crispy, tangy street snack.', food:true, energy:10},
+  letter:      {name:'கடிதம்', icon:'✉️', sell:0, buy:0, desc:'A letter awaiting delivery.'}
+});
+
+/* ---- 23.4 new shops ---- */
+Object.assign(shops, {
+  tailorShop:   { name:'தையல் கடை · Tailor', at:'tailor', buy:['thread','saree'], sell:[] },
+  sweetShop:    { name:'இனிப்பு கடை · Sweet Shop', at:'sweetshop', buy:['sweet'], sell:[] },
+  cinemaCounter:{ name:'திரையரங்க கவுண்டர்', at:'cinemaOwner', buy:['movieTicket'], sell:[] },
+  panipuriCart: { name:'பானிபூரி வண்டி', at:'panipuriwala', buy:['panipuri'], sell:[] }
+});
+
+/* ---- 23.5 new quests ---- */
+const questDefs2 = [
+  {
+    id:'q_postDelivery', title:'அஞ்சல் பணி', giver:'postman',
+    desc:'ராஜேந்திரனுக்காக 3 கடிதங்களை நகர மக்களிடம் சேர்க்கவும்.',
+    steps:[
+      {id:'talk', text:'ராஜேந்திரனிடம் பேசுங்கள்', type:'talk', target:'postman'},
+      {id:'d1', text:'குருக்களிடம் கடிதம் கொடுங்கள்', type:'talk', target:'priest'},
+      {id:'d2', text:'ஆசிரியரிடம் கடிதம் கொடுங்கள்', type:'talk', target:'teacher'},
+      {id:'d3', text:'டாக்டரிடம் கடிதம் கொடுங்கள்', type:'talk', target:'doctor'}
+    ],
+    reward:{money:28, rep:6}
+  },
+  {
+    id:'q_tailorOrder', title:'தையல் ஆர்டர்', giver:'tailor',
+    desc:'இளங்கோவுக்காக நூல் வாங்கி ஒரு புடவை தைக்க உதவுங்கள்.',
+    steps:[
+      {id:'talk', text:'இளங்கோவிடம் பேசுங்கள்', type:'talk', target:'tailor'},
+      {id:'buy', text:'தையல் நூல் வாங்கவும்', type:'own', target:'thread', count:1},
+      {id:'return', text:'இளங்கோவிடம் திரும்பிச் செல்லுங்கள்', type:'talk', target:'tailor'}
+    ],
+    reward:{money:20, rep:4, item:'saree'}
+  },
+  {
+    id:'q_sweetFestival', title:'திருவிழா இனிப்புகள்', giver:'sweetshop',
+    desc:'வள்ளிக்காக 3 இனிப்புகள் வாங்கி கோயிலுக்கு எடுத்துச் செல்லுங்கள்.',
+    steps:[
+      {id:'talk', text:'வள்ளியிடம் பேசுங்கள்', type:'talk', target:'sweetshop'},
+      {id:'buy', text:'3 இனிப்புகள் வாங்கவும்', type:'own', target:'sweet', count:3},
+      {id:'deliver', text:'குருக்களிடம் இனிப்புகளை கொடுங்கள்', type:'talk', target:'priest'}
+    ],
+    reward:{money:18, rep:6}
+  },
+  {
+    id:'q_cinemaNight', title:'திரையரங்க இரவு', giver:'cinemaOwner',
+    desc:'பாண்டியனிடமிருந்து ஒரு டிக்கெட் வாங்கி படம் பாருங்கள்.',
+    steps:[
+      {id:'talk', text:'பாண்டியனிடம் பேசுங்கள்', type:'talk', target:'cinemaOwner'},
+      {id:'buy', text:'திரைப்பட டிக்கெட் வாங்கவும்', type:'own', target:'movieTicket', count:1},
+      {id:'return', text:'பாண்டியனிடம் திரும்பிச் செல்லுங்கள்', type:'talk', target:'cinemaOwner'}
+    ],
+    reward:{money:10, rep:10}
+  },
+  {
+    id:'q_kolamContest', title:'கோலம் போட்டி', giver:'kolamArtist',
+    desc:'மீனாவுக்காக கோலம் வரையும் மினி-கேமில் உயர் மதிப்பெண் பெறுங்கள்.',
+    steps:[
+      {id:'talk', text:'மீனாவிடம் பேசுங்கள்', type:'talk', target:'kolamArtist'},
+      {id:'minigame', text:'கோலம் விளையாட்டில் 8 புள்ளிகள் பெறவும்', type:'minigame', target:'kolam', count:8},
+      {id:'return', text:'மீனாவிடம் திரும்பிச் செல்லுங்கள்', type:'talk', target:'kolamArtist'}
+    ],
+    reward:{money:24, rep:9, item:'kolamPowder'}
+  },
+  {
+    id:'q_panipuriChallenge', title:'பானிபூரி சவால்', giver:'panipuriwala',
+    desc:'பாபுவின் பானிபூரி சவாலில் 12 புள்ளிகள் சம்பாதியுங்கள்.',
+    steps:[
+      {id:'talk', text:'பாபுவிடம் பேசுங்கள்', type:'talk', target:'panipuriwala'},
+      {id:'minigame', text:'பானிபூரி விளையாட்டில் 12 புள்ளிகள் பெறவும்', type:'minigame', target:'panipuri', count:12},
+      {id:'return', text:'பாபுவிடம் திரும்பிச் செல்லுங்கள்', type:'talk', target:'panipuriwala'}
+    ],
+    reward:{money:16, rep:5}
+  }
+];
+questDefs2.forEach(q=>questDefs.push(q));
+
+/* ---- 23.6 new achievements ---- */
+const achDefs2 = [
+  {id:'a_socialite', name:'நகர நண்பன்', desc:'எல்லா குடிமக்களுடனும் பேசுங்கள்', icon:'🤝',
+    check:s=>npcs.every(n=>s.flags['talked_'+n.id])},
+  {id:'a_filmBuff', name:'சினிமா ரசிகன்', desc:'ஒரு படம் பாருங்கள்', icon:'🎬', check:s=>s.flags.watchedMovie},
+  {id:'a_kolamMaster', name:'கோலம் நிபுணர்', desc:'கோலம் விளையாட்டில் 8+ புள்ளிகள்', icon:'🎨',
+    check:s=>(s.flags.mg_kolam_score||0)>=8},
+  {id:'a_postmanFriend', name:'அஞ்சல் நண்பன்', desc:'அனைத்து கடிதங்களையும் சேர்க்கவும்', icon:'✉️',
+    check:s=>s.quests.q_postDelivery && s.quests.q_postDelivery.status==='complete'},
+  {id:'a_gourmand', name:'சுவை ரசிகன்', desc:'10 இனிப்பு/பானிபூரி சாப்பிடுங்கள்', icon:'🍬',
+    check:s=>(s.flags.snacksEaten||0)>=10}
+];
+achDefs2.forEach(a=>achDefs.push(a));
+
+/* ==========================================================================
+   24. EXPANSION — dialogue trees for the 6 new NPCs
+   ========================================================================== */
+Object.assign(DialogueTrees, {
+  postman:{
+    root(){
+      const qs = QuestSystem.getStatus('q_postDelivery');
+      if(qs==='none') return 'offer';
+      if(qs==='active'){
+        const q = State.quests.q_postDelivery;
+        if(!q.steps.d1.done || !q.steps.d2.done || !q.steps.d3.done) return 'progress';
+        return 'ready';
+      }
+      return 'chat';
+    },
+    nodes:{
+      offer:{ text:'வணக்கம், நான் ராஜேந்திரன், தபால்காரன். மூன்று கடிதங்களை நகர மக்களிடம் சேர்க்க உதவுவீர்களா?',
+        options:[{label:'செய்கிறேன்!', action:()=>{QuestSystem.start('q_postDelivery'); InventorySystem.add('letter',3);}, next:'end'},{label:'இல்லை', next:'end'}]},
+      progress:{ text:'குருக்கள், ஆசிரியர், டாக்டர் ஆகியோரிடம் கடிதங்களை கொடுங்கள்.', options:[{label:'சரி', next:'end'}]},
+      ready:{ text:'அனைத்து கடிதங்களும் சேர்க்கப்பட்டனவா? அற்புதம்!', options:[{label:'நன்றி!', action:()=>QuestSystem.complete('q_postDelivery'), next:'end'}]},
+      chat:{ text:'இன்று நிறைய தபால் வேலை இருக்கிறது!', options:[{label:'வணக்கம்', next:'end'}]}
+    }
+  },
+  tailor:{
+    root(){
+      const qs = QuestSystem.getStatus('q_tailorOrder');
+      if(qs==='none') return 'offer';
+      if(qs==='active') return QuestSystem.stepDone('q_tailorOrder','buy') ? 'ready' : 'progress';
+      return 'chat';
+    },
+    nodes:{
+      offer:{ text:'நான் இளங்கோ, தையல்காரன். எனக்கு ஒரு நூல் கொண்டு வர முடியுமா? ஒரு அழகான புடவை தைத்துத் தருகிறேன்.',
+        options:[{label:'செய்கிறேன்!', action:()=>QuestSystem.start('q_tailorOrder'), next:'end'},{label:'இல்லை', next:'end'}]},
+      progress:{ text:'என் கடையில் நூல் வாங்கலாம்.', options:[{label:'கடையைப் பார்க்க', action:()=>ShopSystem.open('tailorShop'), next:'end'},{label:'சரி', next:'end'}]},
+      ready:{ text:'இதோ, உங்களுக்காக ஒரு அழகான புடவை!', options:[{label:'நன்றி!', action:()=>QuestSystem.complete('q_tailorOrder'), next:'end'}]},
+      chat:{ text:'நல்ல ஆடைகள் நம்பிக்கையை தரும்!', options:[{label:'கடையைப் பார்க்க', action:()=>ShopSystem.open('tailorShop'), next:'end'},{label:'வணக்கம்', next:'end'}]}
+    }
+  },
+  sweetshop:{
+    root(){
+      const qs = QuestSystem.getStatus('q_sweetFestival');
+      if(qs==='none') return 'offer';
+      if(qs==='active') return QuestSystem.stepDone('q_sweetFestival','buy') ? 'ready' : 'progress';
+      return 'chat';
+    },
+    nodes:{
+      offer:{ text:'நான் வள்ளி. திருவிழாவுக்கு 3 இனிப்புகள் வாங்கி கோயிலுக்கு கொடுக்க முடியுமா?',
+        options:[{label:'செய்கிறேன்!', action:()=>QuestSystem.start('q_sweetFestival'), next:'end'},{label:'இல்லை', next:'end'}]},
+      progress:{ text:'என் கடையில் இனிப்புகள் வாங்கலாம்.', options:[{label:'கடையைப் பார்க்க', action:()=>ShopSystem.open('sweetShop'), next:'end'},{label:'சரி', next:'end'}]},
+      ready:{ text:'நல்லது! இப்போது கோயிலுக்கு கொடுங்கள்.', options:[{label:'சரி', action:()=>QuestSystem.complete('q_sweetFestival'), next:'end'}]},
+      chat:{ text:'சுவையான மைசூர்பாக் வேண்டுமா?', options:[{label:'கடையைப் பார்க்க', action:()=>ShopSystem.open('sweetShop'), next:'end'},{label:'வணக்கம்', next:'end'}]}
+    }
+  },
+  cinemaOwner:{
+    root(){
+      const qs = QuestSystem.getStatus('q_cinemaNight');
+      if(qs==='none') return 'offer';
+      if(qs==='active') return QuestSystem.stepDone('q_cinemaNight','buy') ? 'ready' : 'progress';
+      return 'chat';
+    },
+    nodes:{
+      offer:{ text:'நான் பாண்டியன், இந்த திரையரங்கத்தின் உரிமையாளர். இன்று இரவு ஒரு நல்ல படம் ஓடுகிறது!',
+        options:[{label:'டிக்கெட் வேண்டும்!', action:()=>QuestSystem.start('q_cinemaNight'), next:'end'},{label:'இல்லை', next:'end'}]},
+      progress:{ text:'கவுண்டரில் டிக்கெட் வாங்கலாம்.', options:[{label:'டிக்கெட் வாங்க', action:()=>ShopSystem.open('cinemaCounter'), next:'end'},{label:'சரி', next:'end'}]},
+      ready:{ text:'படத்தை ரசித்தீர்களா? நன்றி வருகைக்கு!', options:[{label:'அருமையாக இருந்தது!', action:()=>{QuestSystem.complete('q_cinemaNight'); State.flags.watchedMovie=true;}, next:'end'}]},
+      chat:{ text:'எப்போதும் திரையரங்கத்திற்கு வாருங்கள்!', options:[{label:'வணக்கம்', next:'end'}]}
+    }
+  },
+  kolamArtist:{
+    root(){
+      const qs = QuestSystem.getStatus('q_kolamContest');
+      if(qs==='none') return 'offer';
+      if(qs==='active') return QuestSystem.stepDone('q_kolamContest','minigame') ? 'ready' : 'progress';
+      return 'chat';
+    },
+    nodes:{
+      offer:{ text:'நான் மீனா, கோலம் கலைஞர். பூங்காவில் என்னுடன் கோலம் போட்டியில் பங்கேற்க விரும்புகிறீர்களா?',
+        options:[{label:'சவால் ஏற்கிறேன்!', action:()=>QuestSystem.start('q_kolamContest'), next:'end'},{label:'இல்லை', next:'end'}]},
+      progress:{ text:'கோலம் தளத்திற்குச் சென்று விளையாட்டைத் தொடங்குங்கள்.',
+        options:[{label:'தொடங்கு', action:()=>Minigames.start('kolam'), next:'end'},{label:'பின்னால்', next:'end'}]},
+      ready:{ text:'அழகான கோலம்! நீங்கள் ஒரு கலைஞர்!', options:[{label:'நன்றி!', action:()=>QuestSystem.complete('q_kolamContest'), next:'end'}]},
+      chat:{ text:'கோலம் நம் பாரம்பரியத்தின் அழகு.', options:[{label:'மீண்டும் விளையாடு', action:()=>Minigames.start('kolam'), next:'end'},{label:'வணக்கம்', next:'end'}]}
+    }
+  },
+  panipuriwala:{
+    root(){
+      const qs = QuestSystem.getStatus('q_panipuriChallenge');
+      if(qs==='none') return 'offer';
+      if(qs==='active') return QuestSystem.stepDone('q_panipuriChallenge','minigame') ? 'ready' : 'progress';
+      return 'chat';
+    },
+    nodes:{
+      offer:{ text:'நான் பாபு! என் பானிபூரி சவாலில் வெற்றி பெற முடியுமா? வேகமாக சாப்பிட வேண்டும்!',
+        options:[{label:'சவால் ஏற்கிறேன்!', action:()=>QuestSystem.start('q_panipuriChallenge'), next:'end'},{label:'இல்லை', next:'end'}]},
+      progress:{ text:'தயாரா? சவாலைத் தொடங்குங்கள்.',
+        options:[{label:'தொடங்கு', action:()=>Minigames.start('panipuri'), next:'end'},{label:'பின்னால்', next:'end'}]},
+      ready:{ text:'சூப்பர்! நீங்கள் ஒரு உண்மையான பானிபூரி ரசிகர்!', options:[{label:'நன்றி!', action:()=>QuestSystem.complete('q_panipuriChallenge'), next:'end'}]},
+      chat:{ text:'சூடான, காரமான பானிபூரி வேண்டுமா?',
+        options:[{label:'கடையைப் பார்க்க', action:()=>ShopSystem.open('panipuriCart'), next:'end'},{label:'மீண்டும் சவால்', action:()=>Minigames.start('panipuri'), next:'end'},{label:'வணக்கம்', next:'end'}]}
+    }
+  }
+});
+
+/* NEXT_SECTION_MARKER */
 </script>
 </body>
 </html>
