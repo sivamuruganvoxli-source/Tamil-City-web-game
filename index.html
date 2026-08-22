@@ -101,13 +101,18 @@ button{font-family:inherit;}
 /* =========================================================================
    BOTTOM ACTION BAR (mobile + desktop icons)
    ========================================================================= */
-#actionBar{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:6;display:flex;gap:10px;}
+#actionBar{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:6;display:flex;gap:10px;
+  flex-wrap:wrap;justify-content:center;max-width:96vw;}
 .iconBtn{width:50px;height:50px;border-radius:50%;border:2px solid var(--ui-accent);background:var(--ui-bg);
   color:var(--ui-text);font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;
-  box-shadow:0 4px 14px rgba(0,0,0,.5);position:relative;}
+  box-shadow:0 4px 14px rgba(0,0,0,.5);position:relative;flex:0 0 auto;}
 .iconBtn:active{transform:scale(.94);}
 .iconBtn .badge{position:absolute;top:-4px;right:-4px;background:var(--ui-bad);color:#fff;font-size:9px;
   border-radius:8px;padding:1px 5px;font-weight:700;}
+@media (max-width:480px){
+  .iconBtn{width:42px;height:42px;font-size:16px;}
+  #actionBar{gap:8px;bottom:10px;}
+}
 
 /* =========================================================================
    JOYSTICK (touch)
@@ -284,8 +289,13 @@ button{font-family:inherit;}
   <button class="iconBtn" id="btnInventory" title="Inventory">🎒</button>
   <button class="iconBtn" id="btnQuests" title="Quests">📜</button>
   <button class="iconBtn" id="btnAchievements" title="Achievements">🏆</button>
+  <button class="iconBtn" id="btnFriends" title="Friends">💛</button>
   <button class="iconBtn" id="btnVehicle" title="Toggle vehicle">🚶</button>
   <button class="iconBtn" id="btnDayNight" title="Day/Night">🌙</button>
+  <button class="iconBtn" id="btnCodex" title="Codex">📖</button>
+  <button class="iconBtn" id="btnTravel" title="Fast Travel">🗺️</button>
+  <button class="iconBtn" id="btnPhoto" title="Photo">📷</button>
+  <button class="iconBtn" id="btnHelp" title="Help">❓</button>
 </div>
 
 <div id="joystickZone"></div>
@@ -349,6 +359,71 @@ button{font-family:inherit;}
   </div>
 </div>
 
+<div class="modal" id="friendsModal">
+  <div class="panel">
+    <h2>💛 நண்பர்கள்</h2>
+    <div class="sub">பரிசு கொடுத்து நட்பை வளர்க்கவும் (பேச்சுவாக்கின் போது கொடுக்கலாம்)</div>
+    <div id="friendsListBody"></div>
+    <div class="closeRow"><button id="friendsCloseBtn">மூடு</button></div>
+  </div>
+</div>
+
+<div class="modal" id="helpModal">
+  <div class="panel">
+    <h2>❓ உதவி &amp; கட்டுப்பாடுகள்</h2>
+    <div class="sub">Tamil Nagaram — how to play</div>
+    <div style="font-size:13px;line-height:1.8;">
+      <b style="color:var(--ui-accent)">Move:</b> WASD / Arrow keys (desktop) or the joystick (mobile)<br>
+      <b style="color:var(--ui-accent)">Sprint:</b> hold Shift while walking<br>
+      <b style="color:var(--ui-accent)">Interact:</b> press E near a person or place, or tap the round action button<br>
+      <b style="color:var(--ui-accent)">Vehicle:</b> tap 🚶/🛺 to switch between walking and driving the auto-rickshaw<br>
+      <b style="color:var(--ui-accent)">Inventory (I):</b> tap food items to eat them and restore energy<br>
+      <b style="color:var(--ui-accent)">Quests (Q):</b> talk to townsfolk to discover and track quests<br>
+      <b style="color:var(--ui-accent)">Shops:</b> opened automatically during certain conversations — buy with 💰, sell to earn<br>
+      <b style="color:var(--ui-accent)">Gifts:</b> if you're carrying someone's favourite item, a gift option appears in their dialogue<br>
+      <b style="color:var(--ui-accent)">Mini-games:</b> fishing at the harbor, cooking at tea stalls, kolam at the park, panipuri at the cart, paperwork at the government office, and traffic dodging<br>
+      <b style="color:var(--ui-accent)">Day/Night:</b> the clock runs automatically; toggle with 🌙 in the action bar<br>
+      <b style="color:var(--ui-accent)">Fast Travel (🗺️):</b> jump straight to any district you've already visited<br>
+      <b style="color:var(--ui-accent)">Codex (📖):</b> a living reference of every person, place and item in the city<br>
+      <b style="color:var(--ui-accent)">Photo (📷):</b> save a PNG snapshot of the city to your device<br>
+      <b style="color:var(--ui-accent)">Save:</b> pause (⏸ or Esc) and tap சேமி to save — the game also autosaves periodically
+    </div>
+    <div class="closeRow"><button id="helpCloseBtn">மூடு</button></div>
+  </div>
+</div>
+
+<div class="modal" id="codexModal">
+  <div class="panel">
+    <h2>📖 நகர குறிப்பேடு</h2>
+    <div class="sub">Codex — every person, place and item you've discovered</div>
+    <div id="codexTabs" style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+      <button class="tabBtn active" data-ctab="people">மக்கள்</button>
+      <button class="tabBtn" data-ctab="places">இடங்கள்</button>
+      <button class="tabBtn" data-ctab="items">பொருட்கள்</button>
+      <button class="tabBtn" data-ctab="stats">புள்ளிவிவரம்</button>
+    </div>
+    <div id="codexBody"></div>
+    <div class="closeRow"><button id="codexCloseBtn">மூடு</button></div>
+  </div>
+</div>
+
+<div class="modal" id="travelModal">
+  <div class="panel">
+    <h2>🗺️ விரைவு பயணம்</h2>
+    <div class="sub">Fast travel to any district you've already explored (costs a little energy)</div>
+    <div id="travelListBody" class="gridItems"></div>
+    <div class="closeRow"><button id="travelCloseBtn">மூடு</button></div>
+  </div>
+</div>
+
+<div id="legendOverlay" style="display:none;position:fixed;inset:0;z-index:40;background:radial-gradient(ellipse at center,#3a2412,#0b0704 85%);
+  color:var(--ui-text);flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;">
+  <div style="font-size:52px;">🏆👑🛺</div>
+  <h1 style="color:var(--ui-accent);font-size:clamp(26px,5vw,44px);">நகர புராணம்!</h1>
+  <p style="max-width:480px;opacity:.85;">You've unlocked every achievement in Tamil Nagaram. You truly know this city — its temple bells, its market mornings, its harbor evenings. Nandri!</p>
+  <button class="primaryBtn" id="legendCloseBtn" style="margin-top:16px;">தொடர்ந்து விளையாடு</button>
+</div>
+
 <div class="modal center" id="pauseModal">
   <div class="panel" style="width:min(380px,90vw);text-align:center;">
     <h2 style="justify-content:center;">⏸ இடைநிறுத்தம்</h2>
@@ -388,12 +463,14 @@ button{font-family:inherit;}
   <div class="sub">Tamil Nagaram — a full open-world city life game. Explore, earn, trade, complete quests, ride, and play mini-games across a living Tamil city.</div>
   <div class="feat">
     <div>🕌 Temple, market, beach, harbor &amp; more</div>
-    <div>🧑‍🤝‍🧑 8 NPCs with schedules &amp; dialogue</div>
-    <div>📜 Branching quest lines</div>
-    <div>🛍️ Shops, trading &amp; economy</div>
-    <div>🎮 3 mini-games</div>
-    <div>🏆 Achievements &amp; save system</div>
-    <div>🌗 Full day/night cycle</div>
+    <div>🧑‍🤝‍🧑 14 NPCs with schedules &amp; dialogue</div>
+    <div>📜 13 branching quest lines</div>
+    <div>🛍️ 8 shops, trading &amp; economy</div>
+    <div>🎮 6 mini-games</div>
+    <div>💛 Friendship &amp; gift-giving</div>
+    <div>🌱 A jasmine garden to grow &amp; harvest</div>
+    <div>🏆 20+ achievements &amp; save system</div>
+    <div>🌗 Full day/night cycle &amp; weather</div>
     <div>🚶🛺 Walk or drive an auto</div>
   </div>
   <div id="startBtnRow">
@@ -405,11 +482,71 @@ button{font-family:inherit;}
 <script>
 /* ==========================================================================
    TAMIL NAGARAM — FULL CITY RPG
-   Single-file open world game. Sections:
-   1. Utils & constants
-   2. Audio engine (WebAudio synth, no external assets)
-   3. Global game state
-   4. Save/Load (localStorage)
+   ==========================================================================
+   A complete, single-file, offline-capable open-world city life game.
+   Everything — markup, styling, and logic — lives in this one HTML document
+   so it can be opened directly in any modern browser, on desktop or mobile,
+   with zero build step and zero external assets (all art is drawn live with
+   the Canvas 2D API; all sound is synthesised live with the Web Audio API).
+
+   ------------------------------- CONTROLS --------------------------------
+   Desktop : WASD / Arrow keys to move, Shift to sprint, E to interact,
+             I = inventory, Q = quests, M = pulse minimap, Esc = pause.
+   Mobile  : on-screen joystick (bottom-left) to move, a context-sensitive
+             action button (bottom-right) to interact, and an icon bar
+             along the bottom for inventory / quests / achievements /
+             friends / vehicle toggle / day-night toggle / help.
+
+   ------------------------------ ARCHITECTURE ------------------------------
+   The file is organised into numbered sections, in the order they are
+   defined (later sections may safely reference systems from earlier ones;
+   a few forward references between systems are fine in JavaScript because
+   nothing actually *runs* until the main loop starts, by which point every
+   top-level declaration in the file has already executed once):
+
+     1  Utils                     — small pure helper functions (math, rng)
+     2  Audio engine              — WebAudio oscillator-based sound effects
+     3  Global state              — the single source of truth, `State`
+     4  Save / load               — localStorage persistence
+     5  World data                — roads, buildings, zones, decor arrays
+     6  NPC definitions           — schedules and home/work waypoints
+     7  Items / shops / quests / achievements — static data tables
+     8  Dialogue trees            — branching conversation data per NPC
+     9  Player, NPC instances, collectibles — mutable runtime entities
+    10  Input                     — keyboard, touch joystick, interact button
+    11  Quest system              — start/progress/complete state machine
+    12  Inventory & economy       — add/remove items, spend/earn money
+    13  Shop system               — buy/sell UI + logic
+    14  Dialogue system           — opens/renders conversation trees
+    15  Achievement system        — polls `check()` predicates each tick
+    16  UI system                 — modals, toasts, HUD, panel renderers
+    17  Mini-games                — six self-contained arcade activities
+    18  World simulation          — movement, collision, NPC AI, clock
+    19  Rendering                 — all canvas drawing routines
+    20  UI wiring                 — DOM event listeners for every button
+    21  Main loop                 — requestAnimationFrame driver
+    22  Startup flow              — new game / continue / autosave
+    23  Expansion pack            — second ring of districts & NPCs
+    24  Expansion dialogue trees  — conversations for the new NPCs
+    25  Ambient traffic           — decorative roaming background vehicles
+    26  Day summary               — end-of-day recap toast
+    27  Friendship & gifts        — generic gift-giving woven into dialogue
+    28  Government office         — clerk NPC + "Stamp Rush" mini-game
+    29  Civic landmarks           — railway, tank, lighthouse, playground
+    30  Garden                    — plant/grow/harvest jasmine over time
+    31  Sky objects               — sun/moon arc, drifting clouds
+    32  Festival & fireworks      — every 5th night, plus quest confetti
+    33  Ambient wildlife          — birds by day, fireflies by night
+    34  Codex / Almanac           — in-game encyclopedia of the city
+    35  Statistics                — lifetime play stats tracked & shown
+    36  Fast travel               — teleport between discovered zones
+    37  Fatigue event             — what happens if energy hits zero
+    38  Photo mode                — export a PNG snapshot of the city
+
+   None of these systems reach outside this file: no network calls, no
+   external scripts, no build tooling. Progress is saved to the browser's
+   localStorage under the key "tamilNagaramSave_v1" and can be continued
+   from the title screen.
    ========================================================================== */
 "use strict";
 
@@ -1117,6 +1254,12 @@ const InteractSystem = {
         if(b.id==='harbor') label='மீன்பிடி';
         else if(b.id.startsWith('tea')) label='சமை';
         else if(b.id==='busstand') label='ஏறு';
+        else if(b.id==='tailor') label='கடை';
+        else if(b.id==='sweetshop') label='கடை';
+        else if(b.id==='cinema') label='கடை';
+        else if(b.id==='kolamGround') label='கோலம்';
+        else if(b.id==='panipuricart') label='சவால்';
+        else if(b.id==='gardenPlot') label='தோட்டம்';
         bestD=d; best={type:'building', ref:b, label};
       }
     }
@@ -1135,6 +1278,12 @@ const InteractSystem = {
     const b = this.currentTarget.ref;
     if(b.id==='harbor'){ Minigames.start('fishing'); return; }
     if(b.id && b.id.startsWith('tea')){ Minigames.start('cooking'); return; }
+    if(b.id==='tailor'){ ShopSystem.open('tailorShop'); return; }
+    if(b.id==='sweetshop'){ ShopSystem.open('sweetShop'); return; }
+    if(b.id==='cinema'){ ShopSystem.open('cinemaCounter'); return; }
+    if(b.id==='kolamGround'){ Minigames.start('kolam'); return; }
+    if(b.id==='panipuricart'){ Minigames.start('panipuri'); return; }
+    if(b.id==='gardenPlot'){ gardenInteract(); return; }
     if(b.id==='busstand'){
       if(InventorySystem.remove('busTicket',1)){
         Player.x = Util.rand(400,WORLD_W-400); Player.y = Util.rand(400,WORLD_H-1000);
@@ -1331,6 +1480,15 @@ const DialogueSystem = {
     const tree = DialogueTrees[npcId];
     if(!npc || !tree) return;
     this.npc = npc;
+    State.flags['talked_'+npcId] = true;
+    // generic: any active quest step of type 'talk' targeting this npc is satisfied by visiting them
+    QuestSystem.activeQuests().forEach(def=>{
+      const q = State.quests[def.id];
+      def.steps.forEach(step=>{
+        if(step.type==='talk' && step.target===npcId) q.steps[step.id].done = true;
+      });
+    });
+    AchievementSystem.checkAll();
     const startNode = typeof tree.root==='function' ? tree.root() : tree.root;
     this.node = startNode;
     document.getElementById('dialoguePortrait').textContent = npc.icon;
@@ -1363,6 +1521,19 @@ const DialogueSystem = {
       };
       opts.appendChild(btn);
     });
+    // generic gift option, available in any node, for any npc with a favourite item
+    if(typeof GiftSystem!=='undefined' && GiftSystem.canGift(this.npc.id)){
+      const fav = NpcFavorites[this.npc.id];
+      const giftBtn = document.createElement('button');
+      giftBtn.className = 'dOpt';
+      giftBtn.style.borderColor = '#f4d35e';
+      giftBtn.textContent = '🎁 பரிசு கொடு: ' + ItemDefs[fav].icon + ' ' + ItemDefs[fav].name;
+      giftBtn.onclick = ()=>{
+        GiftSystem.give(this.npc.id);
+        this.render();
+      };
+      opts.appendChild(giftBtn);
+    }
   }
 };
 
@@ -1378,6 +1549,11 @@ const AchievementSystem = {
         UI.toast('🏆 சாதனை திறக்கப்பட்டது: ' + a.name, 'quest');
       }
     });
+    if(this.unlockedCount()===achDefs.length && !State.flags.legendShown){
+      State.flags.legendShown = true;
+      const el = document.getElementById('legendOverlay');
+      if(el){ el.style.display='flex'; Confetti.burst(window.innerWidth/2, window.innerHeight/3, 80); }
+    }
   },
   unlockedCount(){ return Object.keys(State.achievements).length; }
 };
@@ -1448,8 +1624,10 @@ const UI = {
         card.onclick = ()=>{
           if(InventorySystem.remove(id,1)){
             State.energy = Util.clamp(State.energy + def.energy, 0, 100);
+            State.flags.snacksEaten = (State.flags.snacksEaten||0) + 1;
             UI.toast('சாப்பிட்டீர்கள்: '+def.name+' (+'+def.energy+' ஆற்றல்)', 'money');
             UI.updateHud(); UI.renderInventory();
+            AchievementSystem.checkAll();
           }
         };
       }
@@ -1487,6 +1665,24 @@ const UI = {
     });
     document.getElementById('achSub').textContent = AchievementSystem.unlockedCount() + ' / ' + achDefs.length + ' திறக்கப்பட்டது';
   },
+  renderFriends(){
+    const body = document.getElementById('friendsListBody');
+    body.innerHTML = '';
+    Object.keys(NpcFavorites).forEach(npcId=>{
+      const npc = npcs.find(n=>n.id===npcId);
+      if(!npc) return;
+      const fav = NpcFavorites[npcId];
+      const level = GiftSystem.friendshipOf(npcId);
+      const div = document.createElement('div');
+      div.className = 'achEntry';
+      div.innerHTML = `<div class="aic">${npc.icon}</div><div class="atext" style="flex:1;">
+          <h5>${npc.name} <span style="font-weight:400;color:var(--ui-text-dim);font-size:11px;">(${npc.role})</span></h5>
+          <div class="bar-track" style="margin-top:4px;"><div class="bar-fill" style="width:${level}%;background:linear-gradient(90deg,#e0a938,#f4d35e);"></div></div>
+          <p style="margin-top:4px;">விருப்பமான பொருள்: ${ItemDefs[fav].icon} ${ItemDefs[fav].name} · நட்பு ${level}/100</p>
+        </div>`;
+      body.appendChild(div);
+    });
+  },
   togglePause(){
     if(!State.started) return;
     State.paused = !State.paused;
@@ -1509,14 +1705,22 @@ const Minigames = {
     this.mcanvas = document.getElementById('minigameCanvas');
     this.mctx = this.mcanvas.getContext('2d');
     document.getElementById('mgTitle').textContent =
-      id==='fishing' ? '🎣 மீன்பிடி' : id==='cooking' ? '🫓 தோசை சுடுதல்' : '🛺 போக்குவரத்து ஓட்டம்';
+      id==='fishing' ? '🎣 மீன்பிடி' : id==='cooking' ? '🫓 தோசை சுடுதல்' :
+      id==='kolam' ? '🎨 கோலம் வரைதல்' : id==='panipuri' ? '🥟 பானிபூரி சவால்' :
+      id==='stamp' ? '🧾 ஆவண முத்திரை' : '🛺 போக்குவரத்து ஓட்டம்';
     document.getElementById('mgSub').textContent =
       id==='fishing' ? 'குறி மையத்தில் இருக்கும்போது தட்டவும்!' :
       id==='cooking' ? 'சரியான நேரத்தில் தோசையை புரட்டவும்!' :
+      id==='kolam' ? 'ஒளிரும் புள்ளிகளை வரிசையாக தட்டவும்!' :
+      id==='panipuri' ? 'வேகமாக தட்டி பானிபூரி சாப்பிடுங்கள்!' :
+      id==='stamp' ? 'பச்சை மண்டலத்தில் முத்திரை குத்துங்கள்!' :
       'வாகனங்களை தவிர்த்து முன்னேறுங்கள்!';
     if(id==='fishing') this.initFishing();
     if(id==='cooking') this.initCooking();
     if(id==='traffic') this.initTraffic();
+    if(id==='kolam') this.initKolam();
+    if(id==='panipuri') this.initPanipuri();
+    if(id==='stamp') this.initStamp();
     UI.closeModal('dialogueModal');
     UI.openModal('minigameModal');
     State.paused = true; // freeze world while minigame is up
@@ -1524,8 +1728,9 @@ const Minigames = {
       if(e.key===' ' || e.key==='Enter'){ e.preventDefault(); this.tap(); }
     };
     window.addEventListener('keydown', this.keyHandler);
-    this.mcanvas.onclick = ()=>this.tap();
-    this.mcanvas.ontouchstart = e=>{ e.preventDefault(); this.tap(); };
+    this.mcanvas.onclick = (e)=>this.tap(e);
+    this.mcanvas.ontouchstart = e=>{ e.preventDefault(); const t=e.changedTouches[0]; const r=this.mcanvas.getBoundingClientRect();
+      this.tap({offsetX:(t.clientX-r.left)*(this.mcanvas.width/r.width), offsetY:(t.clientY-r.top)*(this.mcanvas.height/r.height)}); };
     this.loop();
   },
   stop(finish){
@@ -1547,14 +1752,35 @@ const Minigames = {
       EconomySystem.addMoney(this.score*2);
       State.reputation += Math.floor(this.score/3);
       UI.toast('ஓட்டம் முடிந்தது! ₹' + (this.score*2) + ' சம்பாதித்தீர்கள்', 'money');
+    } else if(finish && this.active==='kolam'){
+      State.flags.mg_kolam_score = Math.max(State.flags.mg_kolam_score||0, this.score);
+      InventorySystem.add('kolamPowder', 1);
+      QuestSystem.evaluateProgress();
+      UI.toast('கோலம் முடிந்தது! ' + this.score + ' புள்ளிகள்', 'money');
+      AchievementSystem.checkAll();
+    } else if(finish && this.active==='panipuri'){
+      State.flags.mg_panipuri_score = Math.max(State.flags.mg_panipuri_score||0, this.score);
+      State.flags.snacksEaten = (State.flags.snacksEaten||0) + this.score;
+      QuestSystem.evaluateProgress();
+      UI.toast('சவால் முடிந்தது! ' + this.score + ' புள்ளிகள்', 'money');
+      AchievementSystem.checkAll();
+    } else if(finish && this.active==='stamp'){
+      State.flags.mg_stamp_score = Math.max(State.flags.mg_stamp_score||0, this.score);
+      EconomySystem.addMoney(this.score*2);
+      QuestSystem.evaluateProgress();
+      UI.toast('முத்திரை முடிந்தது! ' + this.score + ' ஆவணங்கள்', 'money');
+      AchievementSystem.checkAll();
     }
     this.active = null;
     UI.updateHud();
   },
-  tap(){
+  tap(e){
     if(this.active==='fishing') this.fishTap();
     if(this.active==='cooking') this.cookTap();
     if(this.active==='traffic') this.trafficJump();
+    if(this.active==='kolam') this.kolamTap(e);
+    if(this.active==='panipuri') this.panipuriClickAt(e && e.offsetX!==undefined ? e.offsetX : 0, e && e.offsetY!==undefined ? e.offsetY : 0);
+    if(this.active==='stamp') this.stampTap();
   },
 
   /* ---------------- FISHING ---------------- */
@@ -1685,6 +1911,155 @@ const Minigames = {
     ctx.fillText('🛺 ' + Math.ceil(this.timeLeft) + 's  |  Score ' + this.score, w/2, 24);
   },
 
+  /* ---------------- KOLAM DRAWING ---------------- */
+  initKolam(){
+    const w=this.mcanvas.width, h=this.mcanvas.height;
+    this.kolam = { dots:[], seq:[], step:0, roundTimeLeft:3, misses:0 };
+    const cx=w/2, cy=h/2, r=120;
+    for(let i=0;i<8;i++){
+      const a = i/8*Math.PI*2;
+      this.kolam.dots.push({x:cx+Math.cos(a)*r, y:cy+Math.sin(a)*r, id:i});
+    }
+    this.kolamNewSequence();
+    this.timeLeft = 45;
+  },
+  kolamNewSequence(){
+    const k = this.kolam;
+    k.seq = [];
+    const n = 3 + Math.min(4, Math.floor(this.score/2));
+    for(let i=0;i<n;i++) k.seq.push(Util.randInt(0,7));
+    k.step = 0;
+    k.roundTimeLeft = 3 + n*0.6;
+  },
+  kolamTap(e){
+    if(!e) return;
+    const k = this.kolam;
+    const ox = e.offsetX ?? 0, oy = e.offsetY ?? 0;
+    let hit = -1, bestD = 26;
+    k.dots.forEach(d=>{
+      const dist = Util.dist(ox,oy,d.x,d.y);
+      if(dist<bestD){ bestD=dist; hit=d.id; }
+    });
+    if(hit<0) return;
+    if(hit===k.seq[k.step]){
+      k.step++;
+      Audio2.beep(500+k.step*60,0.08,'sine',0.2,700);
+      if(k.step>=k.seq.length){
+        this.score++;
+        Audio2.coin();
+        this.kolamNewSequence();
+      }
+    } else {
+      k.misses++;
+      Audio2.error();
+      this.kolamNewSequence();
+    }
+  },
+  updateKolam(dt){
+    const k = this.kolam;
+    k.roundTimeLeft -= dt;
+    if(k.roundTimeLeft<=0){ Audio2.error(); this.kolamNewSequence(); }
+    this.timeLeft -= dt;
+    if(this.timeLeft<=0) this.stop(true);
+  },
+  drawKolam(){
+    const ctx=this.mctx, w=this.mcanvas.width, h=this.mcanvas.height, k=this.kolam;
+    ctx.fillStyle='#2a1810'; ctx.fillRect(0,0,w,h);
+    ctx.strokeStyle='rgba(255,255,255,.15)'; ctx.lineWidth=1;
+    for(let i=0;i<k.seq.length-1 && i<k.step;i++){
+      const a=k.dots[k.seq[i]], b=k.dots[k.seq[i+1]];
+      ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.strokeStyle='#e0a938'; ctx.lineWidth=3; ctx.stroke();
+    }
+    k.dots.forEach((d,i)=>{
+      const isNext = k.seq[k.step]===i;
+      ctx.fillStyle = isNext ? '#f4d35e' : 'rgba(255,255,255,.4)';
+      ctx.beginPath(); ctx.arc(d.x,d.y, isNext?12:8, 0, Math.PI*2); ctx.fill();
+    });
+    ctx.fillStyle='#fdf1de'; ctx.font='15px sans-serif'; ctx.textAlign='center';
+    ctx.fillText('கோலம்: ' + k.step + '/' + k.seq.length + '  ·  ' + Math.ceil(k.roundTimeLeft) + 's', w/2, 24);
+  },
+
+  /* ---------------- PANIPURI RUSH ---------------- */
+  initPanipuri(){
+    this.pani = { targets:[], spawnT:0 };
+    this.timeLeft = 20;
+  },
+  panipuriTap(){ /* handled via per-target click in updatePanipuri using canvas coords from event stored below */ },
+  updatePanipuri(dt){
+    const p = this.pani;
+    p.spawnT -= dt;
+    if(p.spawnT<=0){
+      p.targets.push({x:Util.rand(40,this.mcanvas.width-40), y:Util.rand(40,this.mcanvas.height-40), life:1.1, r:26});
+      p.spawnT = Util.rand(0.35,0.7);
+    }
+    p.targets.forEach(t=>t.life-=dt);
+    p.targets = p.targets.filter(t=>t.life>0);
+    this.timeLeft -= dt;
+    if(this.timeLeft<=0) this.stop(true);
+  },
+  drawPanipuri(){
+    const ctx=this.mctx, w=this.mcanvas.width, h=this.mcanvas.height, p=this.pani;
+    ctx.fillStyle='#241408'; ctx.fillRect(0,0,w,h);
+    p.targets.forEach(t=>{
+      ctx.globalAlpha = Util.clamp(t.life,0,1);
+      ctx.font=(t.r*1.6)+'px sans-serif'; ctx.textAlign='center';
+      ctx.fillText('🥟', t.x, t.y+t.r/2);
+      ctx.globalAlpha = 1;
+    });
+    ctx.fillStyle='#fdf1de'; ctx.font='15px sans-serif'; ctx.textAlign='center';
+    ctx.fillText('பானிபூரி: ' + Math.ceil(this.timeLeft) + 's', w/2, 24);
+  },
+  panipuriClickAt(ox,oy){
+    const p = this.pani;
+    for(let i=p.targets.length-1;i>=0;i--){
+      const t = p.targets[i];
+      if(Util.dist(ox,oy,t.x,t.y)<t.r){
+        p.targets.splice(i,1);
+        this.score++;
+        Audio2.coin();
+        return;
+      }
+    }
+    Audio2.error();
+  },
+
+  /* ---------------- STAMP RUSH (government paperwork) ---------------- */
+  initStamp(){
+    this.stamp = { progress:0, dir:1, speed:1.1, zoneStart:0.4, zoneEnd:0.56, flipped:false };
+    this.timeLeft = 25;
+  },
+  stampTap(){
+    const s = this.stamp;
+    if(!s.flipped){
+      if(s.progress>=s.zoneStart && s.progress<=s.zoneEnd){ this.score++; Audio2.beep(700,0.08,'square',0.25,500); }
+      else Audio2.error();
+      s.flipped = true;
+      setTimeout(()=>{ s.progress=0; s.flipped=false; s.zoneStart=Util.rand(0.25,0.6); s.zoneEnd=s.zoneStart+Util.rand(0.1,0.16); s.speed=Math.min(2.2,s.speed+0.05); }, 300);
+    }
+  },
+  updateStamp(dt){
+    const s = this.stamp;
+    if(!s.flipped) s.progress += dt*s.speed;
+    if(s.progress>1){ s.progress=1; if(!s.flipped){ Audio2.error(); s.flipped=true; setTimeout(()=>{s.progress=0;s.flipped=false;},300); } }
+    this.timeLeft -= dt;
+    if(this.timeLeft<=0) this.stop(true);
+  },
+  drawStamp(){
+    const ctx=this.mctx, w=this.mcanvas.width, h=this.mcanvas.height, s=this.stamp;
+    ctx.fillStyle='#2e2e3a'; ctx.fillRect(0,0,w,h);
+    ctx.fillStyle='#fdf1de'; ctx.fillRect(w/2-70,h/2-90,140,110);
+    ctx.strokeStyle='#c9b795'; ctx.lineWidth=2;
+    for(let i=0;i<5;i++){ ctx.beginPath(); ctx.moveTo(w/2-55,h/2-70+i*16); ctx.lineTo(w/2+55,h/2-70+i*16); ctx.stroke(); }
+    if(s.flipped){ ctx.fillStyle='rgba(192,57,43,.8)'; ctx.font='bold 22px sans-serif'; ctx.textAlign='center';
+      ctx.save(); ctx.translate(w/2,h/2-30); ctx.rotate(-0.2); ctx.fillText('✓ OK', 0,0); ctx.restore(); }
+    const bx=40, by=h-60, bw=w-80, bh=26;
+    ctx.fillStyle='rgba(255,255,255,.15)'; ctx.fillRect(bx,by,bw,bh);
+    ctx.fillStyle='rgba(95,174,90,.65)'; ctx.fillRect(bx+s.zoneStart*bw, by, (s.zoneEnd-s.zoneStart)*bw, bh);
+    ctx.fillStyle='#f4d35e'; ctx.fillRect(bx+s.progress*bw-3, by-6, 6, bh+12);
+    ctx.fillStyle='#fdf1de'; ctx.font='16px sans-serif'; ctx.textAlign='center';
+    ctx.fillText('🧾 ' + Math.ceil(this.timeLeft) + 's', w/2, 30);
+  },
+
   loop(){
     const now = performance.now();
     const dt = Math.min(0.05, (now-(this._last||now))/1000);
@@ -1692,6 +2067,9 @@ const Minigames = {
     if(this.active==='fishing'){ this.updateFishing(dt); this.drawFishing(); }
     if(this.active==='cooking'){ this.updateCooking(dt); this.drawCooking(); }
     if(this.active==='traffic'){ this.updateTraffic(dt); this.drawTraffic(); }
+    if(this.active==='kolam'){ this.updateKolam(dt); this.drawKolam(); }
+    if(this.active==='panipuri'){ this.updatePanipuri(dt); this.drawPanipuri(); }
+    if(this.active==='stamp'){ this.updateStamp(dt); this.drawStamp(); }
     document.getElementById('mgScore').textContent = 'Score: ' + this.score;
     document.getElementById('mgTimer').textContent = 'Time: ' + Math.max(0,Math.ceil(this.timeLeft));
     if(this.active) this.raf = requestAnimationFrame(()=>this.loop());
@@ -1774,7 +2152,7 @@ function updateCollectibles(dt, nowSec){
       c.taken = true;
       c.respawnAt = nowSec + RESPAWN_TIME;
       State.resources[c.type]++;
-      Audio2.pickup();
+      InventorySystem.add(c.type, 1); // also stock the sellable inventory
       QuestSystem.evaluateProgress();
       UI.updateHud();
       UI.renderQuestTracker();
@@ -1818,9 +2196,18 @@ function updateAll(dt){
   updateNpcs(dt);
   updateCollectibles(dt, nowSec);
   updateEnergyRegen(dt);
+  updateAmbientTraffic(dt);
+  updateZoneVisits();
+  updateSky(dt);
+  updateFireworks(dt);
+  Confetti.update(dt);
+  updateWildlife(dt);
+  if(typeof Stats!=='undefined') Stats.update(dt);
   InteractSystem.update();
+  DaySummary.maybeShow();
   if(camShakeT>0) camShakeT -= dt; else camShakeMag = 0;
   UI.updateHud();
+  if(typeof checkFatigue==='function') checkFatigue();
 }
 
 /* ==========================================================================
@@ -1928,6 +2315,90 @@ function drawTea(b){
 function drawTempleWall(b){
   ctx.fillStyle='#e8dcb8'; ctx.fillRect(b.x,b.y,b.w,b.h);
   ctx.strokeStyle='#c9a45a'; ctx.lineWidth=2; ctx.strokeRect(b.x,b.y,b.w,b.h);
+}
+function drawPostOffice(b){
+  ctx.fillStyle='#c0392b'; ctx.fillRect(b.x,b.y,b.w,b.h);
+  ctx.fillStyle='#fdf1de'; ctx.fillRect(b.x,b.y,b.w,10);
+  ctx.fillStyle='rgba(255,255,255,.6)';
+  for(let i=0;i<3;i++) ctx.fillRect(b.x+14+i*(b.w-28)/2, b.y+22, 18, b.h-38);
+  ctx.font='26px sans-serif'; ctx.textAlign='center'; ctx.fillText('📮', b.x+b.w/2, b.y-8);
+}
+function drawTailor(b){
+  ctx.fillStyle='#8a5aa8'; ctx.fillRect(b.x,b.y,b.w,b.h);
+  ctx.fillStyle='#fdf1de'; ctx.fillRect(b.x,b.y,b.w,8);
+  ctx.font='24px sans-serif'; ctx.textAlign='center'; ctx.fillText('🧵', b.x+b.w/2, b.y-6);
+}
+function drawSweetShop(b){
+  ctx.fillStyle='#d9822b'; ctx.fillRect(b.x,b.y,b.w,b.h);
+  ctx.fillStyle='#fdf1de'; ctx.fillRect(b.x,b.y,b.w,8);
+  ctx.font='24px sans-serif'; ctx.textAlign='center'; ctx.fillText('🍬', b.x+b.w/2, b.y-6);
+}
+function drawCinema(b){
+  ctx.fillStyle='#2a2a3a'; ctx.fillRect(b.x,b.y,b.w,b.h);
+  ctx.fillStyle='#e0a938';
+  for(let i=0;i<6;i++){ ctx.beginPath(); ctx.arc(b.x+16+i*((b.w-32)/5), b.y-4, 4, 0, Math.PI*2); ctx.fill(); }
+  ctx.fillStyle='#c0392b'; ctx.fillRect(b.x+b.w/2-40, b.y+b.h-40, 80, 40);
+  ctx.font='30px sans-serif'; ctx.textAlign='center'; ctx.fillText('🎬', b.x+b.w/2, b.y+40);
+}
+function drawParkGate(b){
+  ctx.fillStyle='#5c9a4f'; ctx.fillRect(b.x,b.y,b.w,b.h);
+  ctx.font='20px sans-serif'; ctx.textAlign='center'; ctx.fillText('⛩️', b.x+b.w/2, b.y-4);
+}
+function drawKolamGround(b){
+  ctx.fillStyle='rgba(255,255,255,.5)'; ctx.fillRect(b.x,b.y,b.w,b.h);
+  ctx.strokeStyle='#c05a8c'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.arc(b.x+b.w/2,b.y+b.h/2, Math.min(b.w,b.h)/2-6, 0, Math.PI*2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(b.x+b.w/2,b.y+b.h/2, Math.min(b.w,b.h)/3-2, 0, Math.PI*2); ctx.stroke();
+  for(let i=0;i<8;i++){
+    const a = i/8*Math.PI*2;
+    ctx.beginPath();
+    ctx.arc(b.x+b.w/2+Math.cos(a)*(Math.min(b.w,b.h)/2-6), b.y+b.h/2+Math.sin(a)*(Math.min(b.w,b.h)/2-6), 4,0,Math.PI*2);
+    ctx.fillStyle='#e0a938'; ctx.fill();
+  }
+}
+function drawCart(b){
+  ctx.fillStyle='#e07a3a'; ctx.fillRect(b.x,b.y,b.w,b.h*0.7);
+  ctx.fillStyle='#3a3a3a';
+  ctx.beginPath(); ctx.arc(b.x+14,b.y+b.h,8,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(b.x+b.w-14,b.y+b.h,8,0,Math.PI*2); ctx.fill();
+  ctx.font='20px sans-serif'; ctx.textAlign='center'; ctx.fillText('🛒', b.x+b.w/2, b.y-4);
+}
+function drawRailway(b){
+  ctx.fillStyle='#9a8f6a'; ctx.fillRect(b.x,b.y,b.w,b.h);
+  ctx.fillStyle='#c0392b'; ctx.fillRect(b.x,b.y,b.w,16);
+  ctx.strokeStyle='#5b564f'; ctx.lineWidth=4;
+  for(let i=0;i<3;i++){ ctx.beginPath(); ctx.moveTo(b.x,b.y+b.h+20+i*14); ctx.lineTo(b.x+b.w,b.y+b.h+20+i*14); ctx.stroke(); }
+  ctx.font='26px sans-serif'; ctx.textAlign='center'; ctx.fillText('🚉', b.x+b.w/2, b.y-6);
+}
+function drawTempleTank(b){
+  ctx.fillStyle='#2c5f8a'; ctx.fillRect(b.x,b.y,b.w,b.h);
+  ctx.strokeStyle='#e8dcb8'; ctx.lineWidth=6; ctx.strokeRect(b.x,b.y,b.w,b.h);
+  ctx.font='20px sans-serif'; ctx.textAlign='center';
+  for(let i=0;i<4;i++) ctx.fillText('🪷', b.x+30+i*(b.w-60)/3, b.y+b.h/2+6);
+}
+function drawLighthouse(b){
+  ctx.fillStyle='#c9c2b0'; ctx.fillRect(b.x,b.y,b.w,b.h);
+  for(let i=0;i<4;i++){ ctx.fillStyle = i%2? '#c0392b':'#fdf1de'; ctx.fillRect(b.x, b.y+i*(b.h/4), b.w, b.h/4); }
+  ctx.fillStyle='#e0a938'; ctx.beginPath(); ctx.arc(b.x+b.w/2, b.y-6, 12,0,Math.PI*2); ctx.fill();
+  if(State.isNight){
+    const g = ctx.createRadialGradient(b.x+b.w/2,b.y-6,4,b.x+b.w/2,b.y-6,140);
+    g.addColorStop(0,'rgba(255,240,180,.5)'); g.addColorStop(1,'rgba(255,240,180,0)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(b.x+b.w/2,b.y-6,140,0,Math.PI*2); ctx.fill();
+  }
+}
+function drawPlayground(b){
+  ctx.fillStyle='rgba(224,169,56,.25)'; ctx.fillRect(b.x,b.y,b.w,b.h);
+  ctx.font='28px sans-serif'; ctx.textAlign='center';
+  ctx.fillText('🎠', b.x+b.w*0.25, b.y+b.h*0.55);
+  ctx.fillText('🛝', b.x+b.w*0.6, b.y+b.h*0.5);
+  ctx.fillText('🌳', b.x+b.w*0.85, b.y+b.h*0.6);
+}
+function drawGarden(b){
+  ctx.fillStyle='#5a4022'; ctx.fillRect(b.x,b.y,b.w,b.h);
+  const stage = gardenStage();
+  ctx.font='26px sans-serif'; ctx.textAlign='center';
+  const icon = stage===0 ? '🟫' : stage===1 ? '🌱' : stage===2 ? '🌿' : '🌼';
+  ctx.fillText(icon, b.x+b.w/2, b.y+b.h/2+8);
 }
 function drawGopuram(b, isNight){
   const colors=['#a8322d','#e0a938','#2c5f8a','#3f7d4a','#c0392b'];
@@ -2070,6 +2541,7 @@ function drawWorld(){
     ctx.stroke();
   });
   ctx.setLineDash([]);
+  drawAmbientTraffic();
 
   decor.forEach(d=>{ if(d.type==='tree') drawTree(d.x,d.y,d.palm); if(d.type==='bench') drawBench(d.x,d.y); });
 
@@ -2083,12 +2555,25 @@ function drawWorld(){
       case 'tea': drawTea(b); break;
       case 'gopuram': drawGopuram(b, State.isNight); break;
       case 'templeWall': drawTempleWall(b); break;
+      case 'postoffice': drawPostOffice(b); break;
+      case 'tailor': drawTailor(b); break;
+      case 'sweetshop': drawSweetShop(b); break;
+      case 'cinema': drawCinema(b); break;
+      case 'parkGate': drawParkGate(b); break;
+      case 'kolamGround': drawKolamGround(b); break;
+      case 'cart': drawCart(b); break;
+      case 'railway': drawRailway(b); break;
+      case 'templeTank': drawTempleTank(b); break;
+      case 'lighthouse': drawLighthouse(b); break;
+      case 'playground': drawPlayground(b); break;
+      case 'garden': drawGarden(b); break;
     }
   });
 
   const t = performance.now()/300;
   collectibles.forEach(c=>{ if(c.taken) return; const bob=Math.sin(t+c.bob)*4; drawCollectible(c.x,c.y+bob,c.type); });
 
+  drawWildlife();
   npcs.forEach(drawNpc);
 
   decor.forEach(d=>{ if(d.type==='lamp') drawLamp(d.x,d.y,State.isNight); });
@@ -2102,11 +2587,20 @@ function drawWorld(){
   if(State.weather==='rain'){ ctx.fillStyle='rgba(20,30,50,0.12)'; ctx.fillRect(0,0,canvas.width,canvas.height); }
 
   drawMinimap(cam);
-  drawRainFx();
+  drawFxLayer();
 }
 
-function drawRainFx(){
+function drawFxLayer(){
   fxCtx.clearRect(0,0,fxCanvas.width,fxCanvas.height);
+  if(!State.paused){
+    drawSky();
+    if(isFestivalNight()) drawFireworks();
+    Confetti.draw();
+  }
+  drawRainParticles();
+}
+
+function drawRainParticles(){
   if(State.weather!=='rain' || State.paused) return;
   fxCtx.strokeStyle='rgba(200,220,255,.5)'; fxCtx.lineWidth=1.5;
   const dt = 1/60;
@@ -2143,6 +2637,24 @@ function drawMinimap(cam){
 document.getElementById('btnInventory').addEventListener('click', ()=>{ Audio2.click(); UI.toggleModal('inventoryModal', UI.renderInventory); });
 document.getElementById('btnQuests').addEventListener('click', ()=>{ Audio2.click(); UI.toggleModal('questModal', UI.renderQuests); });
 document.getElementById('btnAchievements').addEventListener('click', ()=>{ Audio2.click(); UI.toggleModal('achModal', UI.renderAchievements); });
+document.getElementById('btnFriends').addEventListener('click', ()=>{ Audio2.click(); UI.toggleModal('friendsModal', UI.renderFriends); });
+document.getElementById('btnHelp').addEventListener('click', ()=>{ Audio2.click(); UI.toggleModal('helpModal'); });
+document.getElementById('btnCodex').addEventListener('click', ()=>{ Audio2.click(); UI.toggleModal('codexModal', ()=>Codex.render('people')); });
+document.getElementById('btnTravel').addEventListener('click', ()=>{ Audio2.click(); UI.toggleModal('travelModal', ()=>FastTravel.render()); });
+document.getElementById('btnPhoto').addEventListener('click', ()=>{ Audio2.click(); PhotoMode.capture(); });
+document.getElementById('friendsCloseBtn').addEventListener('click', ()=>UI.closeModal('friendsModal'));
+document.getElementById('helpCloseBtn').addEventListener('click', ()=>UI.closeModal('helpModal'));
+document.getElementById('codexCloseBtn').addEventListener('click', ()=>UI.closeModal('codexModal'));
+document.getElementById('travelCloseBtn').addEventListener('click', ()=>UI.closeModal('travelModal'));
+document.querySelectorAll('#codexTabs .tabBtn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    Audio2.click();
+    document.querySelectorAll('#codexTabs .tabBtn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    Codex.render(btn.dataset.ctab);
+  });
+});
+document.getElementById('legendCloseBtn').addEventListener('click', ()=>{ document.getElementById('legendOverlay').style.display='none'; });
 document.getElementById('btnVehicle').addEventListener('click', ()=>{
   Audio2.click();
   State.vehicle = !State.vehicle;
@@ -2534,6 +3046,521 @@ Object.assign(DialogueTrees, {
     }
   }
 });
+
+/* ==========================================================================
+   25. AMBIENT TRAFFIC — background vehicles that roam the road network,
+   purely decorative, to make the city feel alive without affecting play.
+   ========================================================================== */
+const ambientVehicles = [];
+(function seedAmbientTraffic(){
+  const palette = ['#e0a938','#c0392b','#2c5f8a','#3f7d4a','#a85a8c'];
+  roads.forEach(r=>{
+    const horizontal = r.w > r.h;
+    const count = horizontal ? Math.max(1, Math.round(r.w/900)) : Math.max(1, Math.round(r.h/900));
+    for(let i=0;i<count;i++){
+      ambientVehicles.push({
+        horizontal, road:r,
+        pos: Math.random(),
+        speed: Util.rand(0.03,0.07) * (Math.random()<0.5?1:-1),
+        color: Util.choice(palette),
+        lane: Math.random()<0.5 ? -18 : 18
+      });
+    }
+  });
+})();
+function updateAmbientTraffic(dt){
+  ambientVehicles.forEach(v=>{
+    v.pos += v.speed*dt;
+    if(v.pos>1.05) v.pos=-0.05;
+    if(v.pos<-0.05) v.pos=1.05;
+  });
+}
+function drawAmbientTraffic(){
+  ambientVehicles.forEach(v=>{
+    const r = v.road;
+    let x,y,angle;
+    if(v.horizontal){
+      x = r.x + v.pos*r.w; y = r.y + r.h/2 + v.lane; angle = v.speed>0?0:Math.PI;
+    } else {
+      x = r.x + r.w/2 + v.lane; y = r.y + v.pos*r.h; angle = v.speed>0?Math.PI/2:-Math.PI/2;
+    }
+    ctx.save(); ctx.translate(x,y); ctx.rotate(angle);
+    ctx.fillStyle = v.color; ctx.fillRect(-14,-8,28,16);
+    ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.fillRect(2,-6,8,12);
+    ctx.restore();
+  });
+}
+
+/* ==========================================================================
+   26. DAY SUMMARY POPUP — shown once per new in-game day
+   ========================================================================== */
+const DaySummary = {
+  lastShownDay: 1,
+  dayStats: { moneyStart: State.money, questsStart: 0 },
+  maybeShow(){
+    if(State.dayCount !== this.lastShownDay){
+      this.lastShownDay = State.dayCount;
+      const earned = State.money - this.dayStats.moneyStart;
+      UI.toast(`🌅 நாள் ${State.dayCount} தொடங்கியது! நேற்று ₹${Math.max(0,earned)} சம்பாதித்தீர்கள்.`, 'quest');
+      this.dayStats.moneyStart = State.money;
+      SaveSystem.save();
+    }
+  }
+};
+
+/* ==========================================================================
+   27. FRIENDSHIP & GIFT SYSTEM
+   Every NPC has one favourite item. Giving it to them during dialogue raises
+   friendship (capped 0-100) and a little reputation. Implemented generically
+   so it applies to every dialogue tree without editing each node.
+   ========================================================================== */
+const NpcFavorites = {
+  priest:'garland', amma:'jasmine', kadaikaran:'sweet', fisherman:'panipuri',
+  merchant:'mango', driver:'idli', teacher:'lamp', doctor:'coconut',
+  postman:'sweet', tailor:'banana', sweetshop:'jasmine', cinemaOwner:'coffee',
+  kolamArtist:'kolamPowder', panipuriwala:'coconut', clerk:'coffee'
+};
+const GiftSystem = {
+  friendshipOf(npcId){ return State.flags['friend_'+npcId] || 0; },
+  canGift(npcId){
+    const fav = NpcFavorites[npcId];
+    return fav && InventorySystem.count(fav) > 0 && this.friendshipOf(npcId) < 100;
+  },
+  give(npcId){
+    const fav = NpcFavorites[npcId];
+    if(!fav || !InventorySystem.remove(fav,1)) return;
+    const cur = this.friendshipOf(npcId);
+    const next = Util.clamp(cur+15, 0, 100);
+    State.flags['friend_'+npcId] = next;
+    State.reputation += 1;
+    UI.toast('நட்பு அதிகரித்தது! ' + ItemDefs[fav].icon + ' (+15)', 'quest');
+    Audio2.pickup();
+    AchievementSystem.checkAll();
+  }
+};
+achDefs.push({id:'a_bestFriend', name:'சிறந்த நண்பன்', desc:'ஒரு நண்பருடன் 100 நட்பு அடையவும்', icon:'💛',
+  check:s=>Object.keys(NpcFavorites).some(id=>(s.flags['friend_'+id]||0)>=100)});
+
+/* ==========================================================================
+   28. GOVERNMENT OFFICE — clerk NPC, "Stamp Rush" minigame, paperwork quest
+   ========================================================================== */
+buildings.push({type:'civic', x:1850, y:120, w:200, h:120, color:'#6a6a8a', label:'அரசு அலுவலகம்', solid:true, id:'govtoffice'});
+zones.push({name:'அரசு அலுவலகம் · Govt Office', x:1830, y:60, w:240, h:36});
+
+npcDefs.push({
+  id:'clerk', name:'சுந்தர்', role:'Government Clerk', icon:'🧑‍💼', color:'#6a6a8a',
+  home:{x:1700,y:260}, work:{x:1940,y:170}, schedule:[[9,17,'work'],[17,33,'home']]
+});
+npcs.push((()=>{ const d=npcDefs[npcDefs.length-1]; return {...d, x:d.home.x,y:d.home.y,targetX:d.home.x,targetY:d.home.y,state:'idle',speed:60,animT:Math.random()*10}; })());
+
+questDefs.push({
+  id:'q_paperwork', title:'ஆவண வேலை', giver:'clerk',
+  desc:'சுந்தருக்காக "ஸ்டாம்ப் ரஷ்" விளையாட்டில் 8 ஆவணங்களை முத்திரையிடவும்.',
+  steps:[
+    {id:'talk', text:'சுந்தரிடம் பேசுங்கள்', type:'talk', target:'clerk'},
+    {id:'minigame', text:'8 ஆவணங்களை முத்திரையிடவும்', type:'minigame', target:'stamp', count:8},
+    {id:'return', text:'சுந்தரிடம் திரும்பிச் செல்லுங்கள்', type:'talk', target:'clerk'}
+  ],
+  reward:{money:26, rep:6}
+});
+achDefs.push({id:'a_bureaucrat', name:'அலுவலக நிபுணர்', desc:'ஸ்டாம்ப் ரஷில் 8+ புள்ளிகள்', icon:'🧾',
+  check:s=>(s.flags.mg_stamp_score||0)>=8});
+
+DialogueTrees.clerk = {
+  root(){
+    const qs = QuestSystem.getStatus('q_paperwork');
+    if(qs==='none') return 'offer';
+    if(qs==='active') return QuestSystem.stepDone('q_paperwork','minigame') ? 'ready' : 'progress';
+    return 'chat';
+  },
+  nodes:{
+    offer:{ text:'நான் சுந்தர், அரசு அலுவலகத்தில் கிளார்க். ஏராளமான ஆவணங்கள் குவிந்துள்ளன — முத்திரையிட உதவுவீர்களா?',
+      options:[{label:'செய்கிறேன்!', action:()=>QuestSystem.start('q_paperwork'), next:'end'},{label:'இல்லை', next:'end'}]},
+    progress:{ text:'ஸ்டாம்ப் ரஷ் விளையாட்டைத் தொடங்குங்கள்.',
+      options:[{label:'தொடங்கு', action:()=>Minigames.start('stamp'), next:'end'},{label:'பின்னால்', next:'end'}]},
+    ready:{ text:'அனைத்து ஆவணங்களும் முத்திரையிடப்பட்டனவா? சிறப்பு!', options:[{label:'நன்றி!', action:()=>QuestSystem.complete('q_paperwork'), next:'end'}]},
+    chat:{ text:'அரசு வேலை ஒருபோதும் முடிவதில்லை!', options:[{label:'மீண்டும் விளையாடு', action:()=>Minigames.start('stamp'), next:'end'},{label:'வணக்கம்', next:'end'}]}
+  }
+};
+
+/* ==========================================================================
+   29. MORE CIVIC LANDMARKS — railway station, temple tank, lighthouse,
+   playground. Purely to enrich the city; each is tied to an "Explorer"
+   achievement that unlocks once every named zone has been visited.
+   ========================================================================== */
+buildings.push({type:'railway', x:3200, y:400, w:260, h:140, solid:true, id:'railway'});
+zones.push({name:'இரயில் நிலையம் · Railway Station', x:3170, y:340, w:320, h:36});
+
+const templeTank = {x:temple.x-260, y:temple.y+40, w:220, h:160};
+buildings.push({type:'templeTank', x:templeTank.x, y:templeTank.y, w:templeTank.w, h:templeTank.h, solid:false, id:'templeTank'});
+
+buildings.push({type:'lighthouse', x:3260, y:1700, w:60, h:160, solid:true, id:'lighthouse'});
+
+const playground = {x:900, y:520, w:260, h:180};
+buildings.push({type:'playground', x:playground.x, y:playground.y, w:playground.w, h:playground.h, solid:false, id:'playground'});
+zones.push({name:'விளையாட்டு மைதானம் · Playground', x:playground.x, y:playground.y-30, w:playground.w, h:32});
+
+achDefs.push({id:'a_explorer', name:'நகர ஆய்வாளர்', desc:'நகரின் எல்லா பகுதிகளையும் பார்வையிடவும்', icon:'🗺️',
+  check:s=>zones.every((z,i)=>s.flags['visited_'+i])});
+
+function updateZoneVisits(){
+  zones.forEach((z,i)=>{
+    const cx=z.x+z.w/2, cy=z.y+z.h/2;
+    if(Util.dist(Player.x,Player.y,cx,cy) < 260) State.flags['visited_'+i] = true;
+  });
+}
+
+/* ==========================================================================
+   30. GARDEN — plant a jasmine seed near the temple, watch it grow through
+   three stages in real time, and harvest a bonus batch of flowers.
+   ========================================================================== */
+Object.assign(ItemDefs, { seed:{name:'மல்லிகை விதை', icon:'🌱', sell:0, buy:5, desc:'Plant near the temple to grow jasmine.'} });
+shops.flowerStall.buy.push('seed');
+
+const gardenPlot = {x:temple.x+temple.w+20, y:temple.y+temple.h-60, w:60, h:60};
+buildings.push({type:'garden', x:gardenPlot.x, y:gardenPlot.y, w:gardenPlot.w, h:gardenPlot.h, solid:false, id:'gardenPlot'});
+State.garden = { stage:0, plantedAt:0 };
+const GARDEN_GROW_SECONDS = 45;
+function gardenStage(){
+  if(State.garden.stage===0) return 0;
+  const elapsed = (performance.now()/1000) - State.garden.plantedAt;
+  return Util.clamp(1+Math.floor(elapsed/GARDEN_GROW_SECONDS), 1, 3);
+}
+function gardenInteract(){
+  const stage = gardenStage();
+  if(State.garden.stage===0){
+    if(InventorySystem.remove('seed',1)){
+      State.garden.stage = 1; State.garden.plantedAt = performance.now()/1000;
+      UI.toast('மல்லிகை விதை நடப்பட்டது 🌱', 'quest');
+    } else {
+      UI.toast('விதை தேவை (பூக்கடையில் வாங்கவும்)', 'warn');
+    }
+  } else if(stage>=3){
+    State.resources.jasmine += 3;
+    InventorySystem.add('jasmine', 3);
+    State.garden.stage = 0;
+    State.flags.harvestedGarden = true;
+    UI.toast('அறுவடை! +3 மல்லிகை பூக்கள் 🌼', 'money');
+    AchievementSystem.checkAll();
+  } else {
+    UI.toast('இன்னும் வளர்ந்து கொண்டிருக்கிறது... (' + stage + '/3)', 'warn');
+  }
+}
+achDefs.push({id:'a_gardener', name:'தோட்டக்காரன்', desc:'தோட்டத்தை அறுவடை செய்யவும்', icon:'🌱', check:s=>s.flags.harvestedGarden});
+
+/* ==========================================================================
+   31. SKY OBJECTS — sun, moon, drifting clouds; purely decorative but tied
+   to the real time-of-day value so the sky reads correctly at a glance.
+   ========================================================================== */
+const clouds = [];
+for(let i=0;i<10;i++) clouds.push({x:Math.random(), y:Util.rand(0.05,0.35), w:Util.rand(70,160), speed:Util.rand(4,10)});
+function updateSky(dt){
+  clouds.forEach(c=>{ c.x += (c.speed*dt)/canvas.width; if(c.x>1.2) c.x=-0.2; });
+}
+function drawSky(){
+  const hour = State.timeMinutes/60;
+  // sun/moon arc across the sky based on hour (visible roughly 5-19 for sun, else moon)
+  const sunUp = hour>=5 && hour<=19;
+  const t = sunUp ? (hour-5)/14 : ((hour<5? hour+24-19 : hour-19))/10;
+  const arcX = canvas.width*Util.clamp(t,0,1);
+  const arcY = canvas.height*0.22 - Math.sin(Util.clamp(t,0,1)*Math.PI)*canvas.height*0.16;
+  if(sunUp){
+    const g = fxCtx.createRadialGradient(arcX,arcY,4,arcX,arcY,50);
+    g.addColorStop(0,'rgba(255,230,150,0.9)'); g.addColorStop(1,'rgba(255,230,150,0)');
+    fxCtx.fillStyle=g; fxCtx.beginPath(); fxCtx.arc(arcX,arcY,50,0,Math.PI*2); fxCtx.fill();
+    fxCtx.fillStyle='#fff6d9'; fxCtx.beginPath(); fxCtx.arc(arcX,arcY,16,0,Math.PI*2); fxCtx.fill();
+  } else {
+    fxCtx.fillStyle='rgba(230,230,255,.9)'; fxCtx.beginPath(); fxCtx.arc(arcX,arcY,14,0,Math.PI*2); fxCtx.fill();
+    fxCtx.fillStyle='rgba(11,16,48,1)'; fxCtx.beginPath(); fxCtx.arc(arcX+5,arcY-4,12,0,Math.PI*2); fxCtx.fill();
+  }
+  if(State.weather!=='rain'){
+    fxCtx.fillStyle = State.isNight ? 'rgba(255,255,255,.12)' : 'rgba(255,255,255,.55)';
+    clouds.forEach(c=>{
+      const cx=c.x*canvas.width, cy=c.y*canvas.height*0.6;
+      fxCtx.beginPath();
+      fxCtx.ellipse(cx,cy,c.w*0.5,c.w*0.22,0,0,Math.PI*2);
+      fxCtx.ellipse(cx+c.w*0.3,cy+6,c.w*0.35,c.w*0.18,0,0,Math.PI*2);
+      fxCtx.ellipse(cx-c.w*0.3,cy+8,c.w*0.3,c.w*0.16,0,0,Math.PI*2);
+      fxCtx.fill();
+    });
+  }
+}
+
+/* ==========================================================================
+   32. FESTIVAL & FIREWORKS — every 5th in-game day is a festival night with
+   fireworks over the temple; a lightweight particle system also powers a
+   confetti burst whenever a quest completes or the "City Legend" ending fires.
+   ========================================================================== */
+const Fireworks = { particles:[], nextBurst:0 };
+function isFestivalNight(){ return (State.dayCount % 5 === 0) && State.isNight; }
+function updateFireworks(dt){
+  if(isFestivalNight()){
+    Fireworks.nextBurst -= dt;
+    if(Fireworks.nextBurst<=0){
+      Fireworks.nextBurst = Util.rand(1.2,2.4);
+      const bx = Util.rand(canvas.width*0.3, canvas.width*0.7);
+      const by = Util.rand(canvas.height*0.15, canvas.height*0.4);
+      const color = Util.choice(['#e0a938','#c0392b','#2c5f8a','#3f7d4a','#a85a8c','#f4d35e']);
+      for(let i=0;i<28;i++){
+        const ang = Math.random()*Math.PI*2, spd = Util.rand(60,180);
+        Fireworks.particles.push({x:bx,y:by,vx:Math.cos(ang)*spd,vy:Math.sin(ang)*spd,life:Util.rand(0.6,1.1),color});
+      }
+      Audio2.beep(200,0.2,'sawtooth',0.15,50);
+    }
+  }
+  Fireworks.particles.forEach(p=>{ p.x+=p.vx*dt; p.y+=p.vy*dt; p.vy+=120*dt; p.life-=dt; });
+  Fireworks.particles = Fireworks.particles.filter(p=>p.life>0);
+}
+function drawFireworks(){
+  Fireworks.particles.forEach(p=>{
+    fxCtx.globalAlpha = Util.clamp(p.life,0,1);
+    fxCtx.fillStyle = p.color;
+    fxCtx.beginPath(); fxCtx.arc(p.x,p.y,3,0,Math.PI*2); fxCtx.fill();
+  });
+  fxCtx.globalAlpha = 1;
+}
+
+const Confetti = {
+  particles:[],
+  burst(x,y,n){
+    const colors=['#e0a938','#c0392b','#2c5f8a','#3f7d4a','#a85a8c','#f4d35e'];
+    for(let i=0;i<(n||40);i++){
+      const ang = Math.random()*Math.PI*2, spd = Util.rand(80,220);
+      this.particles.push({x,y,vx:Math.cos(ang)*spd,vy:Math.sin(ang)*spd-100,life:Util.rand(0.8,1.4),
+        color:Util.choice(colors), rot:Math.random()*Math.PI, spin:Util.rand(-6,6)});
+    }
+  },
+  update(dt){
+    this.particles.forEach(p=>{ p.x+=p.vx*dt; p.y+=p.vy*dt; p.vy+=260*dt; p.life-=dt; p.rot+=p.spin*dt; });
+    this.particles = this.particles.filter(p=>p.life>0);
+  },
+  draw(){
+    this.particles.forEach(p=>{
+      fxCtx.save(); fxCtx.translate(p.x,p.y); fxCtx.rotate(p.rot);
+      fxCtx.globalAlpha = Util.clamp(p.life,0,1);
+      fxCtx.fillStyle = p.color;
+      fxCtx.fillRect(-4,-3,8,6);
+      fxCtx.restore();
+    });
+    fxCtx.globalAlpha = 1;
+  }
+};
+// hook confetti into quest completion for a satisfying visual payoff
+const _questComplete = QuestSystem.complete.bind(QuestSystem);
+QuestSystem.complete = function(id){
+  const before = QuestSystem.getStatus(id);
+  _questComplete(id);
+  if(before==='active' && QuestSystem.getStatus(id)==='complete'){
+    Confetti.burst(canvas.width/2, canvas.height/3, 50);
+  }
+};
+
+/* ==========================================================================
+   33. AMBIENT WILDLIFE — decorative birds by day, fireflies by night
+   ========================================================================== */
+const wildlife = [];
+for(let i=0;i<14;i++){
+  wildlife.push({x:Util.rand(0,WORLD_W), y:Util.rand(200,WORLD_H-200), phase:Math.random()*Math.PI*2,
+    radius:Util.rand(30,90), speed:Util.rand(0.3,0.8), baseY:0});
+}
+wildlife.forEach(w=>w.baseY=w.y);
+function updateWildlife(dt){
+  wildlife.forEach(w=>{ w.phase += dt*w.speed; });
+}
+function drawWildlife(){
+  wildlife.forEach(w=>{
+    const x = w.x + Math.cos(w.phase)*w.radius;
+    const y = w.baseY + Math.sin(w.phase*2)*14;
+    if(State.isNight){
+      ctx.fillStyle = `rgba(255,240,150,${0.4+0.6*Math.abs(Math.sin(w.phase*3))})`;
+      ctx.beginPath(); ctx.arc(x,y,2.4,0,Math.PI*2); ctx.fill();
+    } else {
+      ctx.strokeStyle='rgba(60,50,40,.55)'; ctx.lineWidth=1.4;
+      ctx.beginPath();
+      ctx.moveTo(x-5,y); ctx.quadraticCurveTo(x,y-4,x+5,y);
+      ctx.stroke();
+    }
+  });
+}
+
+/* ==========================================================================
+   34. CODEX / ALMANAC — a living encyclopedia of everyone and everything
+   the player has met, discovered or collected. Purely a read-only view
+   built from the same data tables that drive the rest of the game, so it
+   never falls out of sync with them.
+   ========================================================================== */
+const Codex = {
+  render(tab){
+    const body = document.getElementById('codexBody');
+    body.innerHTML = '';
+    if(tab==='people') this.renderPeople(body);
+    else if(tab==='places') this.renderPlaces(body);
+    else if(tab==='items') this.renderItems(body);
+    else if(tab==='stats') this.renderStats(body);
+  },
+  renderPeople(body){
+    npcs.forEach(n=>{
+      const known = !!State.flags['talked_'+n.id];
+      const div = document.createElement('div');
+      div.className = 'achEntry' + (known?'':' locked');
+      div.innerHTML = `<div class="aic">${known?n.icon:'❔'}</div><div class="atext">
+        <h5>${known?n.name:'??? (இன்னும் சந்திக்கவில்லை)'}</h5>
+        <p>${known?n.role:'இந்த நபரைத் தேடி பேசுங்கள்.'}</p></div>`;
+      body.appendChild(div);
+    });
+  },
+  renderPlaces(body){
+    zones.forEach((z,i)=>{
+      const known = !!State.flags['visited_'+i];
+      const div = document.createElement('div');
+      div.className = 'achEntry' + (known?'':' locked');
+      div.innerHTML = `<div class="aic">${known?'📍':'❔'}</div><div class="atext">
+        <h5>${known?z.name:'??? (இன்னும் பார்வையிடவில்லை)'}</h5>
+        <p>${known?'ஆராயப்பட்டது':'அருகில் சென்று ஆராயுங்கள்.'}</p></div>`;
+      body.appendChild(div);
+    });
+  },
+  renderItems(body){
+    Object.entries(ItemDefs).forEach(([id,def])=>{
+      const known = InventorySystem.count(id)>0 || (State.resources[id]||0)>0;
+      const div = document.createElement('div');
+      div.className = 'achEntry' + (known?'':' locked');
+      div.innerHTML = `<div class="aic">${known?def.icon:'❔'}</div><div class="atext">
+        <h5>${known?def.name:'??? பொருள்'}</h5><p>${known?def.desc:'இன்னும் கண்டுபிடிக்கவில்லை.'}</p></div>`;
+      body.appendChild(div);
+    });
+  },
+  renderStats(body){
+    const s = Stats.summary();
+    body.innerHTML = `
+      <div class="questEntry"><h4>விளையாட்டு நேரம்</h4><p>${s.playtime}</p></div>
+      <div class="questEntry"><h4>நடந்த தூரம்</h4><p>${s.distance} மீட்டர்</p></div>
+      <div class="questEntry"><h4>மொத்த சம்பாத்தியம்</h4><p>₹${s.totalEarned}</p></div>
+      <div class="questEntry"><h4>முடிக்கப்பட்ட பணிகள்</h4><p>${s.questsComplete} / ${questDefs.length}</p></div>
+      <div class="questEntry"><h4>சேகரிக்கப்பட்ட பொருட்கள்</h4><p>${s.itemsCollected}</p></div>
+      <div class="questEntry"><h4>பேசிய நபர்கள்</h4><p>${s.npcsTalked} / ${npcs.length}</p></div>
+      <div class="questEntry"><h4>சாதனைகள்</h4><p>${AchievementSystem.unlockedCount()} / ${achDefs.length}</p></div>`;
+  }
+};
+
+/* ==========================================================================
+   35. STATISTICS — lightweight lifetime counters, purely informational,
+   surfaced through the Codex's "stats" tab.
+   ========================================================================== */
+const Stats = {
+  startedAt: performance.now(),
+  distanceMeters: 0,
+  totalEarned: 0,
+  itemsCollected: 0,
+  lastX: Player.x, lastY: Player.y,
+  update(dt){
+    const d = Util.dist(Player.x,Player.y,this.lastX,this.lastY);
+    this.distanceMeters += d/24; // arbitrary world-units-to-metres scale for flavour
+    this.lastX = Player.x; this.lastY = Player.y;
+  },
+  summary(){
+    const mins = Math.floor((performance.now()-this.startedAt)/60000);
+    const npcsTalked = npcs.filter(n=>State.flags['talked_'+n.id]).length;
+    const questsComplete = questDefs.filter(q=>State.quests[q.id]&&State.quests[q.id].status==='complete').length;
+    return {
+      playtime: mins + ' நிமிடங்கள்',
+      distance: Math.floor(this.distanceMeters),
+      totalEarned: this.totalEarned,
+      itemsCollected: this.itemsCollected,
+      npcsTalked, questsComplete
+    };
+  }
+};
+// track earnings & pickups without touching every call site individually
+const _addMoney = EconomySystem.addMoney.bind(EconomySystem);
+EconomySystem.addMoney = function(n){ if(n>0) Stats.totalEarned += n; _addMoney(n); };
+const _invAdd = InventorySystem.add.bind(InventorySystem);
+InventorySystem.add = function(id,n){ Stats.itemsCollected += n; _invAdd(id,n); };
+
+/* ==========================================================================
+   36. FAST TRAVEL — jump straight to any zone whose district has already
+   been visited once (see updateZoneVisits in section 29). Costs a slice of
+   energy to keep it from trivialising the walk/drive gameplay entirely.
+   ========================================================================== */
+const FastTravel = {
+  render(){
+    const body = document.getElementById('travelListBody');
+    body.innerHTML = '';
+    let any = false;
+    zones.forEach((z,i)=>{
+      if(!State.flags['visited_'+i]) return;
+      any = true;
+      const card = document.createElement('div');
+      card.className = 'itemCard';
+      card.innerHTML = `<div class="ic">📍</div><div class="nm">${z.name.split('·')[0].trim()}</div>`;
+      card.onclick = ()=>{
+        if(State.energy < 10){ UI.toast('மிகவும் சோர்வாக உள்ளீர்கள்!', 'warn'); return; }
+        State.energy -= 10;
+        Player.x = z.x + z.w/2; Player.y = z.y + z.h + 60;
+        State.timeMinutes += 15;
+        UI.toast('விரைவு பயணம்: ' + z.name.split('·')[0].trim(), 'money');
+        UI.closeModal('travelModal');
+        addShake(2);
+      };
+      body.appendChild(card);
+    });
+    if(!any) body.innerHTML = '<div style="opacity:.6;font-size:12px;">இன்னும் எந்த பகுதியும் ஆராயப்படவில்லை. நடந்து சுற்றிப் பாருங்கள்!</div>';
+  }
+};
+
+/* ==========================================================================
+   37. FATIGUE EVENT — if energy is fully depleted, the player briefly
+   faints and is helped home by a kind local; a small money cost and a
+   forced rest represent the setback without being punishing.
+   ========================================================================== */
+let fatigueLock = false;
+function checkFatigue(){
+  if(State.energy<=0 && !fatigueLock){
+    fatigueLock = true;
+    State.paused = true;
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:35;background:rgba(0,0,0,.85);color:#fdf1de;'+
+      'display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;';
+    overlay.innerHTML = `<div style="font-size:40px;">😵💫</div>
+      <h2 style="color:var(--ui-accent);">சோர்வாக இருக்கிறீர்கள்...</h2>
+      <p style="max-width:400px;opacity:.85;">ஒரு அன்பான உள்ளூர்வாசி உங்களை வீட்டிற்கு அழைத்துச் சென்றார். சிறிது ஓய்வு எடுத்துக் கொள்ளுங்கள்.</p>
+      <button class="primaryBtn" id="fatigueOkBtn" style="margin-top:14px;">சரி</button>`;
+    document.body.appendChild(overlay);
+    document.getElementById('fatigueOkBtn').onclick = ()=>{
+      State.energy = 60;
+      State.money = Math.max(0, State.money-5);
+      Player.x = temple.x+temple.w/2; Player.y = temple.y+temple.h+80;
+      State.paused = false; fatigueLock = false;
+      overlay.remove();
+      UI.updateHud();
+    };
+  }
+}
+
+/* ==========================================================================
+   38. PHOTO MODE — export the current view (game canvas + fx canvas) as a
+   downloadable PNG, composited onto a plain background so transparency
+   doesn't turn black in the saved file.
+   ========================================================================== */
+const PhotoMode = {
+  capture(){
+    const out = document.createElement('canvas');
+    out.width = canvas.width; out.height = canvas.height;
+    const octx = out.getContext('2d');
+    octx.fillStyle = '#0b1030'; octx.fillRect(0,0,out.width,out.height);
+    octx.drawImage(canvas,0,0);
+    octx.drawImage(fxCanvas,0,0);
+    octx.fillStyle = 'rgba(0,0,0,.45)';
+    octx.fillRect(0,out.height-34,220,34);
+    octx.fillStyle = '#fdf1de'; octx.font='14px sans-serif'; octx.textAlign='left';
+    octx.fillText('தமிழ் நகரம் · ' + Util.fmtTime(State.timeMinutes), 10, out.height-13);
+    const url = out.toDataURL('image/png');
+    const a = document.createElement('a');
+    a.href = url; a.download = 'tamil-nagaram-' + Date.now() + '.png';
+    document.body.appendChild(a); a.click(); a.remove();
+    UI.toast('புகைப்படம் சேமிக்கப்பட்டது 📷', 'money');
+  }
+};
 
 /* NEXT_SECTION_MARKER */
 </script>
